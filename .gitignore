@@ -1,0 +1,18 @@
+# Build artifacts from printing-press verify/scorecard
+*-validation
+
+# Go binaries (Windows)
+*.exe
+
+# Go build cache
+.cache/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*~
+.idea/
+.vscode/
