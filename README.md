@@ -4,6 +4,34 @@ The curated collection of CLIs built by the [CLI Printing Press](https://github.
 
 Every CLI in this library was generated from an API spec, verified through the press's quality gates, and submitted via the `/printing-press publish` skill. They're not wrappers — they have local SQLite sync, offline search, workflow commands, and agent-optimized output.
 
+## Install from the Library
+
+Each CLI is a standalone Go module. You need [Go 1.23+](https://go.dev/dl/) installed.
+
+### go install (recommended)
+
+```bash
+go install github.com/mvanhorn/printing-press-library/library/<category>/<cli-name>/cmd/<cli-name>@latest
+```
+
+For example, to install the Linear CLI:
+
+```bash
+go install github.com/mvanhorn/printing-press-library/library/project-management/linear-pp-cli/cmd/linear-pp-cli@latest
+```
+
+The binary lands in your `$GOPATH/bin` (or `$HOME/go/bin` by default). Make sure that's on your `PATH`.
+
+### From source
+
+```bash
+git clone https://github.com/mvanhorn/printing-press-library.git
+cd printing-press-library/library/<category>/<cli-name>
+go install ./cmd/<cli-name>
+```
+
+Check each CLI's own README for usage, configuration, and required environment variables.
+
 ## Structure
 
 ```
