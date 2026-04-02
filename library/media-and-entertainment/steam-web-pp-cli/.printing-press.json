@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-04-01T23:52:34.115792Z",
+  "printing_press_version": "0.4.0",
+  "api_name": "steam-web",
+  "cli_name": "steam-web-pp-cli",
+  "spec_path": "/Users/tmchow/printing-press/.runstate/cli-printing-press-8bdedb85/runs/20260401-165231/research/steam-public-spec.json"
+}

@@ -7,6 +7,13 @@
       "api": "Linear",
       "description": "Offline-capable, agent-native CLI for the Linear API with SQLite-backed sync, search, and cross-entity queries.",
       "path": "library/project-management/linear-pp-cli"
+    },
+    {
+      "name": "steam-web-pp-cli",
+      "category": "media-and-entertainment",
+      "api": "Steam Web API",
+      "description": "Query Steam player profiles, game libraries, achievements, and friends from the terminal. 90/100 Grade A.",
+      "path": "library/media-and-entertainment/steam-web-pp-cli"
     }
   ]
 }
