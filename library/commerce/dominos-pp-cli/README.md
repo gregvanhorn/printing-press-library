@@ -7,12 +7,12 @@ Order pizza, browse menus, track deliveries, and manage rewards from the termina
 ### Go
 
 ```
-go install github.com/mvanhorn/printing-press-library/library/commerce/dominos-pp-cli/cmd/dominos-pp-cli@latest
+go install github.com/mvanhorn/dominos-pp-cli/cmd/dominos-pp-cli@latest
 ```
 
 ### Binary
 
-Download from [Releases](https://github.com/mvanhorn/printing-press-library/releases).
+Download from [Releases](https://github.com/mvanhorn/dominos-pp-cli/releases).
 
 ## Quick Start
 
@@ -257,6 +257,19 @@ dominos-pp-cli compare-prices --address "421 N 63rd St, Seattle, WA 98103" --ite
 ```bash
 dominos-pp-cli track --phone 2065551234 --watch --interval 15s
 ```
+
+## Sources & Inspiration
+
+This CLI was built by studying these community projects and resources:
+
+- [**node-dominos-pizza-api**](https://github.com/RIAEvangelist/node-dominos-pizza-api) -- JavaScript. The most comprehensive reverse-engineered documentation of Domino's endpoints, tracking, international support, and error codes.
+- [**apizza**](https://github.com/harrybrwn/apizza) -- Go. CLI for ordering Domino's with cart management, topping syntax, and the `dawg` Go API wrapper library that mapped the `/power/` REST endpoints.
+- [**pizzapi (Python)**](https://github.com/ggrammar/pizzapi) -- Python. Customer, address, store, menu, and order flow.
+- [**mcpizza**](https://github.com/GrahamMcBain/mcpizza) -- Python MCP server. Store finder, menu browsing, cart management with safety-first ordering (real orders disabled by default).
+- [**pizzamcp**](https://github.com/GrahamMcBain/pizzamcp) -- JavaScript MCP server. End-to-end ordering with payment processing via the `dominos` npm package.
+- [**dominos (PyPI)**](https://github.com/tomasbasham/dominos) -- Python. UK API variant. Flagged the 403 reachability risk that informed our rate-limiting approach.
+
+API endpoints were also discovered by sniffing authenticated traffic from dominos.com, which revealed a GraphQL BFF (`/api/web-bff/graphql`) with 24 operations (loyalty, deals, campaigns, upsells) not documented by any community project.
 
 ---
 
