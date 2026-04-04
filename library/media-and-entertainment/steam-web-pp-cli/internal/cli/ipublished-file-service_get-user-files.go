@@ -28,7 +28,7 @@ func newIpublishedFileServiceGetUserFilesCmd(flags *rootFlags) *cobra.Command {
 	var flagCreatorAppid string
 	var flagMatchCloudFilename string
 	var flagCacheMaxAgeSeconds int
-	var flagLanguage string
+	var flagLanguage int
 	var flagTaggroups string
 	var flagExcludedContentDescriptors string
 	var flagAdminQuery bool
@@ -51,7 +51,7 @@ func newIpublishedFileServiceGetUserFilesCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "get-user-files",
-		Short: "Retrieves files published by a user.",
+		Short: "GetUserFiles operation of IPublishedFileService",
 		Example: "  steam-web-pp-cli ipublished-file-service get-user-files",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -109,7 +109,7 @@ func newIpublishedFileServiceGetUserFilesCmd(flags *rootFlags) *cobra.Command {
 			if flagCacheMaxAgeSeconds != 0 {
 				params["cache_max_age_seconds"] = fmt.Sprintf("%v", flagCacheMaxAgeSeconds)
 			}
-			if flagLanguage != "" {
+			if flagLanguage != 0 {
 				params["language"] = fmt.Sprintf("%v", flagLanguage)
 			}
 			if flagTaggroups != "" {
@@ -215,29 +215,38 @@ func newIpublishedFileServiceGetUserFilesCmd(flags *rootFlags) *cobra.Command {
 	_ = cmd.MarkFlagRequired("steamid")
 	cmd.Flags().StringVar(&flagAppid, "appid", "", "App Id of the app that the files were published to.")
 	_ = cmd.MarkFlagRequired("appid")
-	cmd.Flags().StringVar(&flagShortcutid, "shortcutid", "", "Shortcut Id to retrieve published files from.")
-	cmd.Flags().IntVar(&flagPage, "page", 0, "Starting page for results.")
-	cmd.Flags().IntVar(&flagNumperpage, "numperpage", 0, "The number of results, per page to return.")
-	cmd.Flags().StringVar(&flagType, "type", "", "Type of files to be returned.")
-	cmd.Flags().StringVar(&flagSortmethod, "sortmethod", "", "Sorting method to use on returned values.")
-	cmd.Flags().IntVar(&flagPrivacy, "privacy", 0, "Filter by privacy settings.")
-	cmd.Flags().StringVar(&flagRequiredtags, "requiredtags", "", "Tags that must be present on a published file to satisfy the query.")
-	cmd.Flags().StringVar(&flagExcludedtags, "excludedtags", "", "Tags that must NOT be present on a published file to satisfy the query.")
+	cmd.Flags().StringVar(&flagShortcutid, "shortcutid", "", "(Optional) Shortcut Id to retrieve published files from.")
+	_ = cmd.MarkFlagRequired("shortcutid")
+	cmd.Flags().IntVar(&flagPage, "page", 0, "(Optional) Starting page for results.")
+	cmd.Flags().IntVar(&flagNumperpage, "numperpage", 0, "(Optional) The number of results, per page to return.")
+	cmd.Flags().StringVar(&flagType, "type", "", "(Optional) Type of files to be returned.")
+	cmd.Flags().StringVar(&flagSortmethod, "sortmethod", "", "(Optional) Sorting method to use on returned values.")
+	cmd.Flags().IntVar(&flagPrivacy, "privacy", 0, "(optional) Filter by privacy settings.")
+	_ = cmd.MarkFlagRequired("privacy")
+	cmd.Flags().StringVar(&flagRequiredtags, "requiredtags", "", "(Optional) Tags that must be present on a published file to satisfy the query.")
+	_ = cmd.MarkFlagRequired("requiredtags")
+	cmd.Flags().StringVar(&flagExcludedtags, "excludedtags", "", "(Optional) Tags that must NOT be present on a published file to satisfy the query.")
+	_ = cmd.MarkFlagRequired("excludedtags")
 	cmd.Flags().StringVar(&flagRequiredKvTags, "required-kv-tags", "", "Required key-value tags to match on.")
 	_ = cmd.MarkFlagRequired("required-kv-tags")
-	cmd.Flags().IntVar(&flagFiletype, "filetype", 0, "File type to match files to.")
+	cmd.Flags().IntVar(&flagFiletype, "filetype", 0, "(Optional) File type to match files to.")
+	_ = cmd.MarkFlagRequired("filetype")
 	cmd.Flags().StringVar(&flagCreatorAppid, "creator-appid", "", "App Id of the app that published the files, only matched if specified.")
 	_ = cmd.MarkFlagRequired("creator-appid")
 	cmd.Flags().StringVar(&flagMatchCloudFilename, "match-cloud-filename", "", "Match this cloud filename if specified.")
 	_ = cmd.MarkFlagRequired("match-cloud-filename")
 	cmd.Flags().IntVar(&flagCacheMaxAgeSeconds, "cache-max-age-seconds", 0, "Allow stale data to be returned for the specified number of seconds.")
-	cmd.Flags().StringVar(&flagLanguage, "language", "", "Specifies the localized text to return. Defaults to English.")
-	cmd.Flags().StringVar(&flagTaggroups, "taggroups", "", "At least one of the tags must be present on a published file to satisfy the query.")
-	cmd.Flags().StringVar(&flagExcludedContentDescriptors, "excluded-content-descriptors", "", "Filter out items that have these content descriptors.")
+	cmd.Flags().IntVar(&flagLanguage, "language", 0, "Specifies the localized text to return. Defaults to English.")
+	cmd.Flags().StringVar(&flagTaggroups, "taggroups", "", "(Optional) At least one of the tags must be present on a published file to satisfy the query.")
+	_ = cmd.MarkFlagRequired("taggroups")
+	cmd.Flags().StringVar(&flagExcludedContentDescriptors, "excluded-content-descriptors", "", "(Optional) Filter out items that have these content descriptors.")
+	_ = cmd.MarkFlagRequired("excluded-content-descriptors")
 	cmd.Flags().BoolVar(&flagAdminQuery, "admin-query", false, "Admin tool is doing a query, return hidden items")
 	_ = cmd.MarkFlagRequired("admin-query")
-	cmd.Flags().BoolVar(&flagTotalonly, "totalonly", false, "If true, only return the total number of files that satisfy this query.")
-	cmd.Flags().BoolVar(&flagIdsOnly, "ids-only", false, "If true, only return the published file ids of files that satisfy this query.")
+	cmd.Flags().BoolVar(&flagTotalonly, "totalonly", false, "(Optional) If true, only return the total number of files that satisfy this query.")
+	_ = cmd.MarkFlagRequired("totalonly")
+	cmd.Flags().BoolVar(&flagIdsOnly, "ids-only", false, "(Optional) If true, only return the published file ids of files that satisfy this query.")
+	_ = cmd.MarkFlagRequired("ids-only")
 	cmd.Flags().BoolVar(&flagReturnVoteData, "return-vote-data", false, "Return vote data")
 	cmd.Flags().BoolVar(&flagReturnTags, "return-tags", false, "Return tags in the file details")
 	_ = cmd.MarkFlagRequired("return-tags")

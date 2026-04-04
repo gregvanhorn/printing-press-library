@@ -13,18 +13,18 @@ import (
 )
 
 func newIgameNotificationsServiceUserCreateSessionCmd(flags *rootFlags) *cobra.Command {
-	var flagAppid string
-	var flagContext int
-	var flagTitle string
-	var flagUsers string
-	var flagSteamid string
+	var bodyAppid int
+	var bodyContext int
+	var bodySteamid int
+	var bodyTitle string
+	var bodyUsers string
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "user-create-session",
 		Aliases: []string{"create"},
-		Short: "Creates an async game session",
-		Example: "  steam-web-pp-cli igame-notifications-service user-create-session",
+		Short: "UserCreateSession operation of IGameNotificationsService",
+		Example: "  steam-web-pp-cli igame-notifications-service user-create-session --title example-resource",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -45,6 +45,21 @@ func newIgameNotificationsServiceUserCreateSessionCmd(flags *rootFlags) *cobra.C
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyAppid != 0 {
+					body["appid"] = bodyAppid
+				}
+				if bodyContext != 0 {
+					body["context"] = bodyContext
+				}
+				if bodySteamid != 0 {
+					body["steamid"] = bodySteamid
+				}
+				if bodyTitle != "" {
+					body["title"] = bodyTitle
+				}
+				if bodyUsers != "" {
+					body["users"] = bodyUsers
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -109,15 +124,16 @@ func newIgameNotificationsServiceUserCreateSessionCmd(flags *rootFlags) *cobra.C
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagAppid, "appid", "", "The appid to create the session for.")
+	cmd.Flags().IntVar(&bodyAppid, "appid", 0, "The appid to create the session for.")
 	_ = cmd.MarkFlagRequired("appid")
-	cmd.Flags().IntVar(&flagContext, "context", 0, "Game-specified context value the game can used to associate the session with some object on their backend.")
+	cmd.Flags().IntVar(&bodyContext, "context", 0, "Game-specified context value the game can used to associate the session with some object on their backend.")
 	_ = cmd.MarkFlagRequired("context")
-	cmd.Flags().StringVar(&flagTitle, "title", "", "The title of the session to be displayed within each user's list of sessions.")
+	cmd.Flags().IntVar(&bodySteamid, "steamid", 0, "(Optional) steamid to make the request on behalf of -- if specified, the user must be in the session and all users...")
+	_ = cmd.MarkFlagRequired("steamid")
+	cmd.Flags().StringVar(&bodyTitle, "title", "", "The title of the session to be displayed within each user's list of sessions.")
 	_ = cmd.MarkFlagRequired("title")
-	cmd.Flags().StringVar(&flagUsers, "users", "", "The initial state of all users in the session.")
+	cmd.Flags().StringVar(&bodyUsers, "users", "", "The initial state of all users in the session.")
 	_ = cmd.MarkFlagRequired("users")
-	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "steamid to make the request on behalf of -- if specified, the user must be in the session and all users being added...")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

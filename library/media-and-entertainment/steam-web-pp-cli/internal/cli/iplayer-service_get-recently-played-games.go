@@ -18,7 +18,7 @@ func newIplayerServiceGetRecentlyPlayedGamesCmd(flags *rootFlags) *cobra.Command
 
 	cmd := &cobra.Command{
 		Use:   "get-recently-played-games",
-		Short: "Gets information about a player's recently played games",
+		Short: "GetRecentlyPlayedGames operation of IPlayerService",
 		Example: "  steam-web-pp-cli iplayer-service get-recently-played-games",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()

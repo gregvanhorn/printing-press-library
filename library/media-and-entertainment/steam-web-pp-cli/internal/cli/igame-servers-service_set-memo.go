@@ -13,15 +13,15 @@ import (
 )
 
 func newIgameServersServiceSetMemoCmd(flags *rootFlags) *cobra.Command {
-	var flagKey string
-	var flagSteamid string
-	var flagMemo string
+	var bodyKey string
+	var bodyMemo string
+	var bodySteamid int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "set-memo",
-		Short: "This method changes the memo associated with the game server account. Memos do not affect the account in any way....",
-		Example: "  steam-web-pp-cli igame-servers-service set-memo",
+		Short: "SetMemo operation of IGameServersService",
+		Example: "  steam-web-pp-cli igame-servers-service set-memo --key your-token-here",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -42,6 +42,15 @@ func newIgameServersServiceSetMemoCmd(flags *rootFlags) *cobra.Command {
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyKey != "" {
+					body["key"] = bodyKey
+				}
+				if bodyMemo != "" {
+					body["memo"] = bodyMemo
+				}
+				if bodySteamid != 0 {
+					body["steamid"] = bodySteamid
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -106,11 +115,11 @@ func newIgameServersServiceSetMemoCmd(flags *rootFlags) *cobra.Command {
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "The SteamID of the game server to set the memo on")
-	_ = cmd.MarkFlagRequired("steamid")
-	cmd.Flags().StringVar(&flagMemo, "memo", "", "The memo to set on the new account")
+	cmd.Flags().StringVar(&bodyKey, "key", "", "Access key")
+	cmd.Flags().StringVar(&bodyMemo, "memo", "", "The memo to set on the new account")
 	_ = cmd.MarkFlagRequired("memo")
+	cmd.Flags().IntVar(&bodySteamid, "steamid", 0, "The SteamID of the game server to set the memo on")
+	_ = cmd.MarkFlagRequired("steamid")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

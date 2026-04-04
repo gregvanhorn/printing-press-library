@@ -13,15 +13,15 @@ import (
 )
 
 func newIauthenticationServicePollAuthSessionStatusCmd(flags *rootFlags) *cobra.Command {
-	var flagClientId string
-	var flagRequestId string
-	var flagTokenToRevoke int
+	var bodyClientId int
+	var bodyRequestId string
+	var bodyTokenToRevoke int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "poll-auth-session-status",
-		Short: "poll during authentication process",
-		Example: "  steam-web-pp-cli iauthentication-service poll-auth-session-status",
+		Short: "PollAuthSessionStatus operation of IAuthenticationService",
+		Example: "  steam-web-pp-cli iauthentication-service poll-auth-session-status --request-id 550e8400-e29b-41d4-a716-446655440000",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -42,6 +42,15 @@ func newIauthenticationServicePollAuthSessionStatusCmd(flags *rootFlags) *cobra.
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyClientId != 0 {
+					body["client_id"] = bodyClientId
+				}
+				if bodyRequestId != "" {
+					body["request_id"] = bodyRequestId
+				}
+				if bodyTokenToRevoke != 0 {
+					body["token_to_revoke"] = bodyTokenToRevoke
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -106,11 +115,11 @@ func newIauthenticationServicePollAuthSessionStatusCmd(flags *rootFlags) *cobra.
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagClientId, "client-id", "", "Client id")
+	cmd.Flags().IntVar(&bodyClientId, "client-id", 0, "Client id")
 	_ = cmd.MarkFlagRequired("client-id")
-	cmd.Flags().StringVar(&flagRequestId, "request-id", "", "Request id")
+	cmd.Flags().StringVar(&bodyRequestId, "request-id", "", "Request id")
 	_ = cmd.MarkFlagRequired("request-id")
-	cmd.Flags().IntVar(&flagTokenToRevoke, "token-to-revoke", 0, "If this is set to a token owned by this user, that token will be retired")
+	cmd.Flags().IntVar(&bodyTokenToRevoke, "token-to-revoke", 0, "If this is set to a token owned by this user, that token will be retired")
 	_ = cmd.MarkFlagRequired("token-to-revoke")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 

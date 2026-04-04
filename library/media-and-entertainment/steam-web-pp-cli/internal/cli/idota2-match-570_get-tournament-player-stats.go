@@ -17,7 +17,6 @@ func newIdota2Match570GetTournamentPlayerStatsCmd(flags *rootFlags) *cobra.Comma
 	var flagHeroId string
 	var flagTimeFrame string
 	var flagMatchId string
-	var flagPhaseId string
 
 	cmd := &cobra.Command{
 		Use:   "get-tournament-player-stats",
@@ -29,7 +28,7 @@ func newIdota2Match570GetTournamentPlayerStatsCmd(flags *rootFlags) *cobra.Comma
 				return err
 			}
 
-			path := "/IDOTA2Match_570/GetTournamentPlayerStats/v2"
+			path := "/IDOTA2Match_570/GetTournamentPlayerStats/v1"
 			params := map[string]string{}
 			if flagAccountId != "" {
 				params["account_id"] = fmt.Sprintf("%v", flagAccountId)
@@ -45,9 +44,6 @@ func newIdota2Match570GetTournamentPlayerStatsCmd(flags *rootFlags) *cobra.Comma
 			}
 			if flagMatchId != "" {
 				params["match_id"] = fmt.Sprintf("%v", flagMatchId)
-			}
-			if flagPhaseId != "" {
-				params["phase_id"] = fmt.Sprintf("%v", flagPhaseId)
 			}
 			data, prov, err := resolveRead(c, flags, "idota2-match-570", false, path, params)
 			if err != nil {
@@ -96,7 +92,6 @@ func newIdota2Match570GetTournamentPlayerStatsCmd(flags *rootFlags) *cobra.Comma
 	cmd.Flags().StringVar(&flagHeroId, "hero-id", "", "Hero id")
 	cmd.Flags().StringVar(&flagTimeFrame, "time-frame", "", "Time frame")
 	cmd.Flags().StringVar(&flagMatchId, "match-id", "", "Match id")
-	cmd.Flags().StringVar(&flagPhaseId, "phase-id", "", "Phase id")
 
 	return cmd
 }

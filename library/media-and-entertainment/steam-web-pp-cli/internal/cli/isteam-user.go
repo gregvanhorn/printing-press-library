@@ -16,6 +16,7 @@ func newIsteamUserCmd(flags *rootFlags) *cobra.Command {
 	cmd.AddCommand(newIsteamUserGetFriendListCmd(flags))
 	cmd.AddCommand(newIsteamUserGetPlayerBansCmd(flags))
 	cmd.AddCommand(newIsteamUserGetPlayerSummariesCmd(flags))
+	cmd.AddCommand(newIsteamUserGetPlayerSummariesIsteamuserCmd(flags))
 	cmd.AddCommand(newIsteamUserGetUserGroupListCmd(flags))
 	cmd.AddCommand(newIsteamUserResolveVanityUrlCmd(flags))
 	return cmd

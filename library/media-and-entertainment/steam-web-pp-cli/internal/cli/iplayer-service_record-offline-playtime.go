@@ -13,16 +13,16 @@ import (
 )
 
 func newIplayerServiceRecordOfflinePlaytimeCmd(flags *rootFlags) *cobra.Command {
-	var flagSteamid string
-	var flagTicket string
-	var flagPlaySessions string
+	var bodyPlaySessions string
+	var bodySteamid int
+	var bodyTicket string
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "record-offline-playtime",
 		Aliases: []string{"create"},
-		Short: "Tracks playtime for a user when they are offline",
-		Example: "  steam-web-pp-cli iplayer-service record-offline-playtime",
+		Short: "RecordOfflinePlaytime operation of IPlayerService",
+		Example: "  steam-web-pp-cli iplayer-service record-offline-playtime --play-sessions example-value",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -43,6 +43,15 @@ func newIplayerServiceRecordOfflinePlaytimeCmd(flags *rootFlags) *cobra.Command 
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyPlaySessions != "" {
+					body["play_sessions"] = bodyPlaySessions
+				}
+				if bodySteamid != 0 {
+					body["steamid"] = bodySteamid
+				}
+				if bodyTicket != "" {
+					body["ticket"] = bodyTicket
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -107,12 +116,12 @@ func newIplayerServiceRecordOfflinePlaytimeCmd(flags *rootFlags) *cobra.Command 
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "Steamid")
-	_ = cmd.MarkFlagRequired("steamid")
-	cmd.Flags().StringVar(&flagTicket, "ticket", "", "Ticket")
-	_ = cmd.MarkFlagRequired("ticket")
-	cmd.Flags().StringVar(&flagPlaySessions, "play-sessions", "", "Play sessions")
+	cmd.Flags().StringVar(&bodyPlaySessions, "play-sessions", "", "Play sessions")
 	_ = cmd.MarkFlagRequired("play-sessions")
+	cmd.Flags().IntVar(&bodySteamid, "steamid", 0, "Steamid")
+	_ = cmd.MarkFlagRequired("steamid")
+	cmd.Flags().StringVar(&bodyTicket, "ticket", "", "Ticket")
+	_ = cmd.MarkFlagRequired("ticket")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

@@ -14,7 +14,7 @@ import (
 func newIsteamUserStatsGetGlobalStatsForGameCmd(flags *rootFlags) *cobra.Command {
 	var flagAppid string
 	var flagCount int
-	var flagName string
+	var flagName0 string
 	var flagStartdate int
 	var flagEnddate int
 
@@ -36,8 +36,8 @@ func newIsteamUserStatsGetGlobalStatsForGameCmd(flags *rootFlags) *cobra.Command
 			if flagCount != 0 {
 				params["count"] = fmt.Sprintf("%v", flagCount)
 			}
-			if flagName != "" {
-				params["name"] = fmt.Sprintf("%v", flagName)
+			if flagName0 != "" {
+				params["name[0]"] = fmt.Sprintf("%v", flagName0)
 			}
 			if flagStartdate != 0 {
 				params["startdate"] = fmt.Sprintf("%v", flagStartdate)
@@ -90,8 +90,8 @@ func newIsteamUserStatsGetGlobalStatsForGameCmd(flags *rootFlags) *cobra.Command
 	_ = cmd.MarkFlagRequired("appid")
 	cmd.Flags().IntVar(&flagCount, "count", 0, "Number of stats get data for")
 	_ = cmd.MarkFlagRequired("count")
-	cmd.Flags().StringVar(&flagName, "name", "", "Names of stat to get data for")
-	_ = cmd.MarkFlagRequired("name")
+	cmd.Flags().StringVar(&flagName0, "name-0", "", "Names of stat to get data for")
+	_ = cmd.MarkFlagRequired("name-0")
 	cmd.Flags().IntVar(&flagStartdate, "startdate", 0, "Start date for daily totals (unix epoch timestamp)")
 	cmd.Flags().IntVar(&flagEnddate, "enddate", 0, "End date for daily totals (unix epoch timestamp)")
 

@@ -13,16 +13,16 @@ import (
 )
 
 func newIauthenticationServiceUpdateAuthSessionWithSteamGuardCodeCmd(flags *rootFlags) *cobra.Command {
-	var flagClientId string
-	var flagSteamid string
-	var flagCode string
-	var flagCodeType string
+	var bodyClientId int
+	var bodyCode string
+	var bodyCodeType string
+	var bodySteamid int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "update-auth-session-with-steam-guard-code",
-		Short: "approve an authentication session via steam guard code",
-		Example: "  steam-web-pp-cli iauthentication-service update-auth-session-with-steam-guard-code",
+		Short: "UpdateAuthSessionWithSteamGuardCode operation of IAuthenticationService",
+		Example: "  steam-web-pp-cli iauthentication-service update-auth-session-with-steam-guard-code --code example-value",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -43,6 +43,18 @@ func newIauthenticationServiceUpdateAuthSessionWithSteamGuardCodeCmd(flags *root
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyClientId != 0 {
+					body["client_id"] = bodyClientId
+				}
+				if bodyCode != "" {
+					body["code"] = bodyCode
+				}
+				if bodyCodeType != "" {
+					body["code_type"] = bodyCodeType
+				}
+				if bodySteamid != 0 {
+					body["steamid"] = bodySteamid
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -107,14 +119,14 @@ func newIauthenticationServiceUpdateAuthSessionWithSteamGuardCodeCmd(flags *root
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagClientId, "client-id", "", "pending client ID, from initialized session")
+	cmd.Flags().IntVar(&bodyClientId, "client-id", 0, "pending client ID, from initialized session")
 	_ = cmd.MarkFlagRequired("client-id")
-	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "user who wants to login")
-	_ = cmd.MarkFlagRequired("steamid")
-	cmd.Flags().StringVar(&flagCode, "code", "", "confirmation code")
+	cmd.Flags().StringVar(&bodyCode, "code", "", "confirmation code")
 	_ = cmd.MarkFlagRequired("code")
-	cmd.Flags().StringVar(&flagCodeType, "code-type", "", "type of confirmation code")
+	cmd.Flags().StringVar(&bodyCodeType, "code-type", "", "type of confirmation code")
 	_ = cmd.MarkFlagRequired("code-type")
+	cmd.Flags().IntVar(&bodySteamid, "steamid", 0, "user who wants to login")
+	_ = cmd.MarkFlagRequired("steamid")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

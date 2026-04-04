@@ -5,6 +5,7 @@ package cli
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/mvanhorn/printing-press-library/library/media-and-entertainment/steam-web-pp-cli/internal/config"
 	"github.com/spf13/cobra"
@@ -40,6 +41,7 @@ func newAuthStatusCmd(flags *rootFlags) *cobra.Command {
 				fmt.Fprintln(w, red("Not authenticated"))
 				fmt.Fprintln(w, "")
 				fmt.Fprintln(w, "Set your token:")
+				fmt.Fprintln(w, "  export STEAM_WEB_API_KEY=\"your-token-here\"")
 				fmt.Fprintf(w, "  steam-web-pp-cli auth set-token <token>\n")
 				return authErr(fmt.Errorf("no credentials configured"))
 			}
@@ -91,6 +93,10 @@ func newAuthLogoutCmd(flags *rootFlags) *cobra.Command {
 			}
 
 			// Warn if env vars still set
+			if os.Getenv("STEAM_WEB_API_KEY") != "" {
+				fmt.Fprintf(cmd.OutOrStdout(), "Config cleared. Note: STEAM_WEB_API_KEY env var is still set.\n")
+				return nil
+			}
 			fmt.Fprintln(cmd.OutOrStdout(), "Logged out. Credentials cleared.")
 			return nil
 		},

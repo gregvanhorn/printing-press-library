@@ -24,7 +24,7 @@ func newItfitems440GetGoldenWrenchesCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 
-			path := "/ITFItems_440/GetGoldenWrenches/v2"
+			path := "/ITFItems_440/GetGoldenWrenches/v1"
 			params := map[string]string{}
 			data, prov, err := resolveRead(c, flags, "itfitems-440", false, path, params)
 			if err != nil {

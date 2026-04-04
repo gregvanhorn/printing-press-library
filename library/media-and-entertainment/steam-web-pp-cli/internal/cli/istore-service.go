@@ -14,5 +14,8 @@ func newIstoreServiceCmd(flags *rootFlags) *cobra.Command {
 	}
 
 	cmd.AddCommand(newIstoreServiceGetAppListCmd(flags))
+	cmd.AddCommand(newIstoreServiceGetGamesFollowedCmd(flags))
+	cmd.AddCommand(newIstoreServiceGetGamesFollowedCountCmd(flags))
+	cmd.AddCommand(newIstoreServiceGetRecommendedTagsForUserCmd(flags))
 	return cmd
 }

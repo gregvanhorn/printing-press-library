@@ -14,5 +14,6 @@ func newItfitems440Cmd(flags *rootFlags) *cobra.Command {
 	}
 
 	cmd.AddCommand(newItfitems440GetGoldenWrenchesCmd(flags))
+	cmd.AddCommand(newItfitems440GetGoldenWrenchesItfitems440Cmd(flags))
 	return cmd
 }

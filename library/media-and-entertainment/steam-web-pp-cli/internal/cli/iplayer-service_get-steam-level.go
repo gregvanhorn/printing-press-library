@@ -17,7 +17,7 @@ func newIplayerServiceGetSteamLevelCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "get-steam-level",
-		Short: "Returns the Steam Level of a user",
+		Short: "GetSteamLevel operation of IPlayerService",
 		Example: "  steam-web-pp-cli iplayer-service get-steam-level",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()

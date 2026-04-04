@@ -13,14 +13,14 @@ import (
 )
 
 func newIgameServersServiceDeleteAccountCmd(flags *rootFlags) *cobra.Command {
-	var flagKey string
-	var flagSteamid string
+	var bodyKey string
+	var bodySteamid int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "delete-account",
-		Short: "Deletes a persistent game server account",
-		Example: "  steam-web-pp-cli igame-servers-service delete-account",
+		Short: "DeleteAccount operation of IGameServersService",
+		Example: "  steam-web-pp-cli igame-servers-service delete-account --key your-token-here",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -41,6 +41,12 @@ func newIgameServersServiceDeleteAccountCmd(flags *rootFlags) *cobra.Command {
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyKey != "" {
+					body["key"] = bodyKey
+				}
+				if bodySteamid != 0 {
+					body["steamid"] = bodySteamid
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -105,8 +111,8 @@ func newIgameServersServiceDeleteAccountCmd(flags *rootFlags) *cobra.Command {
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "The SteamID of the game server account to delete")
+	cmd.Flags().StringVar(&bodyKey, "key", "", "Access key")
+	cmd.Flags().IntVar(&bodySteamid, "steamid", 0, "The SteamID of the game server account to delete")
 	_ = cmd.MarkFlagRequired("steamid")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 

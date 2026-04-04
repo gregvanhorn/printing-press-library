@@ -13,25 +13,25 @@ import (
 )
 
 func newIauthenticationServiceBeginAuthSessionViaCredentialsCmd(flags *rootFlags) *cobra.Command {
-	var flagDeviceFriendlyName string
-	var flagAccountName string
-	var flagEncryptedPassword string
-	var flagEncryptionTimestamp int
-	var flagRememberLogin bool
-	var flagPlatformType string
-	var flagPersistence string
-	var flagWebsiteId string
-	var flagDeviceDetails string
-	var flagGuardData string
-	var flagLanguage int
-	var flagQosLevel int
+	var bodyAccountName string
+	var bodyDeviceDetails string
+	var bodyDeviceFriendlyName string
+	var bodyEncryptedPassword string
+	var bodyEncryptionTimestamp int
+	var bodyGuardData string
+	var bodyLanguage int
+	var bodyPersistence string
+	var bodyPlatformType string
+	var bodyQosLevel int
+	var bodyRememberLogin bool
+	var bodyWebsiteId string
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "begin-auth-session-via-credentials",
 		Aliases: []string{"create"},
-		Short: "start authentication process",
-		Example: "  steam-web-pp-cli iauthentication-service begin-auth-session-via-credentials",
+		Short: "BeginAuthSessionViaCredentials operation of IAuthenticationService",
+		Example: "  steam-web-pp-cli iauthentication-service begin-auth-session-via-credentials --account-name example-resource",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -52,6 +52,42 @@ func newIauthenticationServiceBeginAuthSessionViaCredentialsCmd(flags *rootFlags
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyAccountName != "" {
+					body["account_name"] = bodyAccountName
+				}
+				if bodyDeviceDetails != "" {
+					body["device_details"] = bodyDeviceDetails
+				}
+				if bodyDeviceFriendlyName != "" {
+					body["device_friendly_name"] = bodyDeviceFriendlyName
+				}
+				if bodyEncryptedPassword != "" {
+					body["encrypted_password"] = bodyEncryptedPassword
+				}
+				if bodyEncryptionTimestamp != 0 {
+					body["encryption_timestamp"] = bodyEncryptionTimestamp
+				}
+				if bodyGuardData != "" {
+					body["guard_data"] = bodyGuardData
+				}
+				if bodyLanguage != 0 {
+					body["language"] = bodyLanguage
+				}
+				if bodyPersistence != "" {
+					body["persistence"] = bodyPersistence
+				}
+				if bodyPlatformType != "" {
+					body["platform_type"] = bodyPlatformType
+				}
+				if bodyQosLevel != 0 {
+					body["qos_level"] = bodyQosLevel
+				}
+				if bodyRememberLogin != false {
+					body["remember_login"] = bodyRememberLogin
+				}
+				if bodyWebsiteId != "" {
+					body["website_id"] = bodyWebsiteId
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -116,27 +152,27 @@ func newIauthenticationServiceBeginAuthSessionViaCredentialsCmd(flags *rootFlags
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagDeviceFriendlyName, "device-friendly-name", "", "Device friendly name")
-	_ = cmd.MarkFlagRequired("device-friendly-name")
-	cmd.Flags().StringVar(&flagAccountName, "account-name", "", "Account name")
+	cmd.Flags().StringVar(&bodyAccountName, "account-name", "", "Account name")
 	_ = cmd.MarkFlagRequired("account-name")
-	cmd.Flags().StringVar(&flagEncryptedPassword, "encrypted-password", "", "password, RSA encrypted client side")
-	_ = cmd.MarkFlagRequired("encrypted-password")
-	cmd.Flags().IntVar(&flagEncryptionTimestamp, "encryption-timestamp", 0, "timestamp to map to a key - STime")
-	_ = cmd.MarkFlagRequired("encryption-timestamp")
-	cmd.Flags().BoolVar(&flagRememberLogin, "remember-login", false, "deprecated")
-	_ = cmd.MarkFlagRequired("remember-login")
-	cmd.Flags().StringVar(&flagPlatformType, "platform-type", "", "Platform type")
-	_ = cmd.MarkFlagRequired("platform-type")
-	cmd.Flags().StringVar(&flagPersistence, "persistence", "", "whether we are requesting a persistent or an ephemeral session")
-	cmd.Flags().StringVar(&flagWebsiteId, "website-id", "", "(EMachineAuthWebDomain) identifier of client requesting auth")
-	cmd.Flags().StringVar(&flagDeviceDetails, "device-details", "", "User-supplied details about the device attempting to sign in")
+	cmd.Flags().StringVar(&bodyDeviceDetails, "device-details", "", "User-supplied details about the device attempting to sign in")
 	_ = cmd.MarkFlagRequired("device-details")
-	cmd.Flags().StringVar(&flagGuardData, "guard-data", "", "steam guard data for client login")
+	cmd.Flags().StringVar(&bodyDeviceFriendlyName, "device-friendly-name", "", "Device friendly name")
+	_ = cmd.MarkFlagRequired("device-friendly-name")
+	cmd.Flags().StringVar(&bodyEncryptedPassword, "encrypted-password", "", "password, RSA encrypted client side")
+	_ = cmd.MarkFlagRequired("encrypted-password")
+	cmd.Flags().IntVar(&bodyEncryptionTimestamp, "encryption-timestamp", 0, "timestamp to map to a key - STime")
+	_ = cmd.MarkFlagRequired("encryption-timestamp")
+	cmd.Flags().StringVar(&bodyGuardData, "guard-data", "", "steam guard data for client login")
 	_ = cmd.MarkFlagRequired("guard-data")
-	cmd.Flags().IntVar(&flagLanguage, "language", 0, "Language")
+	cmd.Flags().IntVar(&bodyLanguage, "language", 0, "Language")
 	_ = cmd.MarkFlagRequired("language")
-	cmd.Flags().IntVar(&flagQosLevel, "qos-level", 0, "[ENetQOSLevel] client-specified priority for this auth attempt")
+	cmd.Flags().StringVar(&bodyPersistence, "persistence", "", "whether we are requesting a persistent or an ephemeral session")
+	cmd.Flags().StringVar(&bodyPlatformType, "platform-type", "", "Platform type")
+	_ = cmd.MarkFlagRequired("platform-type")
+	cmd.Flags().IntVar(&bodyQosLevel, "qos-level", 0, "[ENetQOSLevel] client-specified priority for this auth attempt")
+	cmd.Flags().BoolVar(&bodyRememberLogin, "remember-login", false, "deprecated")
+	_ = cmd.MarkFlagRequired("remember-login")
+	cmd.Flags().StringVar(&bodyWebsiteId, "website-id", "", "(EMachineAuthWebDomain) identifier of client requesting auth")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

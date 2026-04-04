@@ -22,5 +22,6 @@ func newIdota2Match570Cmd(flags *rootFlags) *cobra.Command {
 	cmd.AddCommand(newIdota2Match570GetTopLiveGameCmd(flags))
 	cmd.AddCommand(newIdota2Match570GetTopWeekendTourneyGamesCmd(flags))
 	cmd.AddCommand(newIdota2Match570GetTournamentPlayerStatsCmd(flags))
+	cmd.AddCommand(newIdota2Match570GetTournamentPlayerStatsIdota2match570Cmd(flags))
 	return cmd
 }

@@ -13,17 +13,17 @@ import (
 )
 
 func newIhelpRequestLogsServiceUploadUserApplicationLogCmd(flags *rootFlags) *cobra.Command {
-	var flagAppid string
-	var flagLogType string
-	var flagVersionString string
-	var flagLogContents string
-	var flagRequestId string
+	var bodyAppid int
+	var bodyLogContents string
+	var bodyLogType string
+	var bodyRequestId int
+	var bodyVersionString string
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "upload-user-application-log",
-		Short: "User uploading application logs",
-		Example: "  steam-web-pp-cli ihelp-request-logs-service upload-user-application-log",
+		Short: "UploadUserApplicationLog operation of IHelpRequestLogsService",
+		Example: "  steam-web-pp-cli ihelp-request-logs-service upload-user-application-log --log-contents example-value",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -44,6 +44,21 @@ func newIhelpRequestLogsServiceUploadUserApplicationLogCmd(flags *rootFlags) *co
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyAppid != 0 {
+					body["appid"] = bodyAppid
+				}
+				if bodyLogContents != "" {
+					body["log_contents"] = bodyLogContents
+				}
+				if bodyLogType != "" {
+					body["log_type"] = bodyLogType
+				}
+				if bodyRequestId != 0 {
+					body["request_id"] = bodyRequestId
+				}
+				if bodyVersionString != "" {
+					body["version_string"] = bodyVersionString
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -108,16 +123,16 @@ func newIhelpRequestLogsServiceUploadUserApplicationLogCmd(flags *rootFlags) *co
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagAppid, "appid", "", "Appid")
+	cmd.Flags().IntVar(&bodyAppid, "appid", 0, "Appid")
 	_ = cmd.MarkFlagRequired("appid")
-	cmd.Flags().StringVar(&flagLogType, "log-type", "", "Log type")
-	_ = cmd.MarkFlagRequired("log-type")
-	cmd.Flags().StringVar(&flagVersionString, "version-string", "", "Version string")
-	_ = cmd.MarkFlagRequired("version-string")
-	cmd.Flags().StringVar(&flagLogContents, "log-contents", "", "Log contents")
+	cmd.Flags().StringVar(&bodyLogContents, "log-contents", "", "Log contents")
 	_ = cmd.MarkFlagRequired("log-contents")
-	cmd.Flags().StringVar(&flagRequestId, "request-id", "", "Request id")
+	cmd.Flags().StringVar(&bodyLogType, "log-type", "", "Log type")
+	_ = cmd.MarkFlagRequired("log-type")
+	cmd.Flags().IntVar(&bodyRequestId, "request-id", 0, "Request id")
 	_ = cmd.MarkFlagRequired("request-id")
+	cmd.Flags().StringVar(&bodyVersionString, "version-string", "", "Version string")
+	_ = cmd.MarkFlagRequired("version-string")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

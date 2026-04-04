@@ -18,7 +18,7 @@ func newIplayerServiceIsPlayingSharedGameCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "is-playing-shared-game",
-		Short: "Obsolete, partners should use ISteamUser.CheckAppOwnership",
+		Short: "IsPlayingSharedGame operation of IPlayerService",
 		Example: "  steam-web-pp-cli iplayer-service is-playing-shared-game",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()

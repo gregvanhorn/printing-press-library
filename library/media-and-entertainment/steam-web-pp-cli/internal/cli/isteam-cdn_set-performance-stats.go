@@ -13,18 +13,18 @@ import (
 )
 
 func newIsteamCdnSetPerformanceStatsCmd(flags *rootFlags) *cobra.Command {
-	var flagKey string
-	var flagCdnname string
-	var flagMbpsSent int
-	var flagMbpsRecv int
-	var flagCpuPercent int
-	var flagCacheHitPercent int
+	var bodyCacheHitPercent int
+	var bodyCdnname string
+	var bodyCpuPercent int
+	var bodyKey string
+	var bodyMbpsRecv int
+	var bodyMbpsSent int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "set-performance-stats",
 		Short: "SetPerformanceStats operation of ISteamCDN",
-		Example: "  steam-web-pp-cli isteam-cdn set-performance-stats",
+		Example: "  steam-web-pp-cli isteam-cdn set-performance-stats --cdnname example-resource",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -45,6 +45,24 @@ func newIsteamCdnSetPerformanceStatsCmd(flags *rootFlags) *cobra.Command {
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyCacheHitPercent != 0 {
+					body["cache_hit_percent"] = bodyCacheHitPercent
+				}
+				if bodyCdnname != "" {
+					body["cdnname"] = bodyCdnname
+				}
+				if bodyCpuPercent != 0 {
+					body["cpu_percent"] = bodyCpuPercent
+				}
+				if bodyKey != "" {
+					body["key"] = bodyKey
+				}
+				if bodyMbpsRecv != 0 {
+					body["mbps_recv"] = bodyMbpsRecv
+				}
+				if bodyMbpsSent != 0 {
+					body["mbps_sent"] = bodyMbpsSent
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -109,13 +127,13 @@ func newIsteamCdnSetPerformanceStatsCmd(flags *rootFlags) *cobra.Command {
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagKey, "key", "", "access key")
-	cmd.Flags().StringVar(&flagCdnname, "cdnname", "", "Steam name of CDN property")
+	cmd.Flags().IntVar(&bodyCacheHitPercent, "cache-hit-percent", 0, "Percent cache hits")
+	cmd.Flags().StringVar(&bodyCdnname, "cdnname", "", "Steam name of CDN property")
 	_ = cmd.MarkFlagRequired("cdnname")
-	cmd.Flags().IntVar(&flagMbpsSent, "mbps-sent", 0, "Outgoing network traffic in Mbps")
-	cmd.Flags().IntVar(&flagMbpsRecv, "mbps-recv", 0, "Incoming network traffic in Mbps")
-	cmd.Flags().IntVar(&flagCpuPercent, "cpu-percent", 0, "Percent CPU load")
-	cmd.Flags().IntVar(&flagCacheHitPercent, "cache-hit-percent", 0, "Percent cache hits")
+	cmd.Flags().IntVar(&bodyCpuPercent, "cpu-percent", 0, "Percent CPU load")
+	cmd.Flags().StringVar(&bodyKey, "key", "", "access key")
+	cmd.Flags().IntVar(&bodyMbpsRecv, "mbps-recv", 0, "Incoming network traffic in Mbps")
+	cmd.Flags().IntVar(&bodyMbpsSent, "mbps-sent", 0, "Outgoing network traffic in Mbps")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

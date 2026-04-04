@@ -13,13 +13,13 @@ import (
 )
 
 func newIauthenticationServiceGetAuthSessionRiskInfoCmd(flags *rootFlags) *cobra.Command {
-	var flagClientId string
-	var flagLanguage int
+	var bodyClientId int
+	var bodyLanguage int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "get-auth-session-risk-info",
-		Short: "get risk metadata for a specific auth session that has been deemed risky",
+		Short: "GetAuthSessionRiskInfo operation of IAuthenticationService",
 		Example: "  steam-web-pp-cli iauthentication-service get-auth-session-risk-info",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -41,6 +41,12 @@ func newIauthenticationServiceGetAuthSessionRiskInfoCmd(flags *rootFlags) *cobra
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyClientId != 0 {
+					body["client_id"] = bodyClientId
+				}
+				if bodyLanguage != 0 {
+					body["language"] = bodyLanguage
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -105,9 +111,9 @@ func newIauthenticationServiceGetAuthSessionRiskInfoCmd(flags *rootFlags) *cobra
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagClientId, "client-id", "", "client ID from scanned QR Code, used for routing")
+	cmd.Flags().IntVar(&bodyClientId, "client-id", 0, "client ID from scanned QR Code, used for routing")
 	_ = cmd.MarkFlagRequired("client-id")
-	cmd.Flags().IntVar(&flagLanguage, "language", 0, "language for optimistic localization of geoloc data")
+	cmd.Flags().IntVar(&bodyLanguage, "language", 0, "language for optimistic localization of geoloc data")
 	_ = cmd.MarkFlagRequired("language")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 

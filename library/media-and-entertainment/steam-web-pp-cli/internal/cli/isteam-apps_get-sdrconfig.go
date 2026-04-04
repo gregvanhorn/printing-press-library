@@ -16,6 +16,7 @@ func newIsteamAppsGetSdrconfigCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "get-sdrconfig",
+		Aliases: []string{"list"},
 		Short: "GetSDRConfig operation of ISteamApps",
 		Example: "  steam-web-pp-cli isteam-apps get-sdrconfig",
 		RunE: func(cmd *cobra.Command, args []string) error {

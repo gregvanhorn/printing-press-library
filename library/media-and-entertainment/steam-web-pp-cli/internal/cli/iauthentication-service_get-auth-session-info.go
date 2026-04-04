@@ -13,12 +13,12 @@ import (
 )
 
 func newIauthenticationServiceGetAuthSessionInfoCmd(flags *rootFlags) *cobra.Command {
-	var flagClientId string
+	var bodyClientId int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "get-auth-session-info",
-		Short: "get metadata of specific auth session, this will also implicitly bind the calling account",
+		Short: "GetAuthSessionInfo operation of IAuthenticationService",
 		Example: "  steam-web-pp-cli iauthentication-service get-auth-session-info",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -40,6 +40,9 @@ func newIauthenticationServiceGetAuthSessionInfoCmd(flags *rootFlags) *cobra.Com
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyClientId != 0 {
+					body["client_id"] = bodyClientId
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -104,7 +107,7 @@ func newIauthenticationServiceGetAuthSessionInfoCmd(flags *rootFlags) *cobra.Com
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagClientId, "client-id", "", "client ID from scanned QR Code, used for routing")
+	cmd.Flags().IntVar(&bodyClientId, "client-id", 0, "client ID from scanned QR Code, used for routing")
 	_ = cmd.MarkFlagRequired("client-id")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 

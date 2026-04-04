@@ -26,7 +26,7 @@ func newIsteamUserStatsGetSchemaForGameCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 
-			path := "/ISteamUserStats/GetSchemaForGame/v2"
+			path := "/ISteamUserStats/GetSchemaForGame/v1"
 			params := map[string]string{}
 			if flagKey != "" {
 				params["key"] = fmt.Sprintf("%v", flagKey)
@@ -81,7 +81,7 @@ func newIsteamUserStatsGetSchemaForGameCmd(flags *rootFlags) *cobra.Command {
 	cmd.Flags().StringVar(&flagKey, "key", "", "access key")
 	cmd.Flags().StringVar(&flagAppid, "appid", "", "appid of game")
 	_ = cmd.MarkFlagRequired("appid")
-	cmd.Flags().StringVar(&flagL, "l", "", "localized language to return (english, french, etc.)")
+	cmd.Flags().StringVar(&flagL, "l", "", "localized langauge to return (english, french, etc.)")
 
 	return cmd
 }

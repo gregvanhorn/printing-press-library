@@ -13,16 +13,16 @@ import (
 )
 
 func newIauthenticationServiceBeginAuthSessionViaQrCmd(flags *rootFlags) *cobra.Command {
-	var flagDeviceFriendlyName string
-	var flagPlatformType string
-	var flagDeviceDetails string
-	var flagWebsiteId string
+	var bodyDeviceDetails string
+	var bodyDeviceFriendlyName string
+	var bodyPlatformType string
+	var bodyWebsiteId string
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "begin-auth-session-via-qr",
-		Short: "start authentication process",
-		Example: "  steam-web-pp-cli iauthentication-service begin-auth-session-via-qr",
+		Short: "BeginAuthSessionViaQR operation of IAuthenticationService",
+		Example: "  steam-web-pp-cli iauthentication-service begin-auth-session-via-qr --device-details example-value",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -43,6 +43,18 @@ func newIauthenticationServiceBeginAuthSessionViaQrCmd(flags *rootFlags) *cobra.
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyDeviceDetails != "" {
+					body["device_details"] = bodyDeviceDetails
+				}
+				if bodyDeviceFriendlyName != "" {
+					body["device_friendly_name"] = bodyDeviceFriendlyName
+				}
+				if bodyPlatformType != "" {
+					body["platform_type"] = bodyPlatformType
+				}
+				if bodyWebsiteId != "" {
+					body["website_id"] = bodyWebsiteId
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -107,13 +119,13 @@ func newIauthenticationServiceBeginAuthSessionViaQrCmd(flags *rootFlags) *cobra.
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagDeviceFriendlyName, "device-friendly-name", "", "Device friendly name")
-	_ = cmd.MarkFlagRequired("device-friendly-name")
-	cmd.Flags().StringVar(&flagPlatformType, "platform-type", "", "Platform type")
-	_ = cmd.MarkFlagRequired("platform-type")
-	cmd.Flags().StringVar(&flagDeviceDetails, "device-details", "", "User-supplied details about the device attempting to sign in")
+	cmd.Flags().StringVar(&bodyDeviceDetails, "device-details", "", "User-supplied details about the device attempting to sign in")
 	_ = cmd.MarkFlagRequired("device-details")
-	cmd.Flags().StringVar(&flagWebsiteId, "website-id", "", "(EMachineAuthWebDomain) identifier of client requesting auth")
+	cmd.Flags().StringVar(&bodyDeviceFriendlyName, "device-friendly-name", "", "Device friendly name")
+	_ = cmd.MarkFlagRequired("device-friendly-name")
+	cmd.Flags().StringVar(&bodyPlatformType, "platform-type", "", "Platform type")
+	_ = cmd.MarkFlagRequired("platform-type")
+	cmd.Flags().StringVar(&bodyWebsiteId, "website-id", "", "(EMachineAuthWebDomain) identifier of client requesting auth")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

@@ -303,7 +303,7 @@ func determinePaginationDefaults() paginationDefaults {
 
 // determineSinceParam returns the query parameter name for incremental sync filtering.
 func determineSinceParam() string {
-	return "if_modified_since"
+	return "since"
 }
 
 // extractPageItems attempts to extract an array of items and pagination cursor from a response.
@@ -390,12 +390,14 @@ func upsertSingleObject(db *store.Store, resource string, data json.RawMessage) 
 	}
 
 	switch resource {
-	case "ipublished_file_service":
-		return db.UpsertIpublishedFileService(data)
-	case "idota2_match_570":
-		return db.UpsertIdota2Match570(data)
 	case "isteam_user_stats":
 		return db.UpsertIsteamUserStats(data)
+	case "idota2_match_570":
+		return db.UpsertIdota2Match570(data)
+	case "iauthentication_service":
+		return db.UpsertIauthenticationService(data)
+	case "ipublished_file_service":
+		return db.UpsertIpublishedFileService(data)
 	default:
 		return db.Upsert(resource, id, data)
 	}
@@ -433,7 +435,10 @@ func parseSinceDuration(s string) (time.Time, error) {
 func defaultSyncResources() []string {
 	return []string{
 		"iecon-service",
+		"igame-servers-service",
 		"ipublished-file-service",
+		"isteam-directory",
+		"isteam-web-apiutil",
 		"istore-service",
 	}
 }
@@ -444,7 +449,10 @@ func defaultSyncResources() []string {
 func syncResourcePath(resource string) string {
 	paths := map[string]string{
 		"iecon-service": "/IEconService/GetTradeOffers/v1",
+		"igame-servers-service": "/IGameServersService/GetAccountList/v1",
 		"ipublished-file-service": "/IPublishedFileService/QueryFiles/v1",
+		"isteam-directory": "/ISteamDirectory/GetCMListForConnect/v1",
+		"isteam-web-apiutil": "/ISteamWebAPIUtil/GetSupportedAPIList/v1",
 		"istore-service": "/IStoreService/GetAppList/v1",
 	}
 	if p, ok := paths[resource]; ok {

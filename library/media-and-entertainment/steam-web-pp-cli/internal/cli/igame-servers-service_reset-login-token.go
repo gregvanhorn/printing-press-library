@@ -13,14 +13,14 @@ import (
 )
 
 func newIgameServersServiceResetLoginTokenCmd(flags *rootFlags) *cobra.Command {
-	var flagKey string
-	var flagSteamid string
+	var bodyKey string
+	var bodySteamid int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "reset-login-token",
-		Short: "Generates a new login token for the specified game server",
-		Example: "  steam-web-pp-cli igame-servers-service reset-login-token",
+		Short: "ResetLoginToken operation of IGameServersService",
+		Example: "  steam-web-pp-cli igame-servers-service reset-login-token --key your-token-here",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -41,6 +41,12 @@ func newIgameServersServiceResetLoginTokenCmd(flags *rootFlags) *cobra.Command {
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyKey != "" {
+					body["key"] = bodyKey
+				}
+				if bodySteamid != 0 {
+					body["steamid"] = bodySteamid
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -105,8 +111,8 @@ func newIgameServersServiceResetLoginTokenCmd(flags *rootFlags) *cobra.Command {
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "The SteamID of the game server to reset the login token of")
+	cmd.Flags().StringVar(&bodyKey, "key", "", "Access key")
+	cmd.Flags().IntVar(&bodySteamid, "steamid", 0, "The SteamID of the game server to reset the login token of")
 	_ = cmd.MarkFlagRequired("steamid")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 

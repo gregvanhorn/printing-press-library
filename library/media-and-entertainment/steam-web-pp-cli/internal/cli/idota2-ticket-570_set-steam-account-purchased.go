@@ -13,8 +13,8 @@ import (
 )
 
 func newIdota2Ticket570SetSteamAccountPurchasedCmd(flags *rootFlags) *cobra.Command {
-	var flagSteamid string
-	var flagBadgeType int
+	var bodyBadgeType int
+	var bodySteamid int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
@@ -42,6 +42,12 @@ func newIdota2Ticket570SetSteamAccountPurchasedCmd(flags *rootFlags) *cobra.Comm
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyBadgeType != 0 {
+					body["BadgeType"] = bodyBadgeType
+				}
+				if bodySteamid != 0 {
+					body["steamid"] = bodySteamid
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -106,10 +112,10 @@ func newIdota2Ticket570SetSteamAccountPurchasedCmd(flags *rootFlags) *cobra.Comm
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "The 64-bit Steam ID")
-	_ = cmd.MarkFlagRequired("steamid")
-	cmd.Flags().IntVar(&flagBadgeType, "badge-type", 0, "Badge Type")
+	cmd.Flags().IntVar(&bodyBadgeType, "badge-type", 0, "Badge Type")
 	_ = cmd.MarkFlagRequired("badge-type")
+	cmd.Flags().IntVar(&bodySteamid, "steamid", 0, "The 64-bit Steam ID")
+	_ = cmd.MarkFlagRequired("steamid")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

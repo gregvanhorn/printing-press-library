@@ -14,5 +14,6 @@ func newIsteamNewsCmd(flags *rootFlags) *cobra.Command {
 	}
 
 	cmd.AddCommand(newIsteamNewsGetNewsForAppCmd(flags))
+	cmd.AddCommand(newIsteamNewsGetNewsForAppIsteamnewsCmd(flags))
 	return cmd
 }

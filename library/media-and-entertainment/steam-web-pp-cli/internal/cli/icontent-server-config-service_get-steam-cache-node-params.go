@@ -19,7 +19,7 @@ func newIcontentServerConfigServiceGetSteamCacheNodeParamsCmd(flags *rootFlags) 
 	cmd := &cobra.Command{
 		Use:   "get-steam-cache-node-params",
 		Aliases: []string{"list"},
-		Short: "Get the operational parameters for a SteamCache node (information the node uses to operate).",
+		Short: "GetSteamCacheNodeParams operation of IContentServerConfigService",
 		Example: "  steam-web-pp-cli icontent-server-config-service get-steam-cache-node-params",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()

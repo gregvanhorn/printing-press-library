@@ -13,20 +13,20 @@ import (
 )
 
 func newIcsgotournaments730UploadTournamentPredictionsCmd(flags *rootFlags) *cobra.Command {
-	var flagEvent int
-	var flagSteamid string
-	var flagSteamidkey string
-	var flagSectionid string
-	var flagGroupid string
-	var flagIndex int
-	var flagPickid string
-	var flagItemid string
+	var bodyEvent int
+	var bodyGroupid int
+	var bodyIndex int
+	var bodyItemid int
+	var bodyPickid int
+	var bodySectionid int
+	var bodySteamid int
+	var bodySteamidkey string
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "upload-tournament-predictions",
 		Short: "UploadTournamentPredictions operation of ICSGOTournaments_730",
-		Example: "  steam-web-pp-cli icsgotournaments-730 upload-tournament-predictions",
+		Example: "  steam-web-pp-cli icsgotournaments-730 upload-tournament-predictions --steamidkey your-token-here",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -47,6 +47,30 @@ func newIcsgotournaments730UploadTournamentPredictionsCmd(flags *rootFlags) *cob
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyEvent != 0 {
+					body["event"] = bodyEvent
+				}
+				if bodyGroupid != 0 {
+					body["groupid"] = bodyGroupid
+				}
+				if bodyIndex != 0 {
+					body["index"] = bodyIndex
+				}
+				if bodyItemid != 0 {
+					body["itemid"] = bodyItemid
+				}
+				if bodyPickid != 0 {
+					body["pickid"] = bodyPickid
+				}
+				if bodySectionid != 0 {
+					body["sectionid"] = bodySectionid
+				}
+				if bodySteamid != 0 {
+					body["steamid"] = bodySteamid
+				}
+				if bodySteamidkey != "" {
+					body["steamidkey"] = bodySteamidkey
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -111,22 +135,22 @@ func newIcsgotournaments730UploadTournamentPredictionsCmd(flags *rootFlags) *cob
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().IntVar(&flagEvent, "event", 0, "The event ID")
+	cmd.Flags().IntVar(&bodyEvent, "event", 0, "The event ID")
 	_ = cmd.MarkFlagRequired("event")
-	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "The SteamID of the user inventory")
-	_ = cmd.MarkFlagRequired("steamid")
-	cmd.Flags().StringVar(&flagSteamidkey, "steamidkey", "", "Authentication obtained from the SteamID")
-	_ = cmd.MarkFlagRequired("steamidkey")
-	cmd.Flags().StringVar(&flagSectionid, "sectionid", "", "Event section id")
-	_ = cmd.MarkFlagRequired("sectionid")
-	cmd.Flags().StringVar(&flagGroupid, "groupid", "", "Event group id")
+	cmd.Flags().IntVar(&bodyGroupid, "groupid", 0, "Event group id")
 	_ = cmd.MarkFlagRequired("groupid")
-	cmd.Flags().IntVar(&flagIndex, "index", 0, "Index in group")
+	cmd.Flags().IntVar(&bodyIndex, "index", 0, "Index in group")
 	_ = cmd.MarkFlagRequired("index")
-	cmd.Flags().StringVar(&flagPickid, "pickid", "", "Pick ID to select")
-	_ = cmd.MarkFlagRequired("pickid")
-	cmd.Flags().StringVar(&flagItemid, "itemid", "", "ItemID to lock in for the pick")
+	cmd.Flags().IntVar(&bodyItemid, "itemid", 0, "ItemID to lock in for the pick")
 	_ = cmd.MarkFlagRequired("itemid")
+	cmd.Flags().IntVar(&bodyPickid, "pickid", 0, "Pick ID to select")
+	_ = cmd.MarkFlagRequired("pickid")
+	cmd.Flags().IntVar(&bodySectionid, "sectionid", 0, "Event section id")
+	_ = cmd.MarkFlagRequired("sectionid")
+	cmd.Flags().IntVar(&bodySteamid, "steamid", 0, "The SteamID of the user inventory")
+	_ = cmd.MarkFlagRequired("steamid")
+	cmd.Flags().StringVar(&bodySteamidkey, "steamidkey", "", "Authentication obtained from the SteamID")
+	_ = cmd.MarkFlagRequired("steamidkey")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

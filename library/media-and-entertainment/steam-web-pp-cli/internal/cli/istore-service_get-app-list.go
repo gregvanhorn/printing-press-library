@@ -13,21 +13,14 @@ import (
 
 func newIstoreServiceGetAppListCmd(flags *rootFlags) *cobra.Command {
 	var flagKey string
-	var flagIfModifiedSince int
-	var flagHaveDescriptionLanguage string
-	var flagIncludeGames bool
-	var flagIncludeDlc bool
-	var flagIncludeSoftware bool
-	var flagIncludeVideos bool
-	var flagIncludeHardware bool
-	var flagLastAppid string
 	var flagMaxResults int
+	var flagLastAppid string
 	var flagAll bool
 
 	cmd := &cobra.Command{
 		Use:   "get-app-list",
 		Aliases: []string{"list"},
-		Short: "Gets a list of apps available on the Steam Store.",
+		Short: "Gets a list of all apps available on the Steam Store",
 		Example: "  steam-web-pp-cli istore-service get-app-list",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -38,15 +31,8 @@ func newIstoreServiceGetAppListCmd(flags *rootFlags) *cobra.Command {
 			path := "/IStoreService/GetAppList/v1"
 			data, prov, err := resolvePaginatedRead(c, flags, "istore-service", path, map[string]string{
 				"key": fmt.Sprintf("%v", flagKey),
-				"if_modified_since": fmt.Sprintf("%v", flagIfModifiedSince),
-				"have_description_language": fmt.Sprintf("%v", flagHaveDescriptionLanguage),
-				"include_games": fmt.Sprintf("%v", flagIncludeGames),
-				"include_dlc": fmt.Sprintf("%v", flagIncludeDlc),
-				"include_software": fmt.Sprintf("%v", flagIncludeSoftware),
-				"include_videos": fmt.Sprintf("%v", flagIncludeVideos),
-				"include_hardware": fmt.Sprintf("%v", flagIncludeHardware),
-				"last_appid": fmt.Sprintf("%v", flagLastAppid),
 				"max_results": fmt.Sprintf("%v", flagMaxResults),
+				"last_appid": fmt.Sprintf("%v", flagLastAppid),
 			}, flagAll, "", "", "")
 			if err != nil {
 				return classifyAPIError(err)
@@ -88,16 +74,9 @@ func newIstoreServiceGetAppListCmd(flags *rootFlags) *cobra.Command {
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	cmd.Flags().IntVar(&flagIfModifiedSince, "if-modified-since", 0, "Return only items that have been modified since this date.")
-	cmd.Flags().StringVar(&flagHaveDescriptionLanguage, "have-description-language", "", "Return only items that have a description in this language.")
-	cmd.Flags().BoolVar(&flagIncludeGames, "include-games", false, "Include games (defaults to enabled)")
-	cmd.Flags().BoolVar(&flagIncludeDlc, "include-dlc", false, "Include DLC")
-	cmd.Flags().BoolVar(&flagIncludeSoftware, "include-software", false, "Include software items")
-	cmd.Flags().BoolVar(&flagIncludeVideos, "include-videos", false, "Include videos and series")
-	cmd.Flags().BoolVar(&flagIncludeHardware, "include-hardware", false, "Include hardware")
-	cmd.Flags().StringVar(&flagLastAppid, "last-appid", "", "For continuations, this is the last appid returned from the previous call.")
-	cmd.Flags().IntVar(&flagMaxResults, "max-results", 0, "Number of results to return at a time. Default 10k, max 50k.")
+	cmd.Flags().StringVar(&flagKey, "key", "", "Steam Web API key")
+	cmd.Flags().IntVar(&flagMaxResults, "max-results", 0, "Maximum number of results to return")
+	cmd.Flags().StringVar(&flagLastAppid, "last-appid", "", "Cursor for pagination — pass the last appid from previous page")
 	cmd.Flags().BoolVar(&flagAll, "all", false, "Fetch all pages")
 
 	return cmd

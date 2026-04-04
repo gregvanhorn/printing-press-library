@@ -18,6 +18,7 @@ func newIauthenticationServiceCmd(flags *rootFlags) *cobra.Command {
 	cmd.AddCommand(newIauthenticationServiceGetAuthSessionInfoCmd(flags))
 	cmd.AddCommand(newIauthenticationServiceGetAuthSessionRiskInfoCmd(flags))
 	cmd.AddCommand(newIauthenticationServiceGetPasswordRsapublicKeyCmd(flags))
+	cmd.AddCommand(newIauthenticationServiceNotifyRiskQuizResultsCmd(flags))
 	cmd.AddCommand(newIauthenticationServicePollAuthSessionStatusCmd(flags))
 	cmd.AddCommand(newIauthenticationServiceUpdateAuthSessionWithMobileConfirmationCmd(flags))
 	cmd.AddCommand(newIauthenticationServiceUpdateAuthSessionWithSteamGuardCodeCmd(flags))

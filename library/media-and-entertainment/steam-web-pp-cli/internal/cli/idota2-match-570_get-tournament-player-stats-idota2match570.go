@@ -11,22 +11,45 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newIsteamAppsGetAppListCmd(flags *rootFlags) *cobra.Command {
+func newIdota2Match570GetTournamentPlayerStatsIdota2match570Cmd(flags *rootFlags) *cobra.Command {
+	var flagAccountId string
+	var flagLeagueId string
+	var flagHeroId string
+	var flagTimeFrame string
+	var flagMatchId string
+	var flagPhaseId string
 
 	cmd := &cobra.Command{
-		Use:   "get-app-list",
-		Aliases: []string{"list"},
-		Short: "GetAppList operation of ISteamApps",
-		Example: "  steam-web-pp-cli isteam-apps get-app-list",
+		Use:   "get-tournament-player-stats-idota2match570",
+		Short: "GetTournamentPlayerStats operation of IDOTA2Match_570",
+		Example: "  steam-web-pp-cli idota2-match-570 get-tournament-player-stats-idota2match570",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
 				return err
 			}
 
-			path := "/ISteamApps/GetAppList/v2"
+			path := "/IDOTA2Match_570/GetTournamentPlayerStats/v2"
 			params := map[string]string{}
-			data, prov, err := resolveRead(c, flags, "isteam-apps", false, path, params)
+			if flagAccountId != "" {
+				params["account_id"] = fmt.Sprintf("%v", flagAccountId)
+			}
+			if flagLeagueId != "" {
+				params["league_id"] = fmt.Sprintf("%v", flagLeagueId)
+			}
+			if flagHeroId != "" {
+				params["hero_id"] = fmt.Sprintf("%v", flagHeroId)
+			}
+			if flagTimeFrame != "" {
+				params["time_frame"] = fmt.Sprintf("%v", flagTimeFrame)
+			}
+			if flagMatchId != "" {
+				params["match_id"] = fmt.Sprintf("%v", flagMatchId)
+			}
+			if flagPhaseId != "" {
+				params["phase_id"] = fmt.Sprintf("%v", flagPhaseId)
+			}
+			data, prov, err := resolveRead(c, flags, "idota2-match-570", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
@@ -67,6 +90,13 @@ func newIsteamAppsGetAppListCmd(flags *rootFlags) *cobra.Command {
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
+	cmd.Flags().StringVar(&flagAccountId, "account-id", "", "Account id")
+	_ = cmd.MarkFlagRequired("account-id")
+	cmd.Flags().StringVar(&flagLeagueId, "league-id", "", "League id")
+	cmd.Flags().StringVar(&flagHeroId, "hero-id", "", "Hero id")
+	cmd.Flags().StringVar(&flagTimeFrame, "time-frame", "", "Time frame")
+	cmd.Flags().StringVar(&flagMatchId, "match-id", "", "Match id")
+	cmd.Flags().StringVar(&flagPhaseId, "phase-id", "", "Phase id")
 
 	return cmd
 }

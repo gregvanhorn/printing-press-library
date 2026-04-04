@@ -25,7 +25,7 @@ func newIsteamUserGetPlayerSummariesCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 
-			path := "/ISteamUser/GetPlayerSummaries/v2"
+			path := "/ISteamUser/GetPlayerSummaries/v1"
 			params := map[string]string{}
 			if flagKey != "" {
 				params["key"] = fmt.Sprintf("%v", flagKey)
@@ -75,7 +75,7 @@ func newIsteamUserGetPlayerSummariesCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "access key")
-	cmd.Flags().StringVar(&flagSteamids, "steamids", "", "Comma-delimited list of SteamIDs (max: 100)")
+	cmd.Flags().StringVar(&flagSteamids, "steamids", "", "Comma-delimited list of SteamIDs")
 	_ = cmd.MarkFlagRequired("steamids")
 
 	return cmd

@@ -45,7 +45,7 @@ brews:
       owner: trevin-chow
       name: homebrew-tap
     homepage: "https://github.com/mvanhorn/printing-press-library"
-    description: "Get your API key from [here](https://steamcommunity.com/dev/apikey)"
+    description: "Official Steam Web API. Get your API key at https://steamcommunity.com/dev/apikey"
     install: |
       bin.install "steam-web-pp-cli"
       bin.install "steam-web-mcp"

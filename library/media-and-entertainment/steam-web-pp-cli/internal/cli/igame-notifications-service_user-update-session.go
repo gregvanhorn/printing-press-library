@@ -13,17 +13,17 @@ import (
 )
 
 func newIgameNotificationsServiceUserUpdateSessionCmd(flags *rootFlags) *cobra.Command {
-	var flagSessionid string
-	var flagAppid string
-	var flagTitle string
-	var flagUsers string
-	var flagSteamid string
+	var bodyAppid int
+	var bodySessionid int
+	var bodySteamid int
+	var bodyTitle string
+	var bodyUsers string
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "user-update-session",
-		Short: "Updates an async game session",
-		Example: "  steam-web-pp-cli igame-notifications-service user-update-session",
+		Short: "UserUpdateSession operation of IGameNotificationsService",
+		Example: "  steam-web-pp-cli igame-notifications-service user-update-session --title example-resource",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -44,6 +44,21 @@ func newIgameNotificationsServiceUserUpdateSessionCmd(flags *rootFlags) *cobra.C
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyAppid != 0 {
+					body["appid"] = bodyAppid
+				}
+				if bodySessionid != 0 {
+					body["sessionid"] = bodySessionid
+				}
+				if bodySteamid != 0 {
+					body["steamid"] = bodySteamid
+				}
+				if bodyTitle != "" {
+					body["title"] = bodyTitle
+				}
+				if bodyUsers != "" {
+					body["users"] = bodyUsers
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -108,13 +123,16 @@ func newIgameNotificationsServiceUserUpdateSessionCmd(flags *rootFlags) *cobra.C
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagSessionid, "sessionid", "", "The sessionid to update.")
-	_ = cmd.MarkFlagRequired("sessionid")
-	cmd.Flags().StringVar(&flagAppid, "appid", "", "The appid of the session to update.")
+	cmd.Flags().IntVar(&bodyAppid, "appid", 0, "The appid of the session to update.")
 	_ = cmd.MarkFlagRequired("appid")
-	cmd.Flags().StringVar(&flagTitle, "title", "", "The new title of the session. If not specified, the title will not be changed.")
-	cmd.Flags().StringVar(&flagUsers, "users", "", "A list of users whose state will be updated to reflect the given state. If the users are not already in the session,...")
-	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "steamid to make the request on behalf of -- if specified, the user must be in the session and all users being added...")
+	cmd.Flags().IntVar(&bodySessionid, "sessionid", 0, "The sessionid to update.")
+	_ = cmd.MarkFlagRequired("sessionid")
+	cmd.Flags().IntVar(&bodySteamid, "steamid", 0, "(Optional) steamid to make the request on behalf of -- if specified, the user must be in the session and all users...")
+	_ = cmd.MarkFlagRequired("steamid")
+	cmd.Flags().StringVar(&bodyTitle, "title", "", "(Optional) The new title of the session. If not specified, the title will not be changed.")
+	_ = cmd.MarkFlagRequired("title")
+	cmd.Flags().StringVar(&bodyUsers, "users", "", "(Optional) A list of users whose state will be updated to reflect the given state. If the users are not already in...")
+	_ = cmd.MarkFlagRequired("users")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

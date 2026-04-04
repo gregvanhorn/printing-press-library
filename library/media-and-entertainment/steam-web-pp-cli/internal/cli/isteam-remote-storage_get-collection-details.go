@@ -13,8 +13,8 @@ import (
 )
 
 func newIsteamRemoteStorageGetCollectionDetailsCmd(flags *rootFlags) *cobra.Command {
-	var flagCollectioncount int
-	var flagPublishedfileids string
+	var bodyCollectioncount int
+	var bodyPublishedfileids0 int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
@@ -42,6 +42,12 @@ func newIsteamRemoteStorageGetCollectionDetailsCmd(flags *rootFlags) *cobra.Comm
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyCollectioncount != 0 {
+					body["collectioncount"] = bodyCollectioncount
+				}
+				if bodyPublishedfileids0 != 0 {
+					body["publishedfileids[0]"] = bodyPublishedfileids0
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -106,10 +112,10 @@ func newIsteamRemoteStorageGetCollectionDetailsCmd(flags *rootFlags) *cobra.Comm
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().IntVar(&flagCollectioncount, "collectioncount", 0, "Number of collections being requested")
+	cmd.Flags().IntVar(&bodyCollectioncount, "collectioncount", 0, "Number of collections being requested")
 	_ = cmd.MarkFlagRequired("collectioncount")
-	cmd.Flags().StringVar(&flagPublishedfileids, "publishedfileids", "", "collection ids to get the details for")
-	_ = cmd.MarkFlagRequired("publishedfileids")
+	cmd.Flags().IntVar(&bodyPublishedfileids0, "publishedfileids-0", 0, "collection ids to get the details for")
+	_ = cmd.MarkFlagRequired("publishedfileids-0")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

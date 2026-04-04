@@ -13,18 +13,18 @@ import (
 )
 
 func newIsteamCdnSetClientFiltersCmd(flags *rootFlags) *cobra.Command {
-	var flagKey string
-	var flagCdnname string
-	var flagAllowedipblocks string
-	var flagAllowedasns string
-	var flagAllowedipcountries string
+	var bodyAllowedasns string
+	var bodyAllowedipblocks string
+	var bodyAllowedipcountries string
+	var bodyCdnname string
+	var bodyKey string
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "set-client-filters",
 		Aliases: []string{"create"},
 		Short: "SetClientFilters operation of ISteamCDN",
-		Example: "  steam-web-pp-cli isteam-cdn set-client-filters",
+		Example: "  steam-web-pp-cli isteam-cdn set-client-filters --cdnname example-resource",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -45,6 +45,21 @@ func newIsteamCdnSetClientFiltersCmd(flags *rootFlags) *cobra.Command {
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyAllowedasns != "" {
+					body["allowedasns"] = bodyAllowedasns
+				}
+				if bodyAllowedipblocks != "" {
+					body["allowedipblocks"] = bodyAllowedipblocks
+				}
+				if bodyAllowedipcountries != "" {
+					body["allowedipcountries"] = bodyAllowedipcountries
+				}
+				if bodyCdnname != "" {
+					body["cdnname"] = bodyCdnname
+				}
+				if bodyKey != "" {
+					body["key"] = bodyKey
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -109,12 +124,12 @@ func newIsteamCdnSetClientFiltersCmd(flags *rootFlags) *cobra.Command {
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagKey, "key", "", "access key")
-	cmd.Flags().StringVar(&flagCdnname, "cdnname", "", "Steam name of CDN property")
+	cmd.Flags().StringVar(&bodyAllowedasns, "allowedasns", "", "comma-separated list of allowed client network AS numbers - blank for not used")
+	cmd.Flags().StringVar(&bodyAllowedipblocks, "allowedipblocks", "", "comma-separated list of allowed IP address blocks in CIDR format - blank for not used")
+	cmd.Flags().StringVar(&bodyAllowedipcountries, "allowedipcountries", "", "comma-separated list of allowed client IP country codes in ISO 3166-1 format - blank for not used")
+	cmd.Flags().StringVar(&bodyCdnname, "cdnname", "", "Steam name of CDN property")
 	_ = cmd.MarkFlagRequired("cdnname")
-	cmd.Flags().StringVar(&flagAllowedipblocks, "allowedipblocks", "", "comma-separated list of allowed IP address blocks in CIDR format - blank for not used")
-	cmd.Flags().StringVar(&flagAllowedasns, "allowedasns", "", "comma-separated list of allowed client network AS numbers - blank for not used")
-	cmd.Flags().StringVar(&flagAllowedipcountries, "allowedipcountries", "", "comma-separated list of allowed client IP country codes in ISO 3166-1 format - blank for not used")
+	cmd.Flags().StringVar(&bodyKey, "key", "", "access key")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

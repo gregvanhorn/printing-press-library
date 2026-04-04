@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -95,6 +96,38 @@ func authErr(err error) error     { return &cliError{code: 4, err: err} }
 func apiErr(err error) error      { return &cliError{code: 5, err: err} }
 func configErr(err error) error   { return &cliError{code: 10, err: err} }
 func rateLimitErr(err error) error { return &cliError{code: 7, err: err} }
+// looksLikeAuthError checks if an error message body contains auth-related keywords.
+func looksLikeAuthError(msg string) bool {
+	lower := strings.ToLower(msg)
+	patterns := []string{
+		`\bkey\b`,
+		`\btoken\b`,
+		`\bunauthorized\b`,
+		`\bapi_key\b`,
+		`missing.{0,20}key`,
+		`required.{0,20}key`,
+		`\bforbidden\b`,
+		`\bauthenticat`,
+		`\bcredential`,
+	}
+	for _, p := range patterns {
+		if matched, _ := regexp.MatchString(p, lower); matched {
+			return true
+		}
+	}
+	return false
+}
+
+// sanitizeErrorBody truncates and strips credential-shaped strings from error output.
+func sanitizeErrorBody(msg string) string {
+	if len(msg) > 200 {
+		msg = msg[:200] + "..."
+	}
+	// Strip credential-shaped patterns
+	credPatterns := regexp.MustCompile(`(?i)(sk-[a-zA-Z0-9]{8,}|sk_live_[a-zA-Z0-9]+|Bearer\s+[a-zA-Z0-9._\-]+|key=[a-zA-Z0-9._\-]+)`)
+	msg = credPatterns.ReplaceAllString(msg, "[REDACTED]")
+	return msg
+}
 
 // classifyAPIError maps API errors to structured exit codes with actionable hints.
 func classifyAPIError(err error) error {
@@ -104,12 +137,19 @@ func classifyAPIError(err error) error {
 		// 409 Conflict = resource already exists. For agents retrying creates, this is success.
 		fmt.Fprintln(os.Stderr, "already exists (no-op)")
 		return nil
+	case strings.Contains(msg, "HTTP 400") && looksLikeAuthError(msg):
+		return authErr(fmt.Errorf("%w\nhint: the API rejected the request — this usually means auth is missing or invalid."+
+			"\n      Set your API key: export STEAM_WEB_API_KEY=<your-key>"+
+			"\n      Run 'steam-web-pp-cli doctor' to check auth status."+
+			"\n      Response: "+sanitizeErrorBody(msg), err))
 	case strings.Contains(msg, "HTTP 401"):
-		return authErr(fmt.Errorf("%w\nhint: check your API credentials."+
+		return authErr(fmt.Errorf("%w\nhint: check your API key."+
+			" Set it with: export STEAM_WEB_API_KEY=<your-key>"+
 			"\n      Run 'steam-web-pp-cli doctor' to check auth status.", err))
 	case strings.Contains(msg, "HTTP 403"):
 		return authErr(fmt.Errorf("%w\nhint: permission denied. Your credentials are valid but lack access to this resource."+
 			"\n      Check that your API key has the required permissions."+
+			"\n      Set it with: export STEAM_WEB_API_KEY=<your-key>"+
 			"\n      Run 'steam-web-pp-cli doctor' to check auth status.", err))
 	case strings.Contains(msg, "HTTP 404"):
 		return notFoundErr(fmt.Errorf("%w\nhint: resource not found. Run the 'list' command to see available items", err))

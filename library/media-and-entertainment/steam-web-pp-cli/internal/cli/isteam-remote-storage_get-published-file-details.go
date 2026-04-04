@@ -13,8 +13,8 @@ import (
 )
 
 func newIsteamRemoteStorageGetPublishedFileDetailsCmd(flags *rootFlags) *cobra.Command {
-	var flagItemcount int
-	var flagPublishedfileids string
+	var bodyItemcount int
+	var bodyPublishedfileids0 int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
@@ -41,6 +41,12 @@ func newIsteamRemoteStorageGetPublishedFileDetailsCmd(flags *rootFlags) *cobra.C
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyItemcount != 0 {
+					body["itemcount"] = bodyItemcount
+				}
+				if bodyPublishedfileids0 != 0 {
+					body["publishedfileids[0]"] = bodyPublishedfileids0
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -105,10 +111,10 @@ func newIsteamRemoteStorageGetPublishedFileDetailsCmd(flags *rootFlags) *cobra.C
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().IntVar(&flagItemcount, "itemcount", 0, "Number of items being requested")
+	cmd.Flags().IntVar(&bodyItemcount, "itemcount", 0, "Number of items being requested")
 	_ = cmd.MarkFlagRequired("itemcount")
-	cmd.Flags().StringVar(&flagPublishedfileids, "publishedfileids", "", "published file id to look up")
-	_ = cmd.MarkFlagRequired("publishedfileids")
+	cmd.Flags().IntVar(&bodyPublishedfileids0, "publishedfileids-0", 0, "published file id to look up")
+	_ = cmd.MarkFlagRequired("publishedfileids-0")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

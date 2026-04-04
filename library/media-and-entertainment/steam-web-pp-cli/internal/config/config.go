@@ -23,8 +23,7 @@ type Config struct {
 	ClientID       string `toml:"client_id"`
 	ClientSecret   string `toml:"client_secret"`
 	Path           string `toml:"-"`
-	APIKey         string `toml:"api_key"`       // Steam Web API key (get one at steamcommunity.com/dev/apikey)
-	APIKeySource   string `toml:"-"`
+	SteamWebApiKey string `toml:"web_api_key"`
 }
 
 func Load(configPath string) (*Config, error) {
@@ -51,13 +50,13 @@ func Load(configPath string) (*Config, error) {
 		}
 	}
 
-	// Env var overrides
+	// Env var overrides — check both STEAM_API_KEY and STEAM_WEB_API_KEY
 	if v := os.Getenv("STEAM_API_KEY"); v != "" {
-		cfg.APIKey = v
-		cfg.APIKeySource = "env:STEAM_API_KEY"
+		cfg.SteamWebApiKey = v
+		cfg.AuthSource = "env:STEAM_API_KEY"
 	} else if v := os.Getenv("STEAM_WEB_API_KEY"); v != "" {
-		cfg.APIKey = v
-		cfg.APIKeySource = "env:STEAM_WEB_API_KEY"
+		cfg.SteamWebApiKey = v
+		cfg.AuthSource = "env:STEAM_WEB_API_KEY"
 	}
 
 	// Base URL override (used by printing-press verify to point at mock/test servers)
@@ -72,7 +71,14 @@ func (c *Config) AuthHeader() string {
 	if c.AuthHeaderVal != "" {
 		return c.AuthHeaderVal
 	}
-	return ""
+	token := c.SteamWebApiKey
+	if token == "" {
+		return ""
+	}
+	if c.SteamWebApiKey == "" {
+		return ""
+	}
+	return token
 }
 
 func applyAuthFormat(format string, replacements map[string]string) string {

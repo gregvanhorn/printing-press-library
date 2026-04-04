@@ -13,7 +13,6 @@ func newIsteamAppsCmd(flags *rootFlags) *cobra.Command {
 		Short: "Manage isteam apps",
 	}
 
-	cmd.AddCommand(newIsteamAppsGetAppListCmd(flags))
 	cmd.AddCommand(newIsteamAppsGetSdrconfigCmd(flags))
 	cmd.AddCommand(newIsteamAppsGetServersAtAddressCmd(flags))
 	cmd.AddCommand(newIsteamAppsUpToDateCheckCmd(flags))

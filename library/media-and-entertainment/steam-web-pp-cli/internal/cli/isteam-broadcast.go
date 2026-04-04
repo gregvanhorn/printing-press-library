@@ -13,6 +13,7 @@ func newIsteamBroadcastCmd(flags *rootFlags) *cobra.Command {
 		Short: "Manage isteam broadcast",
 	}
 
+	cmd.AddCommand(newIsteamBroadcastPlayerStatsCmd(flags))
 	cmd.AddCommand(newIsteamBroadcastViewerHeartbeatCmd(flags))
 	return cmd
 }

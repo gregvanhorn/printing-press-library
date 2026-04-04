@@ -20,7 +20,7 @@ func newIgameServersServiceQueryByFakeIpCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "query-by-fake-ip",
-		Short: "Perform a query on a specific server by FakeIP",
+		Short: "QueryByFakeIP operation of IGameServersService",
 		Example: "  steam-web-pp-cli igame-servers-service query-by-fake-ip",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()

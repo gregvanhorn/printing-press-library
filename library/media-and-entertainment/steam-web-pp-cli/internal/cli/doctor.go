@@ -6,6 +6,7 @@ package cli
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -31,9 +32,29 @@ func newDoctorCmd(flags *rootFlags) *cobra.Command {
 			}
 
 			// Check auth
-			report["auth"] = "not required"
+			if cfg != nil {
+				header := cfg.AuthHeader()
+				if header == "" {
+					report["auth"] = "not configured"
+					report["auth_hint"] = "export STEAM_WEB_API_KEY=<your-key>"
+				} else {
+					report["auth"] = "configured"
+					report["auth_source"] = cfg.AuthSource
+				}
+			}
 
 			// Check auth environment variables
+			authEnvChecked := 0
+			authEnvSet := 0
+			authEnvChecked++
+			if os.Getenv("STEAM_WEB_API_KEY") != "" {
+				authEnvSet++
+			}
+			if authEnvSet == 0 {
+				report["env_vars"] = fmt.Sprintf("none set (checked %d)", authEnvChecked)
+			} else {
+				report["env_vars"] = fmt.Sprintf("%d/%d set", authEnvSet, authEnvChecked)
+			}
 
 			// Check API connectivity and validate credentials
 			if cfg != nil && cfg.BaseURL != "" {
@@ -76,7 +97,9 @@ func newDoctorCmd(flags *rootFlags) *cobra.Command {
 					report["credentials"] = "skipped (API unreachable)"
 				} else {
 					authReq, _ := http.NewRequest("GET", baseURL, nil)
-					authReq.Header.Set("Authorization", authHeader)
+					q := authReq.URL.Query()
+					q.Set("key", authHeader)
+					authReq.URL.RawQuery = q.Encode()
 					authReq.Header.Set("User-Agent", "steam-web-pp-cli")
 					authResp, authErr := httpClient.Do(authReq)
 					if authErr != nil {
@@ -133,6 +156,9 @@ func newDoctorCmd(flags *rootFlags) *cobra.Command {
 				}
 			}
 			// Print auth setup hints (indented under Auth line)
+			if hint, ok := report["auth_hint"]; ok {
+				fmt.Fprintf(w, "  hint: %v\n", hint)
+			}
 			return nil
 		},
 	}

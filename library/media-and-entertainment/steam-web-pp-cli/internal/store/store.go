@@ -76,27 +76,51 @@ func (s *Store) migrate() error {
 		`CREATE VIRTUAL TABLE IF NOT EXISTS resources_fts USING fts5(
 			id, resource_type, content, tokenize='porter unicode61'
 		)`,
-		`CREATE TABLE IF NOT EXISTS iecon_items_730 (
+		`CREATE TABLE IF NOT EXISTS iplayer_service (
 			id TEXT PRIMARY KEY,
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
-		`CREATE TABLE IF NOT EXISTS iecon_service (
+		`CREATE TABLE IF NOT EXISTS isteam_broadcast (
 			id TEXT PRIMARY KEY,
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
-		`CREATE TABLE IF NOT EXISTS igame_notifications_service (
+		`CREATE TABLE IF NOT EXISTS isteam_user_oauth (
 			id TEXT PRIMARY KEY,
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
-		`CREATE TABLE IF NOT EXISTS isteam_remote_storage (
+		`CREATE TABLE IF NOT EXISTS isteam_user_stats (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			gameid INTEGER,
+			appid INTEGER,
+			count INTEGER,
+			name[0] TEXT,
+			startdate INTEGER,
+			enddate INTEGER,
+			key TEXT,
+			steamid INTEGER,
+			l TEXT
+		)`,
+		`CREATE TABLE IF NOT EXISTS isteam_apps (
 			id TEXT PRIMARY KEY,
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
-		`CREATE TABLE IF NOT EXISTS icsgotournaments_730 (
+		`CREATE TABLE IF NOT EXISTS isteam_news (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS isteam_user_auth (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS icsgoplayers_730 (
 			id TEXT PRIMARY KEY,
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -106,7 +130,92 @@ func (s *Store) migrate() error {
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
+		`CREATE TABLE IF NOT EXISTS iecon_items_440 (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS igcversion_1422450 (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS igame_servers_service (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS isteam_directory (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS isteam_user (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS itfitems_440 (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS icsgotournaments_730 (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS idota2_match_stats_570 (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS ibroadcast_service (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS icheat_reporting_service (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS idota2_match_570 (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			league_id INTEGER,
+			match_id INTEGER,
+			dpc INTEGER,
+			include_persona_names INTEGER,
+			hero_id INTEGER,
+			game_mode INTEGER,
+			skill INTEGER,
+			min_players TEXT,
+			account_id TEXT,
+			start_at_match_id INTEGER,
+			matches_requested TEXT,
+			start_at_match_seq_num INTEGER,
+			start_at_team_id INTEGER,
+			teams_requested INTEGER,
+			partner INTEGER,
+			home_division INTEGER,
+			time_frame TEXT,
+			phase_id INTEGER
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_idota2_match_570_league_id ON idota2_match_570(league_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_idota2_match_570_match_id ON idota2_match_570(match_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_idota2_match_570_hero_id ON idota2_match_570(hero_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_idota2_match_570_account_id ON idota2_match_570(account_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_idota2_match_570_start_at_match_id ON idota2_match_570(start_at_match_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_idota2_match_570_start_at_team_id ON idota2_match_570(start_at_team_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_idota2_match_570_phase_id ON idota2_match_570(phase_id)`,
 		`CREATE TABLE IF NOT EXISTS iecon_items_1046930 (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS iecon_items_570 (
 			id TEXT PRIMARY KEY,
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -116,7 +225,94 @@ func (s *Store) migrate() error {
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
+		`CREATE TABLE IF NOT EXISTS igcversion_570 (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS igame_notifications_service (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS iauthentication_service (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+			account_name TEXT,
+			client_id INTEGER,
+			code TEXT,
+			code_type TEXT,
+			steamid INTEGER,
+			device_details TEXT,
+			device_friendly_name TEXT,
+			platform_type TEXT,
+			website_id TEXT,
+			did_confirm_login INTEGER,
+			results TEXT,
+			selected_action TEXT,
+			request_id TEXT,
+			token_to_revoke INTEGER,
+			confirm INTEGER,
+			persistence TEXT,
+			signature TEXT,
+			version INTEGER,
+			encrypted_password TEXT,
+			encryption_timestamp INTEGER,
+			guard_data TEXT,
+			language INTEGER,
+			qos_level INTEGER,
+			remember_login INTEGER
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_iauthentication_service_client_id ON iauthentication_service(client_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_iauthentication_service_website_id ON iauthentication_service(website_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_iauthentication_service_request_id ON iauthentication_service(request_id)`,
+		`CREATE TABLE IF NOT EXISTS icontent_server_config_service (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS iinventory_service (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
 		`CREATE TABLE IF NOT EXISTS iportal2_leaderboards_620 (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS isteam_cdn (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS isteam_economy (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS isteam_remote_storage (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS isteam_web_apiutil (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS iecon_items_583950 (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS igcversion_1046930 (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS igcversion_583950 (
 			id TEXT PRIMARY KEY,
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -126,28 +322,23 @@ func (s *Store) migrate() error {
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 			key TEXT,
-			query_type TEXT,
-			page INTEGER,
-			cursor TEXT,
-			numperpage INTEGER,
-			creator_appid INTEGER,
+			steamid INTEGER,
 			appid INTEGER,
+			shortcutid INTEGER,
+			page INTEGER,
+			numperpage INTEGER,
+			type TEXT,
+			sortmethod TEXT,
+			privacy INTEGER,
 			requiredtags TEXT,
 			excludedtags TEXT,
-			match_all_tags INTEGER,
-			required_flags TEXT,
-			omitted_flags TEXT,
-			search_text TEXT,
-			filetype INTEGER,
-			child_publishedfileid INTEGER,
-			days INTEGER,
-			include_recent_votes_only INTEGER,
-			cache_max_age_seconds INTEGER,
-			language TEXT,
 			required_kv_tags TEXT,
+			filetype INTEGER,
+			creator_appid INTEGER,
+			match_cloud_filename TEXT,
+			cache_max_age_seconds INTEGER,
+			language INTEGER,
 			taggroups TEXT,
-			date_range_created TEXT,
-			date_range_updated TEXT,
 			excluded_content_descriptors TEXT,
 			admin_query INTEGER,
 			totalonly INTEGER,
@@ -161,10 +352,25 @@ func (s *Store) migrate() error {
 			return_for_sale_data INTEGER,
 			return_metadata INTEGER,
 			return_playtime_stats INTEGER,
-			return_details INTEGER,
 			strip_description_bbcode INTEGER,
-			desired_revision TEXT,
 			return_reactions INTEGER,
+			startindex_override INTEGER,
+			desired_revision TEXT,
+			return_apps INTEGER,
+			publishedfileids INTEGER,
+			query_type INTEGER,
+			cursor TEXT,
+			match_all_tags INTEGER,
+			required_flags TEXT,
+			omitted_flags TEXT,
+			search_text TEXT,
+			child_publishedfileid INTEGER,
+			days INTEGER,
+			include_recent_votes_only INTEGER,
+			date_range_created TEXT,
+			date_range_updated TEXT,
+			special_filter TEXT,
+			return_details INTEGER,
 			includetags INTEGER,
 			includeadditionalpreviews INTEGER,
 			includechildren INTEGER,
@@ -176,145 +382,9 @@ func (s *Store) migrate() error {
 			includereactions INTEGER,
 			publishedfileid INTEGER,
 			for_table_of_contents INTEGER,
-			specific_sectionid INTEGER,
-			steamid INTEGER,
-			shortcutid INTEGER,
-			type TEXT,
-			sortmethod TEXT,
-			privacy INTEGER,
-			match_cloud_filename TEXT,
-			startindex_override INTEGER,
-			return_apps INTEGER
+			specific_sectionid INTEGER
 		)`,
 		`CREATE TABLE IF NOT EXISTS istore_service (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS icheat_reporting_service (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS icontent_server_directory_service (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS isteam_apps (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS isteam_news (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS icsgoplayers_730 (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS icsgoservers_730 (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS igcversion_1046930 (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS igcversion_1422450 (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS igcversion_730 (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS iplayer_service (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS icontent_server_config_service (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS idota2_match_570 (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			start_at_match_seq_num INTEGER,
-			matches_requested INTEGER,
-			partner INTEGER,
-			home_division INTEGER,
-			league_id INTEGER,
-			match_id INTEGER,
-			dpc INTEGER,
-			hero_id INTEGER,
-			game_mode INTEGER,
-			skill INTEGER,
-			min_players TEXT,
-			account_id TEXT,
-			start_at_match_id INTEGER,
-			start_at_team_id INTEGER,
-			teams_requested INTEGER,
-			time_frame TEXT,
-			phase_id INTEGER,
-			include_persona_names INTEGER
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_idota2_match_570_league_id ON idota2_match_570(league_id)`,
-		`CREATE INDEX IF NOT EXISTS idx_idota2_match_570_match_id ON idota2_match_570(match_id)`,
-		`CREATE INDEX IF NOT EXISTS idx_idota2_match_570_hero_id ON idota2_match_570(hero_id)`,
-		`CREATE INDEX IF NOT EXISTS idx_idota2_match_570_account_id ON idota2_match_570(account_id)`,
-		`CREATE INDEX IF NOT EXISTS idx_idota2_match_570_start_at_match_id ON idota2_match_570(start_at_match_id)`,
-		`CREATE INDEX IF NOT EXISTS idx_idota2_match_570_start_at_team_id ON idota2_match_570(start_at_team_id)`,
-		`CREATE INDEX IF NOT EXISTS idx_idota2_match_570_phase_id ON idota2_match_570(phase_id)`,
-		`CREATE TABLE IF NOT EXISTS idota2_ticket_570 (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS iecon_items_583950 (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS isteam_cdn (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS isteam_directory (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS isteam_user_stats (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-			gameid INTEGER,
-			appid INTEGER,
-			count INTEGER,
-			startdate INTEGER,
-			enddate INTEGER,
-			key TEXT,
-			steamid INTEGER,
-			l TEXT
-		)`,
-		`CREATE TABLE IF NOT EXISTS idota2_match_stats_570 (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS iecon_items_440 (
 			id TEXT PRIMARY KEY,
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -324,27 +394,7 @@ func (s *Store) migrate() error {
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
-		`CREATE TABLE IF NOT EXISTS iinventory_service (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS isteam_broadcast (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS isteam_user (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS isteam_user_auth (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS isteam_web_apiutil (
+		`CREATE TABLE IF NOT EXISTS icsgoservers_730 (
 			id TEXT PRIMARY KEY,
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -354,7 +404,12 @@ func (s *Store) migrate() error {
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
-		`CREATE TABLE IF NOT EXISTS iecon_items_570 (
+		`CREATE TABLE IF NOT EXISTS idota2_stream_system_570 (
+			id TEXT PRIMARY KEY,
+			data JSON NOT NULL,
+			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS idota2_ticket_570 (
 			id TEXT PRIMARY KEY,
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -364,27 +419,7 @@ func (s *Store) migrate() error {
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
-		`CREATE TABLE IF NOT EXISTS igame_servers_service (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS iauthentication_service (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS iecon_items_1269260 (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS igcversion_570 (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS igcversion_583950 (
+		`CREATE TABLE IF NOT EXISTS iecon_items_730 (
 			id TEXT PRIMARY KEY,
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -394,27 +429,22 @@ func (s *Store) migrate() error {
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
-		`CREATE TABLE IF NOT EXISTS isteam_economy (
+		`CREATE TABLE IF NOT EXISTS icontent_server_directory_service (
 			id TEXT PRIMARY KEY,
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
-		`CREATE TABLE IF NOT EXISTS isteam_user_oauth (
+		`CREATE TABLE IF NOT EXISTS iecon_items_1269260 (
 			id TEXT PRIMARY KEY,
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
-		`CREATE TABLE IF NOT EXISTS itfitems_440 (
+		`CREATE TABLE IF NOT EXISTS iecon_service (
 			id TEXT PRIMARY KEY,
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`,
-		`CREATE TABLE IF NOT EXISTS ibroadcast_service (
-			id TEXT PRIMARY KEY,
-			data JSON NOT NULL,
-			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`,
-		`CREATE TABLE IF NOT EXISTS idota2_stream_system_570 (
+		`CREATE TABLE IF NOT EXISTS igcversion_730 (
 			id TEXT PRIMARY KEY,
 			data JSON NOT NULL,
 			synced_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -564,16 +594,16 @@ func lookupFieldValue(obj map[string]any, snakeKey string) any {
 	}
 	return nil
 }
-// UpsertIpublishedFileService inserts or updates a ipublished_file_service record with domain-specific columns.
-func (s *Store) UpsertIpublishedFileService(data json.RawMessage) error {
+// UpsertIsteamUserStats inserts or updates a isteam_user_stats record with domain-specific columns.
+func (s *Store) UpsertIsteamUserStats(data json.RawMessage) error {
 	var obj map[string]any
 	if err := json.Unmarshal(data, &obj); err != nil {
-		return fmt.Errorf("unmarshaling ipublished_file_service: %w", err)
+		return fmt.Errorf("unmarshaling isteam_user_stats: %w", err)
 	}
 
 	id := extractObjectID(obj)
 	if id == "" {
-		return fmt.Errorf("missing id for ipublished_file_service")
+		return fmt.Errorf("missing id for isteam_user_stats")
 	}
 
 	tx, err := s.db.Begin()
@@ -582,77 +612,26 @@ func (s *Store) UpsertIpublishedFileService(data json.RawMessage) error {
 	}
 	defer tx.Rollback()
 
-	if err := s.upsertGenericResourceTx(tx, "ipublished_file_service", id, data); err != nil {
+	if err := s.upsertGenericResourceTx(tx, "isteam_user_stats", id, data); err != nil {
 		return err
 	}
 
 	_, err = tx.Exec(
-		`INSERT INTO ipublished_file_service (id, data, synced_at, key, query_type, page, cursor, numperpage, creator_appid, appid, requiredtags, excludedtags, match_all_tags, required_flags, omitted_flags, search_text, filetype, child_publishedfileid, days, include_recent_votes_only, cache_max_age_seconds, language, required_kv_tags, taggroups, date_range_created, date_range_updated, excluded_content_descriptors, admin_query, totalonly, ids_only, return_vote_data, return_tags, return_kv_tags, return_previews, return_children, return_short_description, return_for_sale_data, return_metadata, return_playtime_stats, return_details, strip_description_bbcode, desired_revision, return_reactions, includetags, includeadditionalpreviews, includechildren, includekvtags, includevotes, short_description, includeforsaledata, includemetadata, includereactions, publishedfileid, for_table_of_contents, specific_sectionid, steamid, shortcutid, type, sortmethod, privacy, match_cloud_filename, startindex_override, return_apps)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		 ON CONFLICT(id) DO UPDATE SET data = excluded.data, synced_at = excluded.synced_at, key = excluded.key, query_type = excluded.query_type, page = excluded.page, cursor = excluded.cursor, numperpage = excluded.numperpage, creator_appid = excluded.creator_appid, appid = excluded.appid, requiredtags = excluded.requiredtags, excludedtags = excluded.excludedtags, match_all_tags = excluded.match_all_tags, required_flags = excluded.required_flags, omitted_flags = excluded.omitted_flags, search_text = excluded.search_text, filetype = excluded.filetype, child_publishedfileid = excluded.child_publishedfileid, days = excluded.days, include_recent_votes_only = excluded.include_recent_votes_only, cache_max_age_seconds = excluded.cache_max_age_seconds, language = excluded.language, required_kv_tags = excluded.required_kv_tags, taggroups = excluded.taggroups, date_range_created = excluded.date_range_created, date_range_updated = excluded.date_range_updated, excluded_content_descriptors = excluded.excluded_content_descriptors, admin_query = excluded.admin_query, totalonly = excluded.totalonly, ids_only = excluded.ids_only, return_vote_data = excluded.return_vote_data, return_tags = excluded.return_tags, return_kv_tags = excluded.return_kv_tags, return_previews = excluded.return_previews, return_children = excluded.return_children, return_short_description = excluded.return_short_description, return_for_sale_data = excluded.return_for_sale_data, return_metadata = excluded.return_metadata, return_playtime_stats = excluded.return_playtime_stats, return_details = excluded.return_details, strip_description_bbcode = excluded.strip_description_bbcode, desired_revision = excluded.desired_revision, return_reactions = excluded.return_reactions, includetags = excluded.includetags, includeadditionalpreviews = excluded.includeadditionalpreviews, includechildren = excluded.includechildren, includekvtags = excluded.includekvtags, includevotes = excluded.includevotes, short_description = excluded.short_description, includeforsaledata = excluded.includeforsaledata, includemetadata = excluded.includemetadata, includereactions = excluded.includereactions, publishedfileid = excluded.publishedfileid, for_table_of_contents = excluded.for_table_of_contents, specific_sectionid = excluded.specific_sectionid, steamid = excluded.steamid, shortcutid = excluded.shortcutid, type = excluded.type, sortmethod = excluded.sortmethod, privacy = excluded.privacy, match_cloud_filename = excluded.match_cloud_filename, startindex_override = excluded.startindex_override, return_apps = excluded.return_apps`,
+		`INSERT INTO isteam_user_stats (id, data, synced_at, gameid, appid, count, name[0], startdate, enddate, key, steamid, l)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		 ON CONFLICT(id) DO UPDATE SET data = excluded.data, synced_at = excluded.synced_at, gameid = excluded.gameid, appid = excluded.appid, count = excluded.count, name[0] = excluded.name[0], startdate = excluded.startdate, enddate = excluded.enddate, key = excluded.key, steamid = excluded.steamid, l = excluded.l`,
 		id,
 		string(data),
 		time.Now(),
-		lookupFieldValue(obj, "key"),
-		lookupFieldValue(obj, "query_type"),
-		lookupFieldValue(obj, "page"),
-		lookupFieldValue(obj, "cursor"),
-		lookupFieldValue(obj, "numperpage"),
-		lookupFieldValue(obj, "creator_appid"),
+		lookupFieldValue(obj, "gameid"),
 		lookupFieldValue(obj, "appid"),
-		lookupFieldValue(obj, "requiredtags"),
-		lookupFieldValue(obj, "excludedtags"),
-		lookupFieldValue(obj, "match_all_tags"),
-		lookupFieldValue(obj, "required_flags"),
-		lookupFieldValue(obj, "omitted_flags"),
-		lookupFieldValue(obj, "search_text"),
-		lookupFieldValue(obj, "filetype"),
-		lookupFieldValue(obj, "child_publishedfileid"),
-		lookupFieldValue(obj, "days"),
-		lookupFieldValue(obj, "include_recent_votes_only"),
-		lookupFieldValue(obj, "cache_max_age_seconds"),
-		lookupFieldValue(obj, "language"),
-		lookupFieldValue(obj, "required_kv_tags"),
-		lookupFieldValue(obj, "taggroups"),
-		lookupFieldValue(obj, "date_range_created"),
-		lookupFieldValue(obj, "date_range_updated"),
-		lookupFieldValue(obj, "excluded_content_descriptors"),
-		lookupFieldValue(obj, "admin_query"),
-		lookupFieldValue(obj, "totalonly"),
-		lookupFieldValue(obj, "ids_only"),
-		lookupFieldValue(obj, "return_vote_data"),
-		lookupFieldValue(obj, "return_tags"),
-		lookupFieldValue(obj, "return_kv_tags"),
-		lookupFieldValue(obj, "return_previews"),
-		lookupFieldValue(obj, "return_children"),
-		lookupFieldValue(obj, "return_short_description"),
-		lookupFieldValue(obj, "return_for_sale_data"),
-		lookupFieldValue(obj, "return_metadata"),
-		lookupFieldValue(obj, "return_playtime_stats"),
-		lookupFieldValue(obj, "return_details"),
-		lookupFieldValue(obj, "strip_description_bbcode"),
-		lookupFieldValue(obj, "desired_revision"),
-		lookupFieldValue(obj, "return_reactions"),
-		lookupFieldValue(obj, "includetags"),
-		lookupFieldValue(obj, "includeadditionalpreviews"),
-		lookupFieldValue(obj, "includechildren"),
-		lookupFieldValue(obj, "includekvtags"),
-		lookupFieldValue(obj, "includevotes"),
-		lookupFieldValue(obj, "short_description"),
-		lookupFieldValue(obj, "includeforsaledata"),
-		lookupFieldValue(obj, "includemetadata"),
-		lookupFieldValue(obj, "includereactions"),
-		lookupFieldValue(obj, "publishedfileid"),
-		lookupFieldValue(obj, "for_table_of_contents"),
-		lookupFieldValue(obj, "specific_sectionid"),
+		lookupFieldValue(obj, "count"),
+		lookupFieldValue(obj, "name[0]"),
+		lookupFieldValue(obj, "startdate"),
+		lookupFieldValue(obj, "enddate"),
+		lookupFieldValue(obj, "key"),
 		lookupFieldValue(obj, "steamid"),
-		lookupFieldValue(obj, "shortcutid"),
-		lookupFieldValue(obj, "type"),
-		lookupFieldValue(obj, "sortmethod"),
-		lookupFieldValue(obj, "privacy"),
-		lookupFieldValue(obj, "match_cloud_filename"),
-		lookupFieldValue(obj, "startindex_override"),
-		lookupFieldValue(obj, "return_apps"),
+		lookupFieldValue(obj, "l"),
 	)
 	if err != nil {
 		return err
@@ -683,30 +662,30 @@ func (s *Store) UpsertIdota2Match570(data json.RawMessage) error {
 	}
 
 	_, err = tx.Exec(
-		`INSERT INTO idota2_match_570 (id, data, synced_at, start_at_match_seq_num, matches_requested, partner, home_division, league_id, match_id, dpc, hero_id, game_mode, skill, min_players, account_id, start_at_match_id, start_at_team_id, teams_requested, time_frame, phase_id, include_persona_names)
+		`INSERT INTO idota2_match_570 (id, data, synced_at, league_id, match_id, dpc, include_persona_names, hero_id, game_mode, skill, min_players, account_id, start_at_match_id, matches_requested, start_at_match_seq_num, start_at_team_id, teams_requested, partner, home_division, time_frame, phase_id)
 		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		 ON CONFLICT(id) DO UPDATE SET data = excluded.data, synced_at = excluded.synced_at, start_at_match_seq_num = excluded.start_at_match_seq_num, matches_requested = excluded.matches_requested, partner = excluded.partner, home_division = excluded.home_division, league_id = excluded.league_id, match_id = excluded.match_id, dpc = excluded.dpc, hero_id = excluded.hero_id, game_mode = excluded.game_mode, skill = excluded.skill, min_players = excluded.min_players, account_id = excluded.account_id, start_at_match_id = excluded.start_at_match_id, start_at_team_id = excluded.start_at_team_id, teams_requested = excluded.teams_requested, time_frame = excluded.time_frame, phase_id = excluded.phase_id, include_persona_names = excluded.include_persona_names`,
+		 ON CONFLICT(id) DO UPDATE SET data = excluded.data, synced_at = excluded.synced_at, league_id = excluded.league_id, match_id = excluded.match_id, dpc = excluded.dpc, include_persona_names = excluded.include_persona_names, hero_id = excluded.hero_id, game_mode = excluded.game_mode, skill = excluded.skill, min_players = excluded.min_players, account_id = excluded.account_id, start_at_match_id = excluded.start_at_match_id, matches_requested = excluded.matches_requested, start_at_match_seq_num = excluded.start_at_match_seq_num, start_at_team_id = excluded.start_at_team_id, teams_requested = excluded.teams_requested, partner = excluded.partner, home_division = excluded.home_division, time_frame = excluded.time_frame, phase_id = excluded.phase_id`,
 		id,
 		string(data),
 		time.Now(),
-		lookupFieldValue(obj, "start_at_match_seq_num"),
-		lookupFieldValue(obj, "matches_requested"),
-		lookupFieldValue(obj, "partner"),
-		lookupFieldValue(obj, "home_division"),
 		lookupFieldValue(obj, "league_id"),
 		lookupFieldValue(obj, "match_id"),
 		lookupFieldValue(obj, "dpc"),
+		lookupFieldValue(obj, "include_persona_names"),
 		lookupFieldValue(obj, "hero_id"),
 		lookupFieldValue(obj, "game_mode"),
 		lookupFieldValue(obj, "skill"),
 		lookupFieldValue(obj, "min_players"),
 		lookupFieldValue(obj, "account_id"),
 		lookupFieldValue(obj, "start_at_match_id"),
+		lookupFieldValue(obj, "matches_requested"),
+		lookupFieldValue(obj, "start_at_match_seq_num"),
 		lookupFieldValue(obj, "start_at_team_id"),
 		lookupFieldValue(obj, "teams_requested"),
+		lookupFieldValue(obj, "partner"),
+		lookupFieldValue(obj, "home_division"),
 		lookupFieldValue(obj, "time_frame"),
 		lookupFieldValue(obj, "phase_id"),
-		lookupFieldValue(obj, "include_persona_names"),
 	)
 	if err != nil {
 		return err
@@ -714,16 +693,16 @@ func (s *Store) UpsertIdota2Match570(data json.RawMessage) error {
 
 	return tx.Commit()
 }
-// UpsertIsteamUserStats inserts or updates a isteam_user_stats record with domain-specific columns.
-func (s *Store) UpsertIsteamUserStats(data json.RawMessage) error {
+// UpsertIauthenticationService inserts or updates a iauthentication_service record with domain-specific columns.
+func (s *Store) UpsertIauthenticationService(data json.RawMessage) error {
 	var obj map[string]any
 	if err := json.Unmarshal(data, &obj); err != nil {
-		return fmt.Errorf("unmarshaling isteam_user_stats: %w", err)
+		return fmt.Errorf("unmarshaling iauthentication_service: %w", err)
 	}
 
 	id := extractObjectID(obj)
 	if id == "" {
-		return fmt.Errorf("missing id for isteam_user_stats")
+		return fmt.Errorf("missing id for iauthentication_service")
 	}
 
 	tx, err := s.db.Begin()
@@ -732,25 +711,139 @@ func (s *Store) UpsertIsteamUserStats(data json.RawMessage) error {
 	}
 	defer tx.Rollback()
 
-	if err := s.upsertGenericResourceTx(tx, "isteam_user_stats", id, data); err != nil {
+	if err := s.upsertGenericResourceTx(tx, "iauthentication_service", id, data); err != nil {
 		return err
 	}
 
 	_, err = tx.Exec(
-		`INSERT INTO isteam_user_stats (id, data, synced_at, gameid, appid, count, startdate, enddate, key, steamid, l)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		 ON CONFLICT(id) DO UPDATE SET data = excluded.data, synced_at = excluded.synced_at, gameid = excluded.gameid, appid = excluded.appid, count = excluded.count, startdate = excluded.startdate, enddate = excluded.enddate, key = excluded.key, steamid = excluded.steamid, l = excluded.l`,
+		`INSERT INTO iauthentication_service (id, data, synced_at, account_name, client_id, code, code_type, steamid, device_details, device_friendly_name, platform_type, website_id, did_confirm_login, results, selected_action, request_id, token_to_revoke, confirm, persistence, signature, version, encrypted_password, encryption_timestamp, guard_data, language, qos_level, remember_login)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		 ON CONFLICT(id) DO UPDATE SET data = excluded.data, synced_at = excluded.synced_at, account_name = excluded.account_name, client_id = excluded.client_id, code = excluded.code, code_type = excluded.code_type, steamid = excluded.steamid, device_details = excluded.device_details, device_friendly_name = excluded.device_friendly_name, platform_type = excluded.platform_type, website_id = excluded.website_id, did_confirm_login = excluded.did_confirm_login, results = excluded.results, selected_action = excluded.selected_action, request_id = excluded.request_id, token_to_revoke = excluded.token_to_revoke, confirm = excluded.confirm, persistence = excluded.persistence, signature = excluded.signature, version = excluded.version, encrypted_password = excluded.encrypted_password, encryption_timestamp = excluded.encryption_timestamp, guard_data = excluded.guard_data, language = excluded.language, qos_level = excluded.qos_level, remember_login = excluded.remember_login`,
 		id,
 		string(data),
 		time.Now(),
-		lookupFieldValue(obj, "gameid"),
-		lookupFieldValue(obj, "appid"),
-		lookupFieldValue(obj, "count"),
-		lookupFieldValue(obj, "startdate"),
-		lookupFieldValue(obj, "enddate"),
+		lookupFieldValue(obj, "account_name"),
+		lookupFieldValue(obj, "client_id"),
+		lookupFieldValue(obj, "code"),
+		lookupFieldValue(obj, "code_type"),
+		lookupFieldValue(obj, "steamid"),
+		lookupFieldValue(obj, "device_details"),
+		lookupFieldValue(obj, "device_friendly_name"),
+		lookupFieldValue(obj, "platform_type"),
+		lookupFieldValue(obj, "website_id"),
+		lookupFieldValue(obj, "did_confirm_login"),
+		lookupFieldValue(obj, "results"),
+		lookupFieldValue(obj, "selected_action"),
+		lookupFieldValue(obj, "request_id"),
+		lookupFieldValue(obj, "token_to_revoke"),
+		lookupFieldValue(obj, "confirm"),
+		lookupFieldValue(obj, "persistence"),
+		lookupFieldValue(obj, "signature"),
+		lookupFieldValue(obj, "version"),
+		lookupFieldValue(obj, "encrypted_password"),
+		lookupFieldValue(obj, "encryption_timestamp"),
+		lookupFieldValue(obj, "guard_data"),
+		lookupFieldValue(obj, "language"),
+		lookupFieldValue(obj, "qos_level"),
+		lookupFieldValue(obj, "remember_login"),
+	)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+// UpsertIpublishedFileService inserts or updates a ipublished_file_service record with domain-specific columns.
+func (s *Store) UpsertIpublishedFileService(data json.RawMessage) error {
+	var obj map[string]any
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return fmt.Errorf("unmarshaling ipublished_file_service: %w", err)
+	}
+
+	id := extractObjectID(obj)
+	if id == "" {
+		return fmt.Errorf("missing id for ipublished_file_service")
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if err := s.upsertGenericResourceTx(tx, "ipublished_file_service", id, data); err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(
+		`INSERT INTO ipublished_file_service (id, data, synced_at, key, steamid, appid, shortcutid, page, numperpage, type, sortmethod, privacy, requiredtags, excludedtags, required_kv_tags, filetype, creator_appid, match_cloud_filename, cache_max_age_seconds, language, taggroups, excluded_content_descriptors, admin_query, totalonly, ids_only, return_vote_data, return_tags, return_kv_tags, return_previews, return_children, return_short_description, return_for_sale_data, return_metadata, return_playtime_stats, strip_description_bbcode, return_reactions, startindex_override, desired_revision, return_apps, publishedfileids, query_type, cursor, match_all_tags, required_flags, omitted_flags, search_text, child_publishedfileid, days, include_recent_votes_only, date_range_created, date_range_updated, special_filter, return_details, includetags, includeadditionalpreviews, includechildren, includekvtags, includevotes, short_description, includeforsaledata, includemetadata, includereactions, publishedfileid, for_table_of_contents, specific_sectionid)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		 ON CONFLICT(id) DO UPDATE SET data = excluded.data, synced_at = excluded.synced_at, key = excluded.key, steamid = excluded.steamid, appid = excluded.appid, shortcutid = excluded.shortcutid, page = excluded.page, numperpage = excluded.numperpage, type = excluded.type, sortmethod = excluded.sortmethod, privacy = excluded.privacy, requiredtags = excluded.requiredtags, excludedtags = excluded.excludedtags, required_kv_tags = excluded.required_kv_tags, filetype = excluded.filetype, creator_appid = excluded.creator_appid, match_cloud_filename = excluded.match_cloud_filename, cache_max_age_seconds = excluded.cache_max_age_seconds, language = excluded.language, taggroups = excluded.taggroups, excluded_content_descriptors = excluded.excluded_content_descriptors, admin_query = excluded.admin_query, totalonly = excluded.totalonly, ids_only = excluded.ids_only, return_vote_data = excluded.return_vote_data, return_tags = excluded.return_tags, return_kv_tags = excluded.return_kv_tags, return_previews = excluded.return_previews, return_children = excluded.return_children, return_short_description = excluded.return_short_description, return_for_sale_data = excluded.return_for_sale_data, return_metadata = excluded.return_metadata, return_playtime_stats = excluded.return_playtime_stats, strip_description_bbcode = excluded.strip_description_bbcode, return_reactions = excluded.return_reactions, startindex_override = excluded.startindex_override, desired_revision = excluded.desired_revision, return_apps = excluded.return_apps, publishedfileids = excluded.publishedfileids, query_type = excluded.query_type, cursor = excluded.cursor, match_all_tags = excluded.match_all_tags, required_flags = excluded.required_flags, omitted_flags = excluded.omitted_flags, search_text = excluded.search_text, child_publishedfileid = excluded.child_publishedfileid, days = excluded.days, include_recent_votes_only = excluded.include_recent_votes_only, date_range_created = excluded.date_range_created, date_range_updated = excluded.date_range_updated, special_filter = excluded.special_filter, return_details = excluded.return_details, includetags = excluded.includetags, includeadditionalpreviews = excluded.includeadditionalpreviews, includechildren = excluded.includechildren, includekvtags = excluded.includekvtags, includevotes = excluded.includevotes, short_description = excluded.short_description, includeforsaledata = excluded.includeforsaledata, includemetadata = excluded.includemetadata, includereactions = excluded.includereactions, publishedfileid = excluded.publishedfileid, for_table_of_contents = excluded.for_table_of_contents, specific_sectionid = excluded.specific_sectionid`,
+		id,
+		string(data),
+		time.Now(),
 		lookupFieldValue(obj, "key"),
 		lookupFieldValue(obj, "steamid"),
-		lookupFieldValue(obj, "l"),
+		lookupFieldValue(obj, "appid"),
+		lookupFieldValue(obj, "shortcutid"),
+		lookupFieldValue(obj, "page"),
+		lookupFieldValue(obj, "numperpage"),
+		lookupFieldValue(obj, "type"),
+		lookupFieldValue(obj, "sortmethod"),
+		lookupFieldValue(obj, "privacy"),
+		lookupFieldValue(obj, "requiredtags"),
+		lookupFieldValue(obj, "excludedtags"),
+		lookupFieldValue(obj, "required_kv_tags"),
+		lookupFieldValue(obj, "filetype"),
+		lookupFieldValue(obj, "creator_appid"),
+		lookupFieldValue(obj, "match_cloud_filename"),
+		lookupFieldValue(obj, "cache_max_age_seconds"),
+		lookupFieldValue(obj, "language"),
+		lookupFieldValue(obj, "taggroups"),
+		lookupFieldValue(obj, "excluded_content_descriptors"),
+		lookupFieldValue(obj, "admin_query"),
+		lookupFieldValue(obj, "totalonly"),
+		lookupFieldValue(obj, "ids_only"),
+		lookupFieldValue(obj, "return_vote_data"),
+		lookupFieldValue(obj, "return_tags"),
+		lookupFieldValue(obj, "return_kv_tags"),
+		lookupFieldValue(obj, "return_previews"),
+		lookupFieldValue(obj, "return_children"),
+		lookupFieldValue(obj, "return_short_description"),
+		lookupFieldValue(obj, "return_for_sale_data"),
+		lookupFieldValue(obj, "return_metadata"),
+		lookupFieldValue(obj, "return_playtime_stats"),
+		lookupFieldValue(obj, "strip_description_bbcode"),
+		lookupFieldValue(obj, "return_reactions"),
+		lookupFieldValue(obj, "startindex_override"),
+		lookupFieldValue(obj, "desired_revision"),
+		lookupFieldValue(obj, "return_apps"),
+		lookupFieldValue(obj, "publishedfileids"),
+		lookupFieldValue(obj, "query_type"),
+		lookupFieldValue(obj, "cursor"),
+		lookupFieldValue(obj, "match_all_tags"),
+		lookupFieldValue(obj, "required_flags"),
+		lookupFieldValue(obj, "omitted_flags"),
+		lookupFieldValue(obj, "search_text"),
+		lookupFieldValue(obj, "child_publishedfileid"),
+		lookupFieldValue(obj, "days"),
+		lookupFieldValue(obj, "include_recent_votes_only"),
+		lookupFieldValue(obj, "date_range_created"),
+		lookupFieldValue(obj, "date_range_updated"),
+		lookupFieldValue(obj, "special_filter"),
+		lookupFieldValue(obj, "return_details"),
+		lookupFieldValue(obj, "includetags"),
+		lookupFieldValue(obj, "includeadditionalpreviews"),
+		lookupFieldValue(obj, "includechildren"),
+		lookupFieldValue(obj, "includekvtags"),
+		lookupFieldValue(obj, "includevotes"),
+		lookupFieldValue(obj, "short_description"),
+		lookupFieldValue(obj, "includeforsaledata"),
+		lookupFieldValue(obj, "includemetadata"),
+		lookupFieldValue(obj, "includereactions"),
+		lookupFieldValue(obj, "publishedfileid"),
+		lookupFieldValue(obj, "for_table_of_contents"),
+		lookupFieldValue(obj, "specific_sectionid"),
 	)
 	if err != nil {
 		return err

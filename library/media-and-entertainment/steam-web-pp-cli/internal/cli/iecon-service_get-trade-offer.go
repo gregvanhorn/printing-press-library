@@ -19,7 +19,7 @@ func newIeconServiceGetTradeOfferCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "get-trade-offer",
-		Short: "Gets a specific trade offer",
+		Short: "GetTradeOffer operation of IEconService",
 		Example: "  steam-web-pp-cli iecon-service get-trade-offer",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()

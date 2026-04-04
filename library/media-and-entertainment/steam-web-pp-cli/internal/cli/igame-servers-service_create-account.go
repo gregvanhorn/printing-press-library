@@ -13,16 +13,16 @@ import (
 )
 
 func newIgameServersServiceCreateAccountCmd(flags *rootFlags) *cobra.Command {
-	var flagKey string
-	var flagAppid string
-	var flagMemo string
+	var bodyAppid int
+	var bodyKey string
+	var bodyMemo string
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "create-account",
 		Aliases: []string{"create"},
-		Short: "Creates a persistent game server account",
-		Example: "  steam-web-pp-cli igame-servers-service create-account",
+		Short: "CreateAccount operation of IGameServersService",
+		Example: "  steam-web-pp-cli igame-servers-service create-account --key your-token-here",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -43,6 +43,15 @@ func newIgameServersServiceCreateAccountCmd(flags *rootFlags) *cobra.Command {
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyAppid != 0 {
+					body["appid"] = bodyAppid
+				}
+				if bodyKey != "" {
+					body["key"] = bodyKey
+				}
+				if bodyMemo != "" {
+					body["memo"] = bodyMemo
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -107,10 +116,10 @@ func newIgameServersServiceCreateAccountCmd(flags *rootFlags) *cobra.Command {
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	cmd.Flags().StringVar(&flagAppid, "appid", "", "The app to use the account for")
+	cmd.Flags().IntVar(&bodyAppid, "appid", 0, "The app to use the account for")
 	_ = cmd.MarkFlagRequired("appid")
-	cmd.Flags().StringVar(&flagMemo, "memo", "", "The memo to set on the new account")
+	cmd.Flags().StringVar(&bodyKey, "key", "", "Access key")
+	cmd.Flags().StringVar(&bodyMemo, "memo", "", "The memo to set on the new account")
 	_ = cmd.MarkFlagRequired("memo")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 

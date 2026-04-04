@@ -13,13 +13,13 @@ import (
 )
 
 func newIhelpRequestLogsServiceGetApplicationLogDemandCmd(flags *rootFlags) *cobra.Command {
-	var flagAppid string
+	var bodyAppid int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "get-application-log-demand",
 		Aliases: []string{"create"},
-		Short: "Returns whether the server would like the user to upload logs",
+		Short: "GetApplicationLogDemand operation of IHelpRequestLogsService",
 		Example: "  steam-web-pp-cli ihelp-request-logs-service get-application-log-demand",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -41,6 +41,9 @@ func newIhelpRequestLogsServiceGetApplicationLogDemandCmd(flags *rootFlags) *cob
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyAppid != 0 {
+					body["appid"] = bodyAppid
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -105,7 +108,7 @@ func newIhelpRequestLogsServiceGetApplicationLogDemandCmd(flags *rootFlags) *cob
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagAppid, "appid", "", "Appid")
+	cmd.Flags().IntVar(&bodyAppid, "appid", 0, "Appid")
 	_ = cmd.MarkFlagRequired("appid")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 

@@ -17,7 +17,7 @@ func newIgameServersServiceQueryLoginTokenCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "query-login-token",
-		Short: "Queries the status of the specified token, which must be owned by you",
+		Short: "QueryLoginToken operation of IGameServersService",
 		Example: "  steam-web-pp-cli igame-servers-service query-login-token",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()

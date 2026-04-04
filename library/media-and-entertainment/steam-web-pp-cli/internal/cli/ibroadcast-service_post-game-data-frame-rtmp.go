@@ -13,17 +13,17 @@ import (
 )
 
 func newIbroadcastServicePostGameDataFrameRtmpCmd(flags *rootFlags) *cobra.Command {
-	var flagAppid string
-	var flagSteamid string
-	var flagRtmpToken string
-	var flagFrameData string
+	var bodyAppid int
+	var bodyFrameData string
+	var bodyRtmpToken string
+	var bodySteamid int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "post-game-data-frame-rtmp",
 		Aliases: []string{"create"},
-		Short: "Add a game meta data frame to broadcast from a client. Uses RTMP token for validation",
-		Example: "  steam-web-pp-cli ibroadcast-service post-game-data-frame-rtmp",
+		Short: "PostGameDataFrameRTMP operation of IBroadcastService",
+		Example: "  steam-web-pp-cli ibroadcast-service post-game-data-frame-rtmp --frame-data example-value",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -44,6 +44,18 @@ func newIbroadcastServicePostGameDataFrameRtmpCmd(flags *rootFlags) *cobra.Comma
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyAppid != 0 {
+					body["appid"] = bodyAppid
+				}
+				if bodyFrameData != "" {
+					body["frame_data"] = bodyFrameData
+				}
+				if bodyRtmpToken != "" {
+					body["rtmp_token"] = bodyRtmpToken
+				}
+				if bodySteamid != 0 {
+					body["steamid"] = bodySteamid
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -108,14 +120,14 @@ func newIbroadcastServicePostGameDataFrameRtmpCmd(flags *rootFlags) *cobra.Comma
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagAppid, "appid", "", "AppID of the game being broadcasted")
+	cmd.Flags().IntVar(&bodyAppid, "appid", 0, "AppID of the game being broadcasted")
 	_ = cmd.MarkFlagRequired("appid")
-	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "Broadcasters SteamID")
-	_ = cmd.MarkFlagRequired("steamid")
-	cmd.Flags().StringVar(&flagRtmpToken, "rtmp-token", "", "Valid RTMP token for the Broadcaster")
-	_ = cmd.MarkFlagRequired("rtmp-token")
-	cmd.Flags().StringVar(&flagFrameData, "frame-data", "", "game data frame expressing current state of game (string, zipped, whatever)")
+	cmd.Flags().StringVar(&bodyFrameData, "frame-data", "", "game data frame expressing current state of game (string, zipped, whatever)")
 	_ = cmd.MarkFlagRequired("frame-data")
+	cmd.Flags().StringVar(&bodyRtmpToken, "rtmp-token", "", "Valid RTMP token for the Broadcaster")
+	_ = cmd.MarkFlagRequired("rtmp-token")
+	cmd.Flags().IntVar(&bodySteamid, "steamid", 0, "Broadcasters SteamID")
+	_ = cmd.MarkFlagRequired("steamid")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

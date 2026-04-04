@@ -18,7 +18,7 @@ func newIeconServiceGetTradeHoldDurationsCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "get-trade-hold-durations",
-		Short: "Returns the estimated hold duration and end date that a trade with a user would have",
+		Short: "GetTradeHoldDurations operation of IEconService",
 		Example: "  steam-web-pp-cli iecon-service get-trade-hold-durations",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()

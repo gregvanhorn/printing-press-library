@@ -20,7 +20,7 @@ func newIpublishedFileServiceGetSubSectionDataCmd(flags *rootFlags) *cobra.Comma
 
 	cmd := &cobra.Command{
 		Use:   "get-sub-section-data",
-		Short: "Get sub section data (for table of contents, a specific section, or all)",
+		Short: "GetSubSectionData operation of IPublishedFileService",
 		Example: "  steam-web-pp-cli ipublished-file-service get-sub-section-data",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()

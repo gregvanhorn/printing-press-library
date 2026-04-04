@@ -13,14 +13,14 @@ import (
 )
 
 func newIgameNotificationsServiceUserDeleteSessionCmd(flags *rootFlags) *cobra.Command {
-	var flagSessionid string
-	var flagAppid string
-	var flagSteamid string
+	var bodyAppid int
+	var bodySessionid int
+	var bodySteamid int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "user-delete-session",
-		Short: "Deletes an async game session",
+		Short: "UserDeleteSession operation of IGameNotificationsService",
 		Example: "  steam-web-pp-cli igame-notifications-service user-delete-session",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -42,6 +42,15 @@ func newIgameNotificationsServiceUserDeleteSessionCmd(flags *rootFlags) *cobra.C
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyAppid != 0 {
+					body["appid"] = bodyAppid
+				}
+				if bodySessionid != 0 {
+					body["sessionid"] = bodySessionid
+				}
+				if bodySteamid != 0 {
+					body["steamid"] = bodySteamid
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -106,11 +115,12 @@ func newIgameNotificationsServiceUserDeleteSessionCmd(flags *rootFlags) *cobra.C
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagSessionid, "sessionid", "", "The sessionid to delete.")
-	_ = cmd.MarkFlagRequired("sessionid")
-	cmd.Flags().StringVar(&flagAppid, "appid", "", "The appid of the session to delete.")
+	cmd.Flags().IntVar(&bodyAppid, "appid", 0, "The appid of the session to delete.")
 	_ = cmd.MarkFlagRequired("appid")
-	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "steamid to make the request on behalf of -- if specified, the user must be in the session.")
+	cmd.Flags().IntVar(&bodySessionid, "sessionid", 0, "The sessionid to delete.")
+	_ = cmd.MarkFlagRequired("sessionid")
+	cmd.Flags().IntVar(&bodySteamid, "steamid", 0, "(Optional) steamid to make the request on behalf of -- if specified, the user must be in the session.")
+	_ = cmd.MarkFlagRequired("steamid")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

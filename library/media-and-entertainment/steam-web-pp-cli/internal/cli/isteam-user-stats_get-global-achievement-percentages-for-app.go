@@ -25,7 +25,7 @@ func newIsteamUserStatsGetGlobalAchievementPercentagesForAppCmd(flags *rootFlags
 				return err
 			}
 
-			path := "/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2"
+			path := "/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v1"
 			params := map[string]string{}
 			if flagGameid != "" {
 				params["gameid"] = fmt.Sprintf("%v", flagGameid)

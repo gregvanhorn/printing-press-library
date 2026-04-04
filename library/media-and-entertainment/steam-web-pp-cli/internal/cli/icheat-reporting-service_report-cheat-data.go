@@ -13,27 +13,27 @@ import (
 )
 
 func newIcheatReportingServiceReportCheatDataCmd(flags *rootFlags) *cobra.Command {
-	var flagKey string
-	var flagSteamid string
-	var flagAppid string
-	var flagPathandfilename string
-	var flagWebcheaturl string
-	var flagTimeNow int
-	var flagTimeStarted int
-	var flagTimeStopped int
-	var flagCheatname string
-	var flagGameProcessId string
-	var flagCheatProcessId string
-	var flagCheatParam1 int
-	var flagCheatParam2 int
-	var flagCheatDataDump string
+	var bodyAppid int
+	var bodyCheatDataDump string
+	var bodyCheatParam1 int
+	var bodyCheatParam2 int
+	var bodyCheatProcessId int
+	var bodyCheatname string
+	var bodyGameProcessId int
+	var bodyKey string
+	var bodyPathandfilename string
+	var bodySteamid int
+	var bodyTimeNow int
+	var bodyTimeStarted int
+	var bodyTimeStopped int
+	var bodyWebcheaturl string
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "report-cheat-data",
 		Aliases: []string{"create"},
-		Short: "Reports cheat data. Only use on test account that is running the game but not in a multiplayer session.",
-		Example: "  steam-web-pp-cli icheat-reporting-service report-cheat-data",
+		Short: "ReportCheatData operation of ICheatReportingService",
+		Example: "  steam-web-pp-cli icheat-reporting-service report-cheat-data --cheat-data-dump example-value",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -54,6 +54,48 @@ func newIcheatReportingServiceReportCheatDataCmd(flags *rootFlags) *cobra.Comman
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyAppid != 0 {
+					body["appid"] = bodyAppid
+				}
+				if bodyCheatDataDump != "" {
+					body["cheat_data_dump"] = bodyCheatDataDump
+				}
+				if bodyCheatParam1 != 0 {
+					body["cheat_param_1"] = bodyCheatParam1
+				}
+				if bodyCheatParam2 != 0 {
+					body["cheat_param_2"] = bodyCheatParam2
+				}
+				if bodyCheatProcessId != 0 {
+					body["cheat_process_id"] = bodyCheatProcessId
+				}
+				if bodyCheatname != "" {
+					body["cheatname"] = bodyCheatname
+				}
+				if bodyGameProcessId != 0 {
+					body["game_process_id"] = bodyGameProcessId
+				}
+				if bodyKey != "" {
+					body["key"] = bodyKey
+				}
+				if bodyPathandfilename != "" {
+					body["pathandfilename"] = bodyPathandfilename
+				}
+				if bodySteamid != 0 {
+					body["steamid"] = bodySteamid
+				}
+				if bodyTimeNow != 0 {
+					body["time_now"] = bodyTimeNow
+				}
+				if bodyTimeStarted != 0 {
+					body["time_started"] = bodyTimeStarted
+				}
+				if bodyTimeStopped != 0 {
+					body["time_stopped"] = bodyTimeStopped
+				}
+				if bodyWebcheaturl != "" {
+					body["webcheaturl"] = bodyWebcheaturl
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -118,33 +160,33 @@ func newIcheatReportingServiceReportCheatDataCmd(flags *rootFlags) *cobra.Comman
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "steamid of the user running and reporting the cheat.")
-	_ = cmd.MarkFlagRequired("steamid")
-	cmd.Flags().StringVar(&flagAppid, "appid", "", "The appid.")
+	cmd.Flags().IntVar(&bodyAppid, "appid", 0, "The appid.")
 	_ = cmd.MarkFlagRequired("appid")
-	cmd.Flags().StringVar(&flagPathandfilename, "pathandfilename", "", "path and file name of the cheat executable.")
-	_ = cmd.MarkFlagRequired("pathandfilename")
-	cmd.Flags().StringVar(&flagWebcheaturl, "webcheaturl", "", "web url where the cheat was found and downloaded.")
-	_ = cmd.MarkFlagRequired("webcheaturl")
-	cmd.Flags().IntVar(&flagTimeNow, "time-now", 0, "local system time now.")
-	_ = cmd.MarkFlagRequired("time-now")
-	cmd.Flags().IntVar(&flagTimeStarted, "time-started", 0, "local system time when cheat process started. ( 0 if not yet run )")
-	_ = cmd.MarkFlagRequired("time-started")
-	cmd.Flags().IntVar(&flagTimeStopped, "time-stopped", 0, "local system time when cheat process stopped. ( 0 if still running )")
-	_ = cmd.MarkFlagRequired("time-stopped")
-	cmd.Flags().StringVar(&flagCheatname, "cheatname", "", "descriptive name for the cheat.")
-	_ = cmd.MarkFlagRequired("cheatname")
-	cmd.Flags().StringVar(&flagGameProcessId, "game-process-id", "", "process ID of the running game.")
-	_ = cmd.MarkFlagRequired("game-process-id")
-	cmd.Flags().StringVar(&flagCheatProcessId, "cheat-process-id", "", "process ID of the cheat process that ran")
-	_ = cmd.MarkFlagRequired("cheat-process-id")
-	cmd.Flags().IntVar(&flagCheatParam1, "cheat-param-1", 0, "cheat param 1")
-	_ = cmd.MarkFlagRequired("cheat-param-1")
-	cmd.Flags().IntVar(&flagCheatParam2, "cheat-param-2", 0, "cheat param 2")
-	_ = cmd.MarkFlagRequired("cheat-param-2")
-	cmd.Flags().StringVar(&flagCheatDataDump, "cheat-data-dump", "", "data collection in json format")
+	cmd.Flags().StringVar(&bodyCheatDataDump, "cheat-data-dump", "", "data collection in json format")
 	_ = cmd.MarkFlagRequired("cheat-data-dump")
+	cmd.Flags().IntVar(&bodyCheatParam1, "cheat-param-1", 0, "cheat param 1")
+	_ = cmd.MarkFlagRequired("cheat-param-1")
+	cmd.Flags().IntVar(&bodyCheatParam2, "cheat-param-2", 0, "cheat param 2")
+	_ = cmd.MarkFlagRequired("cheat-param-2")
+	cmd.Flags().IntVar(&bodyCheatProcessId, "cheat-process-id", 0, "process ID of the cheat process that ran")
+	_ = cmd.MarkFlagRequired("cheat-process-id")
+	cmd.Flags().StringVar(&bodyCheatname, "cheatname", "", "descriptive name for the cheat.")
+	_ = cmd.MarkFlagRequired("cheatname")
+	cmd.Flags().IntVar(&bodyGameProcessId, "game-process-id", 0, "process ID of the running game.")
+	_ = cmd.MarkFlagRequired("game-process-id")
+	cmd.Flags().StringVar(&bodyKey, "key", "", "Access key")
+	cmd.Flags().StringVar(&bodyPathandfilename, "pathandfilename", "", "path and file name of the cheat executable.")
+	_ = cmd.MarkFlagRequired("pathandfilename")
+	cmd.Flags().IntVar(&bodySteamid, "steamid", 0, "steamid of the user running and reporting the cheat.")
+	_ = cmd.MarkFlagRequired("steamid")
+	cmd.Flags().IntVar(&bodyTimeNow, "time-now", 0, "local system time now.")
+	_ = cmd.MarkFlagRequired("time-now")
+	cmd.Flags().IntVar(&bodyTimeStarted, "time-started", 0, "local system time when cheat process started. ( 0 if not yet run )")
+	_ = cmd.MarkFlagRequired("time-started")
+	cmd.Flags().IntVar(&bodyTimeStopped, "time-stopped", 0, "local system time when cheat process stopped. ( 0 if still running )")
+	_ = cmd.MarkFlagRequired("time-stopped")
+	cmd.Flags().StringVar(&bodyWebcheaturl, "webcheaturl", "", "web url where the cheat was found and downloaded.")
+	_ = cmd.MarkFlagRequired("webcheaturl")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

@@ -14,10 +14,13 @@ func newIsteamUserStatsCmd(flags *rootFlags) *cobra.Command {
 	}
 
 	cmd.AddCommand(newIsteamUserStatsGetGlobalAchievementPercentagesForAppCmd(flags))
+	cmd.AddCommand(newIsteamUserStatsGetGlobalAchievementPercentagesForAppIsteamuserstatsCmd(flags))
 	cmd.AddCommand(newIsteamUserStatsGetGlobalStatsForGameCmd(flags))
 	cmd.AddCommand(newIsteamUserStatsGetNumberOfCurrentPlayersCmd(flags))
 	cmd.AddCommand(newIsteamUserStatsGetPlayerAchievementsCmd(flags))
 	cmd.AddCommand(newIsteamUserStatsGetSchemaForGameCmd(flags))
+	cmd.AddCommand(newIsteamUserStatsGetSchemaForGameIsteamuserstatsCmd(flags))
 	cmd.AddCommand(newIsteamUserStatsGetUserStatsForGameCmd(flags))
+	cmd.AddCommand(newIsteamUserStatsGetUserStatsForGameIsteamuserstatsCmd(flags))
 	return cmd
 }

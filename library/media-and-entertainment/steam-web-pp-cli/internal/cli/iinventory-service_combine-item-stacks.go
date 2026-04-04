@@ -13,19 +13,19 @@ import (
 )
 
 func newIinventoryServiceCombineItemStacksCmd(flags *rootFlags) *cobra.Command {
-	var flagKey string
-	var flagAppid string
-	var flagFromitemid string
-	var flagDestitemid string
-	var flagQuantity int
-	var flagSteamid string
+	var bodyAppid int
+	var bodyDestitemid int
+	var bodyFromitemid int
+	var bodyKey string
+	var bodyQuantity int
+	var bodySteamid int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "combine-item-stacks",
 		Aliases: []string{"create"},
-		Short: "Combine two stacks of items",
-		Example: "  steam-web-pp-cli iinventory-service combine-item-stacks",
+		Short: "CombineItemStacks operation of IInventoryService",
+		Example: "  steam-web-pp-cli iinventory-service combine-item-stacks --key your-token-here",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -46,6 +46,24 @@ func newIinventoryServiceCombineItemStacksCmd(flags *rootFlags) *cobra.Command {
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyAppid != 0 {
+					body["appid"] = bodyAppid
+				}
+				if bodyDestitemid != 0 {
+					body["destitemid"] = bodyDestitemid
+				}
+				if bodyFromitemid != 0 {
+					body["fromitemid"] = bodyFromitemid
+				}
+				if bodyKey != "" {
+					body["key"] = bodyKey
+				}
+				if bodyQuantity != 0 {
+					body["quantity"] = bodyQuantity
+				}
+				if bodySteamid != 0 {
+					body["steamid"] = bodySteamid
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -110,16 +128,16 @@ func newIinventoryServiceCombineItemStacksCmd(flags *rootFlags) *cobra.Command {
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	cmd.Flags().StringVar(&flagAppid, "appid", "", "Appid")
+	cmd.Flags().IntVar(&bodyAppid, "appid", 0, "Appid")
 	_ = cmd.MarkFlagRequired("appid")
-	cmd.Flags().StringVar(&flagFromitemid, "fromitemid", "", "Fromitemid")
-	_ = cmd.MarkFlagRequired("fromitemid")
-	cmd.Flags().StringVar(&flagDestitemid, "destitemid", "", "Destitemid")
+	cmd.Flags().IntVar(&bodyDestitemid, "destitemid", 0, "Destitemid")
 	_ = cmd.MarkFlagRequired("destitemid")
-	cmd.Flags().IntVar(&flagQuantity, "quantity", 0, "Quantity")
+	cmd.Flags().IntVar(&bodyFromitemid, "fromitemid", 0, "Fromitemid")
+	_ = cmd.MarkFlagRequired("fromitemid")
+	cmd.Flags().StringVar(&bodyKey, "key", "", "Access key")
+	cmd.Flags().IntVar(&bodyQuantity, "quantity", 0, "Quantity")
 	_ = cmd.MarkFlagRequired("quantity")
-	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "Steamid")
+	cmd.Flags().IntVar(&bodySteamid, "steamid", 0, "Steamid")
 	_ = cmd.MarkFlagRequired("steamid")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 

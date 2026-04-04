@@ -24,7 +24,7 @@ func newIplayerServiceGetOwnedGamesCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "get-owned-games",
-		Short: "Return a list of games owned by the player",
+		Short: "GetOwnedGames operation of IPlayerService",
 		Example: "  steam-web-pp-cli iplayer-service get-owned-games",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()

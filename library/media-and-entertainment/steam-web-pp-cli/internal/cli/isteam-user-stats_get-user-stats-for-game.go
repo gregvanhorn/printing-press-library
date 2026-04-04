@@ -26,7 +26,7 @@ func newIsteamUserStatsGetUserStatsForGameCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 
-			path := "/ISteamUserStats/GetUserStatsForGame/v2"
+			path := "/ISteamUserStats/GetUserStatsForGame/v1"
 			params := map[string]string{}
 			if flagKey != "" {
 				params["key"] = fmt.Sprintf("%v", flagKey)

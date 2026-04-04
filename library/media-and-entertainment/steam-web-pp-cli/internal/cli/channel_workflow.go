@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/media-and-entertainment/steam-web-pp-cli/internal/store"
+	"github.com/spf13/cobra"
 )
 
 func newWorkflowCmd(flags *rootFlags) *cobra.Command {
@@ -20,11 +20,6 @@ func newWorkflowCmd(flags *rootFlags) *cobra.Command {
 
 	cmd.AddCommand(newWorkflowArchiveCmd(flags))
 	cmd.AddCommand(newWorkflowStatusCmd(flags))
-	cmd.AddCommand(newWorkflowProfileCmd(flags))
-	cmd.AddCommand(newWorkflowGamesCmd(flags))
-	cmd.AddCommand(newWorkflowFriendsCmd(flags))
-	cmd.AddCommand(newWorkflowCompareCmd(flags))
-	cmd.AddCommand(newWorkflowBacklogCmd(flags))
 
 	return cmd
 }
@@ -60,7 +55,7 @@ and full resync. After archiving, use 'search' for instant full-text search.`,
 			}
 			defer s.Close()
 
-			resources := []string{"iecon-service", "ipublished-file-service", "istore-service"}
+			resources := []string{"iecon-service", "igame-servers-service", "ipublished-file-service", "isteam-directory", "isteam-web-apiutil", "istore-service",  }
 			totalSynced := 0
 
 			for _, resource := range resources {
@@ -99,9 +94,7 @@ and full resync. After archiving, use 'search' for instant full-text search.`,
 						break
 					}
 					for _, item := range items {
-						var obj struct {
-							ID string `json:"id"`
-						}
+						var obj struct{ ID string `json:"id"` }
 						json.Unmarshal(item, &obj)
 						id := obj.ID
 						if id == "" {

@@ -13,18 +13,18 @@ import (
 )
 
 func newIcontentServerConfigServiceSetSteamCacheClientFiltersCmd(flags *rootFlags) *cobra.Command {
-	var flagKey string
-	var flagCacheId string
-	var flagCacheKey string
-	var flagChangeNotes string
-	var flagAllowedIpBlocks string
+	var bodyAllowedIpBlocks string
+	var bodyCacheId int
+	var bodyCacheKey string
+	var bodyChangeNotes string
+	var bodyKey string
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "set-steam-cache-client-filters",
 		Aliases: []string{"create"},
-		Short: "Update the client filters for a SteamCache node",
-		Example: "  steam-web-pp-cli icontent-server-config-service set-steam-cache-client-filters",
+		Short: "SetSteamCacheClientFilters operation of IContentServerConfigService",
+		Example: "  steam-web-pp-cli icontent-server-config-service set-steam-cache-client-filters --allowed-ip-blocks example-value",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -45,6 +45,21 @@ func newIcontentServerConfigServiceSetSteamCacheClientFiltersCmd(flags *rootFlag
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyAllowedIpBlocks != "" {
+					body["allowed_ip_blocks"] = bodyAllowedIpBlocks
+				}
+				if bodyCacheId != 0 {
+					body["cache_id"] = bodyCacheId
+				}
+				if bodyCacheKey != "" {
+					body["cache_key"] = bodyCacheKey
+				}
+				if bodyChangeNotes != "" {
+					body["change_notes"] = bodyChangeNotes
+				}
+				if bodyKey != "" {
+					body["key"] = bodyKey
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -109,15 +124,15 @@ func newIcontentServerConfigServiceSetSteamCacheClientFiltersCmd(flags *rootFlag
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	cmd.Flags().StringVar(&flagCacheId, "cache-id", "", "Unique ID number")
-	_ = cmd.MarkFlagRequired("cache-id")
-	cmd.Flags().StringVar(&flagCacheKey, "cache-key", "", "Valid current cache API key")
-	_ = cmd.MarkFlagRequired("cache-key")
-	cmd.Flags().StringVar(&flagChangeNotes, "change-notes", "", "Notes")
-	_ = cmd.MarkFlagRequired("change-notes")
-	cmd.Flags().StringVar(&flagAllowedIpBlocks, "allowed-ip-blocks", "", "comma-separated list of allowed IP address blocks in CIDR format - blank to clear unfilter")
+	cmd.Flags().StringVar(&bodyAllowedIpBlocks, "allowed-ip-blocks", "", "comma-separated list of allowed IP address blocks in CIDR format - blank to clear unfilter")
 	_ = cmd.MarkFlagRequired("allowed-ip-blocks")
+	cmd.Flags().IntVar(&bodyCacheId, "cache-id", 0, "Unique ID number")
+	_ = cmd.MarkFlagRequired("cache-id")
+	cmd.Flags().StringVar(&bodyCacheKey, "cache-key", "", "Valid current cache API key")
+	_ = cmd.MarkFlagRequired("cache-key")
+	cmd.Flags().StringVar(&bodyChangeNotes, "change-notes", "", "Notes")
+	_ = cmd.MarkFlagRequired("change-notes")
+	cmd.Flags().StringVar(&bodyKey, "key", "", "Access key")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

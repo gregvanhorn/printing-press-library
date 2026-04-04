@@ -13,7 +13,7 @@ import (
 
 func newIpublishedFileServiceQueryFilesCmd(flags *rootFlags) *cobra.Command {
 	var flagKey string
-	var flagQueryType string
+	var flagQueryType int
 	var flagPage int
 	var flagCursor string
 	var flagNumperpage int
@@ -30,13 +30,14 @@ func newIpublishedFileServiceQueryFilesCmd(flags *rootFlags) *cobra.Command {
 	var flagDays int
 	var flagIncludeRecentVotesOnly bool
 	var flagCacheMaxAgeSeconds int
-	var flagLanguage string
+	var flagLanguage int
 	var flagRequiredKvTags string
 	var flagTaggroups string
 	var flagDateRangeCreated string
 	var flagDateRangeUpdated string
 	var flagExcludedContentDescriptors string
 	var flagAdminQuery bool
+	var flagSpecialFilter string
 	var flagTotalonly bool
 	var flagIdsOnly bool
 	var flagReturnVoteData bool
@@ -56,7 +57,7 @@ func newIpublishedFileServiceQueryFilesCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "query-files",
-		Short: "Performs a search query for published files",
+		Short: "QueryFiles operation of IPublishedFileService",
 		Example: "  steam-web-pp-cli ipublished-file-service query-files",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -91,6 +92,7 @@ func newIpublishedFileServiceQueryFilesCmd(flags *rootFlags) *cobra.Command {
 				"date_range_updated": fmt.Sprintf("%v", flagDateRangeUpdated),
 				"excluded_content_descriptors": fmt.Sprintf("%v", flagExcludedContentDescriptors),
 				"admin_query": fmt.Sprintf("%v", flagAdminQuery),
+				"special_filter": fmt.Sprintf("%v", flagSpecialFilter),
 				"totalonly": fmt.Sprintf("%v", flagTotalonly),
 				"ids_only": fmt.Sprintf("%v", flagIdsOnly),
 				"return_vote_data": fmt.Sprintf("%v", flagReturnVoteData),
@@ -148,20 +150,21 @@ func newIpublishedFileServiceQueryFilesCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	cmd.Flags().StringVar(&flagQueryType, "query-type", "", "enumeration EPublishedFileQueryType in clientenums.h")
+	cmd.Flags().IntVar(&flagQueryType, "query-type", 0, "enumeration EPublishedFileQueryType in clientenums.h")
 	_ = cmd.MarkFlagRequired("query-type")
 	cmd.Flags().IntVar(&flagPage, "page", 0, "Current page")
 	_ = cmd.MarkFlagRequired("page")
 	cmd.Flags().StringVar(&flagCursor, "cursor", "", "Cursor to paginate through the results (set to '*' for the first request). Prefer this over using the page...")
 	_ = cmd.MarkFlagRequired("cursor")
-	cmd.Flags().IntVar(&flagNumperpage, "numperpage", 0, "The number of results, per page to return.")
+	cmd.Flags().IntVar(&flagNumperpage, "numperpage", 0, "(Optional) The number of results, per page to return.")
 	cmd.Flags().StringVar(&flagCreatorAppid, "creator-appid", "", "App that created the files")
 	_ = cmd.MarkFlagRequired("creator-appid")
 	cmd.Flags().StringVar(&flagAppid, "appid", "", "App that consumes the files")
 	_ = cmd.MarkFlagRequired("appid")
 	cmd.Flags().StringVar(&flagRequiredtags, "requiredtags", "", "Tags to match on. See match_all_tags parameter below")
 	_ = cmd.MarkFlagRequired("requiredtags")
-	cmd.Flags().StringVar(&flagExcludedtags, "excludedtags", "", "Tags that must NOT be present on a published file to satisfy the query.")
+	cmd.Flags().StringVar(&flagExcludedtags, "excludedtags", "", "(Optional) Tags that must NOT be present on a published file to satisfy the query.")
+	_ = cmd.MarkFlagRequired("excludedtags")
 	cmd.Flags().BoolVar(&flagMatchAllTags, "match-all-tags", false, "If true, then items must have all the tags specified, otherwise they must have at least one of the tags.")
 	cmd.Flags().StringVar(&flagRequiredFlags, "required-flags", "", "Required flags that must be set on any returned items")
 	_ = cmd.MarkFlagRequired("required-flags")
@@ -178,17 +181,25 @@ func newIpublishedFileServiceQueryFilesCmd(flags *rootFlags) *cobra.Command {
 	cmd.Flags().BoolVar(&flagIncludeRecentVotesOnly, "include-recent-votes-only", false, "If query_type is k_PublishedFileQueryType_RankedByTrend, then limit result set just to items that have votes within...")
 	_ = cmd.MarkFlagRequired("include-recent-votes-only")
 	cmd.Flags().IntVar(&flagCacheMaxAgeSeconds, "cache-max-age-seconds", 0, "Allow stale data to be returned for the specified number of seconds.")
-	cmd.Flags().StringVar(&flagLanguage, "language", "", "Language to search in and also what gets returned. Defaults to English.")
+	cmd.Flags().IntVar(&flagLanguage, "language", 0, "Language to search in and also what gets returned. Defaults to English.")
 	cmd.Flags().StringVar(&flagRequiredKvTags, "required-kv-tags", "", "Required key-value tags to match on.")
 	_ = cmd.MarkFlagRequired("required-kv-tags")
-	cmd.Flags().StringVar(&flagTaggroups, "taggroups", "", "At least one of the tags must be present on a published file to satisfy the query.")
-	cmd.Flags().StringVar(&flagDateRangeCreated, "date-range-created", "", "Filter to items created within this range.")
-	cmd.Flags().StringVar(&flagDateRangeUpdated, "date-range-updated", "", "Filter to items updated within this range.")
-	cmd.Flags().StringVar(&flagExcludedContentDescriptors, "excluded-content-descriptors", "", "Filter out items that have these content descriptors.")
+	cmd.Flags().StringVar(&flagTaggroups, "taggroups", "", "(Optional) At least one of the tags must be present on a published file to satisfy the query.")
+	_ = cmd.MarkFlagRequired("taggroups")
+	cmd.Flags().StringVar(&flagDateRangeCreated, "date-range-created", "", "(Optional) Filter to items created within this range.")
+	_ = cmd.MarkFlagRequired("date-range-created")
+	cmd.Flags().StringVar(&flagDateRangeUpdated, "date-range-updated", "", "(Optional) Filter to items updated within this range.")
+	_ = cmd.MarkFlagRequired("date-range-updated")
+	cmd.Flags().StringVar(&flagExcludedContentDescriptors, "excluded-content-descriptors", "", "(Optional) Filter out items that have these content descriptors.")
+	_ = cmd.MarkFlagRequired("excluded-content-descriptors")
 	cmd.Flags().BoolVar(&flagAdminQuery, "admin-query", false, "Admin tool is doing a query, return hidden items")
 	_ = cmd.MarkFlagRequired("admin-query")
-	cmd.Flags().BoolVar(&flagTotalonly, "totalonly", false, "If true, only return the total number of files that satisfy this query.")
-	cmd.Flags().BoolVar(&flagIdsOnly, "ids-only", false, "If true, only return the published file ids of files that satisfy this query.")
+	cmd.Flags().StringVar(&flagSpecialFilter, "special-filter", "", "Additional special filtering")
+	_ = cmd.MarkFlagRequired("special-filter")
+	cmd.Flags().BoolVar(&flagTotalonly, "totalonly", false, "(Optional) If true, only return the total number of files that satisfy this query.")
+	_ = cmd.MarkFlagRequired("totalonly")
+	cmd.Flags().BoolVar(&flagIdsOnly, "ids-only", false, "(Optional) If true, only return the published file ids of files that satisfy this query.")
+	_ = cmd.MarkFlagRequired("ids-only")
 	cmd.Flags().BoolVar(&flagReturnVoteData, "return-vote-data", false, "Return vote data")
 	_ = cmd.MarkFlagRequired("return-vote-data")
 	cmd.Flags().BoolVar(&flagReturnTags, "return-tags", false, "Return tags in the file details")

@@ -13,18 +13,18 @@ import (
 )
 
 func newIauthenticationServiceUpdateAuthSessionWithMobileConfirmationCmd(flags *rootFlags) *cobra.Command {
-	var flagVersion int
-	var flagClientId string
-	var flagSteamid string
-	var flagSignature string
-	var flagConfirm bool
-	var flagPersistence string
+	var bodyClientId int
+	var bodyConfirm bool
+	var bodyPersistence string
+	var bodySignature string
+	var bodySteamid int
+	var bodyVersion int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "update-auth-session-with-mobile-confirmation",
-		Short: "approve an authentication session via mobile 2fa",
-		Example: "  steam-web-pp-cli iauthentication-service update-auth-session-with-mobile-confirmation",
+		Short: "UpdateAuthSessionWithMobileConfirmation operation of IAuthenticationService",
+		Example: "  steam-web-pp-cli iauthentication-service update-auth-session-with-mobile-confirmation --signature example-value",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -45,6 +45,24 @@ func newIauthenticationServiceUpdateAuthSessionWithMobileConfirmationCmd(flags *
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyClientId != 0 {
+					body["client_id"] = bodyClientId
+				}
+				if bodyConfirm != false {
+					body["confirm"] = bodyConfirm
+				}
+				if bodyPersistence != "" {
+					body["persistence"] = bodyPersistence
+				}
+				if bodySignature != "" {
+					body["signature"] = bodySignature
+				}
+				if bodySteamid != 0 {
+					body["steamid"] = bodySteamid
+				}
+				if bodyVersion != 0 {
+					body["version"] = bodyVersion
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -109,16 +127,16 @@ func newIauthenticationServiceUpdateAuthSessionWithMobileConfirmationCmd(flags *
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().IntVar(&flagVersion, "version", 0, "version field")
-	_ = cmd.MarkFlagRequired("version")
-	cmd.Flags().StringVar(&flagClientId, "client-id", "", "pending client ID, from scanned QR Code")
+	cmd.Flags().IntVar(&bodyClientId, "client-id", 0, "pending client ID, from scanned QR Code")
 	_ = cmd.MarkFlagRequired("client-id")
-	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "user who wants to login")
-	_ = cmd.MarkFlagRequired("steamid")
-	cmd.Flags().StringVar(&flagSignature, "signature", "", "HMAC digest over {version,client_id,steamid} via user's private key")
+	cmd.Flags().BoolVar(&bodyConfirm, "confirm", false, "Whether to confirm the login (true) or deny the login (false)")
+	cmd.Flags().StringVar(&bodyPersistence, "persistence", "", "whether we are requesting a persistent or an ephemeral session")
+	cmd.Flags().StringVar(&bodySignature, "signature", "", "HMAC digest over {version,client_id,steamid} via user's private key")
 	_ = cmd.MarkFlagRequired("signature")
-	cmd.Flags().BoolVar(&flagConfirm, "confirm", false, "Whether to confirm the login (true) or deny the login (false)")
-	cmd.Flags().StringVar(&flagPersistence, "persistence", "", "whether we are requesting a persistent or an ephemeral session")
+	cmd.Flags().IntVar(&bodySteamid, "steamid", 0, "user who wants to login")
+	_ = cmd.MarkFlagRequired("steamid")
+	cmd.Flags().IntVar(&bodyVersion, "version", 0, "version field")
+	_ = cmd.MarkFlagRequired("version")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 
 	return cmd

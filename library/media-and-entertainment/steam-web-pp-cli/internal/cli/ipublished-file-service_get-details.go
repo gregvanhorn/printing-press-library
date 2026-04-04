@@ -22,7 +22,7 @@ func newIpublishedFileServiceGetDetailsCmd(flags *rootFlags) *cobra.Command {
 	var flagShortDescription bool
 	var flagIncludeforsaledata bool
 	var flagIncludemetadata bool
-	var flagLanguage string
+	var flagLanguage int
 	var flagReturnPlaytimeStats int
 	var flagAppid string
 	var flagStripDescriptionBbcode bool
@@ -33,7 +33,7 @@ func newIpublishedFileServiceGetDetailsCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get-details",
 		Aliases: []string{"list"},
-		Short: "Retrieves information about a set of published files.",
+		Short: "GetDetails operation of IPublishedFileService",
 		Example: "  steam-web-pp-cli ipublished-file-service get-details",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -73,7 +73,7 @@ func newIpublishedFileServiceGetDetailsCmd(flags *rootFlags) *cobra.Command {
 			if flagIncludemetadata != false {
 				params["includemetadata"] = fmt.Sprintf("%v", flagIncludemetadata)
 			}
-			if flagLanguage != "" {
+			if flagLanguage != 0 {
 				params["language"] = fmt.Sprintf("%v", flagLanguage)
 			}
 			if flagReturnPlaytimeStats != 0 {
@@ -154,7 +154,7 @@ func newIpublishedFileServiceGetDetailsCmd(flags *rootFlags) *cobra.Command {
 	_ = cmd.MarkFlagRequired("includeforsaledata")
 	cmd.Flags().BoolVar(&flagIncludemetadata, "includemetadata", false, "If true, populate the metadata field.")
 	_ = cmd.MarkFlagRequired("includemetadata")
-	cmd.Flags().StringVar(&flagLanguage, "language", "", "Specifies the localized text to return. Defaults to English.")
+	cmd.Flags().IntVar(&flagLanguage, "language", 0, "Specifies the localized text to return. Defaults to English.")
 	cmd.Flags().IntVar(&flagReturnPlaytimeStats, "return-playtime-stats", 0, "Return playtime stats for the specified number of days before today.")
 	_ = cmd.MarkFlagRequired("return-playtime-stats")
 	cmd.Flags().StringVar(&flagAppid, "appid", "", "Appid")

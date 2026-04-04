@@ -13,23 +13,23 @@ import (
 )
 
 func newIcontentServerConfigServiceSetSteamCachePerformanceStatsCmd(flags *rootFlags) *cobra.Command {
-	var flagKey string
-	var flagCacheId string
-	var flagCacheKey string
-	var flagMbpsSent int
-	var flagMbpsRecv int
-	var flagCpuPercent int
-	var flagCacheHitPercent int
-	var flagNumConnectedIps int
-	var flagUpstreamEgressUtilization int
-	var flagUpstreamPeeringUtilization int
-	var flagUpstreamTransitUtilization int
+	var bodyCacheHitPercent int
+	var bodyCacheId int
+	var bodyCacheKey string
+	var bodyCpuPercent int
+	var bodyKey string
+	var bodyMbpsRecv int
+	var bodyMbpsSent int
+	var bodyNumConnectedIps int
+	var bodyUpstreamEgressUtilization int
+	var bodyUpstreamPeeringUtilization int
+	var bodyUpstreamTransitUtilization int
 	var stdinBody bool
 
 	cmd := &cobra.Command{
 		Use:   "set-steam-cache-performance-stats",
-		Short: "Update the performance/load stats for a SteamCache node",
-		Example: "  steam-web-pp-cli icontent-server-config-service set-steam-cache-performance-stats",
+		Short: "SetSteamCachePerformanceStats operation of IContentServerConfigService",
+		Example: "  steam-web-pp-cli icontent-server-config-service set-steam-cache-performance-stats --cache-key your-token-here",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -50,6 +50,39 @@ func newIcontentServerConfigServiceSetSteamCachePerformanceStatsCmd(flags *rootF
 				body = jsonBody
 			} else {
 				body = map[string]any{}
+				if bodyCacheHitPercent != 0 {
+					body["cache_hit_percent"] = bodyCacheHitPercent
+				}
+				if bodyCacheId != 0 {
+					body["cache_id"] = bodyCacheId
+				}
+				if bodyCacheKey != "" {
+					body["cache_key"] = bodyCacheKey
+				}
+				if bodyCpuPercent != 0 {
+					body["cpu_percent"] = bodyCpuPercent
+				}
+				if bodyKey != "" {
+					body["key"] = bodyKey
+				}
+				if bodyMbpsRecv != 0 {
+					body["mbps_recv"] = bodyMbpsRecv
+				}
+				if bodyMbpsSent != 0 {
+					body["mbps_sent"] = bodyMbpsSent
+				}
+				if bodyNumConnectedIps != 0 {
+					body["num_connected_ips"] = bodyNumConnectedIps
+				}
+				if bodyUpstreamEgressUtilization != 0 {
+					body["upstream_egress_utilization"] = bodyUpstreamEgressUtilization
+				}
+				if bodyUpstreamPeeringUtilization != 0 {
+					body["upstream_peering_utilization"] = bodyUpstreamPeeringUtilization
+				}
+				if bodyUpstreamTransitUtilization != 0 {
+					body["upstream_transit_utilization"] = bodyUpstreamTransitUtilization
+				}
 			}
 			data, statusCode, err := c.Post(path, body)
 			if err != nil {
@@ -114,26 +147,26 @@ func newIcontentServerConfigServiceSetSteamCachePerformanceStatsCmd(flags *rootF
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	cmd.Flags().StringVar(&flagCacheId, "cache-id", "", "Unique ID number")
-	_ = cmd.MarkFlagRequired("cache-id")
-	cmd.Flags().StringVar(&flagCacheKey, "cache-key", "", "Valid current cache API key")
-	_ = cmd.MarkFlagRequired("cache-key")
-	cmd.Flags().IntVar(&flagMbpsSent, "mbps-sent", 0, "Outgoing network traffic in Mbps")
-	_ = cmd.MarkFlagRequired("mbps-sent")
-	cmd.Flags().IntVar(&flagMbpsRecv, "mbps-recv", 0, "Incoming network traffic in Mbps")
-	_ = cmd.MarkFlagRequired("mbps-recv")
-	cmd.Flags().IntVar(&flagCpuPercent, "cpu-percent", 0, "Percent CPU load")
-	_ = cmd.MarkFlagRequired("cpu-percent")
-	cmd.Flags().IntVar(&flagCacheHitPercent, "cache-hit-percent", 0, "Percent cache hits")
+	cmd.Flags().IntVar(&bodyCacheHitPercent, "cache-hit-percent", 0, "Percent cache hits")
 	_ = cmd.MarkFlagRequired("cache-hit-percent")
-	cmd.Flags().IntVar(&flagNumConnectedIps, "num-connected-ips", 0, "Number of unique connected IP addresses")
+	cmd.Flags().IntVar(&bodyCacheId, "cache-id", 0, "Unique ID number")
+	_ = cmd.MarkFlagRequired("cache-id")
+	cmd.Flags().StringVar(&bodyCacheKey, "cache-key", "", "Valid current cache API key")
+	_ = cmd.MarkFlagRequired("cache-key")
+	cmd.Flags().IntVar(&bodyCpuPercent, "cpu-percent", 0, "Percent CPU load")
+	_ = cmd.MarkFlagRequired("cpu-percent")
+	cmd.Flags().StringVar(&bodyKey, "key", "", "Access key")
+	cmd.Flags().IntVar(&bodyMbpsRecv, "mbps-recv", 0, "Incoming network traffic in Mbps")
+	_ = cmd.MarkFlagRequired("mbps-recv")
+	cmd.Flags().IntVar(&bodyMbpsSent, "mbps-sent", 0, "Outgoing network traffic in Mbps")
+	_ = cmd.MarkFlagRequired("mbps-sent")
+	cmd.Flags().IntVar(&bodyNumConnectedIps, "num-connected-ips", 0, "Number of unique connected IP addresses")
 	_ = cmd.MarkFlagRequired("num-connected-ips")
-	cmd.Flags().IntVar(&flagUpstreamEgressUtilization, "upstream-egress-utilization", 0, "(deprecated) What is the percent utilization of the busiest datacenter egress link?")
+	cmd.Flags().IntVar(&bodyUpstreamEgressUtilization, "upstream-egress-utilization", 0, "(deprecated) What is the percent utilization of the busiest datacenter egress link?")
 	_ = cmd.MarkFlagRequired("upstream-egress-utilization")
-	cmd.Flags().IntVar(&flagUpstreamPeeringUtilization, "upstream-peering-utilization", 0, "What is the percent utilization of the busiest peering link?")
+	cmd.Flags().IntVar(&bodyUpstreamPeeringUtilization, "upstream-peering-utilization", 0, "What is the percent utilization of the busiest peering link?")
 	_ = cmd.MarkFlagRequired("upstream-peering-utilization")
-	cmd.Flags().IntVar(&flagUpstreamTransitUtilization, "upstream-transit-utilization", 0, "What is the percent utilization of the busiest transit link?")
+	cmd.Flags().IntVar(&bodyUpstreamTransitUtilization, "upstream-transit-utilization", 0, "What is the percent utilization of the busiest transit link?")
 	_ = cmd.MarkFlagRequired("upstream-transit-utilization")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")
 

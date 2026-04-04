@@ -16,7 +16,6 @@ func newIsteamNewsGetNewsForAppCmd(flags *rootFlags) *cobra.Command {
 	var flagMaxlength int
 	var flagEnddate int
 	var flagCount int
-	var flagFeeds string
 	var flagTags string
 
 	cmd := &cobra.Command{
@@ -30,7 +29,7 @@ func newIsteamNewsGetNewsForAppCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 
-			path := "/ISteamNews/GetNewsForApp/v2"
+			path := "/ISteamNews/GetNewsForApp/v1"
 			params := map[string]string{}
 			if flagAppid != "" {
 				params["appid"] = fmt.Sprintf("%v", flagAppid)
@@ -43,9 +42,6 @@ func newIsteamNewsGetNewsForAppCmd(flags *rootFlags) *cobra.Command {
 			}
 			if flagCount != 0 {
 				params["count"] = fmt.Sprintf("%v", flagCount)
-			}
-			if flagFeeds != "" {
-				params["feeds"] = fmt.Sprintf("%v", flagFeeds)
 			}
 			if flagTags != "" {
 				params["tags"] = fmt.Sprintf("%v", flagTags)
@@ -96,7 +92,6 @@ func newIsteamNewsGetNewsForAppCmd(flags *rootFlags) *cobra.Command {
 	cmd.Flags().IntVar(&flagMaxlength, "maxlength", 0, "Maximum length for the content to return, if this is 0 the full content is returned, if it's less then a blurb is...")
 	cmd.Flags().IntVar(&flagEnddate, "enddate", 0, "Retrieve posts earlier than this date (unix epoch timestamp)")
 	cmd.Flags().IntVar(&flagCount, "count", 0, "# of posts to retrieve (default 20)")
-	cmd.Flags().StringVar(&flagFeeds, "feeds", "", "Comma-separated list of feed names to return news for")
 	cmd.Flags().StringVar(&flagTags, "tags", "", "Comma-separated list of tags to filter by (e.g. 'patchnodes')")
 
 	return cmd
