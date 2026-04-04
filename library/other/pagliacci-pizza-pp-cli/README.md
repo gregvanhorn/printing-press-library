@@ -2,13 +2,9 @@
 
 REST API for Pagliacci Pizza - Seattle's favorite pizza. Browse stores, menus, slices, time windows, manage rewards, view order history, and place orders. Authenticated endpoints use the custom PagliacciAuth scheme with a required Version-Num header.
 
+Learn more at [Pagliacci Pizza](https://pagliacci.com).
+
 ## Install
-
-### Homebrew
-
-```
-brew install trevin-chow/tap/pagliacci-pizza-pp-cli
-```
 
 ### Go
 
