@@ -19,8 +19,8 @@ func newIdota2Ticket570SteamAccountValidForBadgeTypeCmd(flags *rootFlags) *cobra
 	var flagValidBadgeType4 int
 
 	cmd := &cobra.Command{
-		Use:     "steam-account-valid-for-badge-type",
-		Short:   "SteamAccountValidForBadgeType operation of IDOTA2Ticket_570",
+		Use:   "steam-account-valid-for-badge-type",
+		Short: "SteamAccountValidForBadgeType operation of IDOTA2Ticket_570",
 		Example: "  steam-web-pp-cli idota2-ticket-570 steam-account-valid-for-badge-type",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -45,10 +45,32 @@ func newIdota2Ticket570SteamAccountValidForBadgeTypeCmd(flags *rootFlags) *cobra
 			if flagValidBadgeType4 != 0 {
 				params["ValidBadgeType4"] = fmt.Sprintf("%v", flagValidBadgeType4)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "idota2-ticket-570", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -66,13 +88,13 @@ func newIdota2Ticket570SteamAccountValidForBadgeTypeCmd(flags *rootFlags) *cobra
 	}
 	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "The 64-bit Steam ID")
 	_ = cmd.MarkFlagRequired("steamid")
-	cmd.Flags().IntVar(&flagValidBadgeType1, "validbadgetype1", 0, "Valid Badge Type 1")
-	_ = cmd.MarkFlagRequired("validbadgetype1")
-	cmd.Flags().IntVar(&flagValidBadgeType2, "validbadgetype2", 0, "Valid Badge Type 2")
-	_ = cmd.MarkFlagRequired("validbadgetype2")
-	cmd.Flags().IntVar(&flagValidBadgeType3, "validbadgetype3", 0, "Valid Badge Type 3")
-	_ = cmd.MarkFlagRequired("validbadgetype3")
-	cmd.Flags().IntVar(&flagValidBadgeType4, "validbadgetype4", 0, "Valid Badge Type 4")
+	cmd.Flags().IntVar(&flagValidBadgeType1, "valid-badge-type1", 0, "Valid Badge Type 1")
+	_ = cmd.MarkFlagRequired("valid-badge-type1")
+	cmd.Flags().IntVar(&flagValidBadgeType2, "valid-badge-type2", 0, "Valid Badge Type 2")
+	_ = cmd.MarkFlagRequired("valid-badge-type2")
+	cmd.Flags().IntVar(&flagValidBadgeType3, "valid-badge-type3", 0, "Valid Badge Type 3")
+	_ = cmd.MarkFlagRequired("valid-badge-type3")
+	cmd.Flags().IntVar(&flagValidBadgeType4, "valid-badge-type4", 0, "Valid Badge Type 4")
 
 	return cmd
 }

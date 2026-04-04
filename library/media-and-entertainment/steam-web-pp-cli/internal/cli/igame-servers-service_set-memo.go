@@ -19,8 +19,8 @@ func newIgameServersServiceSetMemoCmd(flags *rootFlags) *cobra.Command {
 	var stdinBody bool
 
 	cmd := &cobra.Command{
-		Use:     "set-memo",
-		Short:   "This method changes the memo associated with the game server account. Memos do not affect the account in any way....",
+		Use:   "set-memo",
+		Short: "This method changes the memo associated with the game server account. Memos do not affect the account in any way....",
 		Example: "  steam-web-pp-cli igame-servers-service set-memo",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -57,9 +57,7 @@ func newIgameServersServiceSetMemoCmd(flags *rootFlags) *cobra.Command {
 						return nil
 					}
 				} else {
-					var wrapped struct {
-						Data []map[string]any `json:"data"`
-					}
+					var wrapped struct{ Data []map[string]any `json:"data"` }
 					if json.Unmarshal(data, &wrapped) == nil && len(wrapped.Data) > 0 {
 						if err := printAutoTable(cmd.OutOrStdout(), wrapped.Data); err != nil {
 							fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)
@@ -109,7 +107,6 @@ func newIgameServersServiceSetMemoCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "The SteamID of the game server to set the memo on")
 	_ = cmd.MarkFlagRequired("steamid")
 	cmd.Flags().StringVar(&flagMemo, "memo", "", "The memo to set on the new account")

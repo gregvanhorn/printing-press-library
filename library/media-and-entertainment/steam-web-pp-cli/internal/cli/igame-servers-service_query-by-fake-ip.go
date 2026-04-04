@@ -19,8 +19,8 @@ func newIgameServersServiceQueryByFakeIpCmd(flags *rootFlags) *cobra.Command {
 	var flagQueryType string
 
 	cmd := &cobra.Command{
-		Use:     "query-by-fake-ip",
-		Short:   "Perform a query on a specific server by FakeIP",
+		Use:   "query-by-fake-ip",
+		Short: "Perform a query on a specific server by FakeIP",
 		Example: "  steam-web-pp-cli igame-servers-service query-by-fake-ip",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -45,10 +45,32 @@ func newIgameServersServiceQueryByFakeIpCmd(flags *rootFlags) *cobra.Command {
 			if flagQueryType != "" {
 				params["query_type"] = fmt.Sprintf("%v", flagQueryType)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "igame-servers-service", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -65,7 +87,6 @@ func newIgameServersServiceQueryByFakeIpCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().IntVar(&flagFakeIp, "fake-ip", 0, "FakeIP of server to query.")
 	_ = cmd.MarkFlagRequired("fake-ip")
 	cmd.Flags().IntVar(&flagFakePort, "fake-port", 0, "Fake port of server to query.")

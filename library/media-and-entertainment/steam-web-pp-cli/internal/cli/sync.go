@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -15,8 +14,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/media-and-entertainment/steam-web-pp-cli/internal/store"
+	"github.com/spf13/cobra"
 )
 
 // syncResult holds the outcome of syncing a single resource.
@@ -62,8 +61,7 @@ Once synced, use the 'search' command for instant full-text search.`,
 			c.NoCache = true
 
 			if dbPath == "" {
-				home, _ := os.UserHomeDir()
-				dbPath = filepath.Join(home, ".local", "share", "steam-web-pp-cli", "data.db")
+				dbPath = defaultDBPath("steam-web-pp-cli")
 			}
 
 			db, err := store.Open(dbPath)
@@ -294,18 +292,18 @@ type paginationDefaults struct {
 }
 
 // determinePaginationDefaults returns the pagination parameter names to use.
-// Uses sensible defaults matching common API conventions.
+// Values are detected from the API spec by the profiler at generation time.
 func determinePaginationDefaults() paginationDefaults {
 	return paginationDefaults{
-		cursorParam: "after",
-		limitParam:  "limit",
+		cursorParam: "cursor",
+		limitParam:  "max_results",
 		limit:       100,
 	}
 }
 
 // determineSinceParam returns the query parameter name for incremental sync filtering.
 func determineSinceParam() string {
-	return "since"
+	return "if_modified_since"
 }
 
 // extractPageItems attempts to extract an array of items and pagination cursor from a response.
@@ -392,12 +390,12 @@ func upsertSingleObject(db *store.Store, resource string, data json.RawMessage) 
 	}
 
 	switch resource {
-	case "isteam_user_stats":
-		return db.UpsertIsteamUserStats(data)
 	case "ipublished_file_service":
 		return db.UpsertIpublishedFileService(data)
 	case "idota2_match_570":
 		return db.UpsertIdota2Match570(data)
+	case "isteam_user_stats":
+		return db.UpsertIsteamUserStats(data)
 	default:
 		return db.Upsert(resource, id, data)
 	}
@@ -445,9 +443,9 @@ func defaultSyncResources() []string {
 // this preserves the actual endpoint path like "/ISteamApps/GetAppList/v2".
 func syncResourcePath(resource string) string {
 	paths := map[string]string{
-		"iecon-service":           "/IEconService/GetTradeOffers/v1",
+		"iecon-service": "/IEconService/GetTradeOffers/v1",
 		"ipublished-file-service": "/IPublishedFileService/QueryFiles/v1",
-		"istore-service":          "/IStoreService/GetAppList/v1",
+		"istore-service": "/IStoreService/GetAppList/v1",
 	}
 	if p, ok := paths[resource]; ok {
 		return p

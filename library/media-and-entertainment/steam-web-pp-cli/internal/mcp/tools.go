@@ -1588,6 +1588,8 @@ func dbPath() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".local", "share", "steam-web-pp-cli", "data.db")
 }
+// Note: MCP tools use their own dbPath() because they are in a separate package (main, not cli).
+// The CLI's defaultDBPath() in the cli package uses the same canonical path.
 
 func handleSync(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
 	return mcplib.NewToolResultText("sync not yet implemented via MCP - use the CLI: steam-web-pp-cli sync"), nil

@@ -17,8 +17,8 @@ func newIplayerServiceIsPlayingSharedGameCmd(flags *rootFlags) *cobra.Command {
 	var flagAppidPlaying int
 
 	cmd := &cobra.Command{
-		Use:     "is-playing-shared-game",
-		Short:   "Obsolete, partners should use ISteamUser.CheckAppOwnership",
+		Use:   "is-playing-shared-game",
+		Short: "Obsolete, partners should use ISteamUser.CheckAppOwnership",
 		Example: "  steam-web-pp-cli iplayer-service is-playing-shared-game",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -37,10 +37,32 @@ func newIplayerServiceIsPlayingSharedGameCmd(flags *rootFlags) *cobra.Command {
 			if flagAppidPlaying != 0 {
 				params["appid_playing"] = fmt.Sprintf("%v", flagAppidPlaying)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "iplayer-service", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -57,7 +79,6 @@ func newIplayerServiceIsPlayingSharedGameCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "The player we're asking about")
 	_ = cmd.MarkFlagRequired("steamid")
 	cmd.Flags().IntVar(&flagAppidPlaying, "appid-playing", 0, "The game player is currently playing")

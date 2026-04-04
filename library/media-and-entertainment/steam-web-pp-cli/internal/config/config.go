@@ -23,7 +23,7 @@ type Config struct {
 	ClientID       string `toml:"client_id"`
 	ClientSecret   string `toml:"client_secret"`
 	Path           string `toml:"-"`
-	APIKey         string `toml:"api_key"`
+	APIKey         string `toml:"api_key"`       // Steam Web API key (get one at steamcommunity.com/dev/apikey)
 	APIKeySource   string `toml:"-"`
 }
 
@@ -52,18 +52,17 @@ func Load(configPath string) (*Config, error) {
 	}
 
 	// Env var overrides
+	if v := os.Getenv("STEAM_API_KEY"); v != "" {
+		cfg.APIKey = v
+		cfg.APIKeySource = "env:STEAM_API_KEY"
+	} else if v := os.Getenv("STEAM_WEB_API_KEY"); v != "" {
+		cfg.APIKey = v
+		cfg.APIKeySource = "env:STEAM_WEB_API_KEY"
+	}
 
 	// Base URL override (used by printing-press verify to point at mock/test servers)
 	if v := os.Getenv("STEAM_WEB_BASE_URL"); v != "" {
 		cfg.BaseURL = v
-	}
-
-	if v := os.Getenv("STEAM_API_KEY"); v != "" {
-		cfg.APIKey = v
-		cfg.APIKeySource = "STEAM_API_KEY"
-	} else if v := os.Getenv("STEAM_KEY"); v != "" {
-		cfg.APIKey = v
-		cfg.APIKeySource = "STEAM_KEY"
 	}
 
 	return cfg, nil

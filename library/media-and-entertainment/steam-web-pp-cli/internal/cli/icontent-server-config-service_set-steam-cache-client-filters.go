@@ -21,9 +21,9 @@ func newIcontentServerConfigServiceSetSteamCacheClientFiltersCmd(flags *rootFlag
 	var stdinBody bool
 
 	cmd := &cobra.Command{
-		Use:     "set-steam-cache-client-filters",
+		Use:   "set-steam-cache-client-filters",
 		Aliases: []string{"create"},
-		Short:   "Update the client filters for a SteamCache node",
+		Short: "Update the client filters for a SteamCache node",
 		Example: "  steam-web-pp-cli icontent-server-config-service set-steam-cache-client-filters",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -60,9 +60,7 @@ func newIcontentServerConfigServiceSetSteamCacheClientFiltersCmd(flags *rootFlag
 						return nil
 					}
 				} else {
-					var wrapped struct {
-						Data []map[string]any `json:"data"`
-					}
+					var wrapped struct{ Data []map[string]any `json:"data"` }
 					if json.Unmarshal(data, &wrapped) == nil && len(wrapped.Data) > 0 {
 						if err := printAutoTable(cmd.OutOrStdout(), wrapped.Data); err != nil {
 							fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)
@@ -112,7 +110,6 @@ func newIcontentServerConfigServiceSetSteamCacheClientFiltersCmd(flags *rootFlag
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringVar(&flagCacheId, "cache-id", "", "Unique ID number")
 	_ = cmd.MarkFlagRequired("cache-id")
 	cmd.Flags().StringVar(&flagCacheKey, "cache-key", "", "Valid current cache API key")

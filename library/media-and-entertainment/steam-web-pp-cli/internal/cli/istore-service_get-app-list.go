@@ -25,9 +25,9 @@ func newIstoreServiceGetAppListCmd(flags *rootFlags) *cobra.Command {
 	var flagAll bool
 
 	cmd := &cobra.Command{
-		Use:     "get-app-list",
+		Use:   "get-app-list",
 		Aliases: []string{"list"},
-		Short:   "Gets a list of apps available on the Steam Store.",
+		Short: "Gets a list of apps available on the Steam Store.",
 		Example: "  steam-web-pp-cli istore-service get-app-list",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -36,21 +36,43 @@ func newIstoreServiceGetAppListCmd(flags *rootFlags) *cobra.Command {
 			}
 
 			path := "/IStoreService/GetAppList/v1"
-			data, err := paginatedGet(c, path, map[string]string{
-				"key":                       fmt.Sprintf("%v", flagKey),
-				"if_modified_since":         fmt.Sprintf("%v", flagIfModifiedSince),
+			data, prov, err := resolvePaginatedRead(c, flags, "istore-service", path, map[string]string{
+				"key": fmt.Sprintf("%v", flagKey),
+				"if_modified_since": fmt.Sprintf("%v", flagIfModifiedSince),
 				"have_description_language": fmt.Sprintf("%v", flagHaveDescriptionLanguage),
-				"include_games":             fmt.Sprintf("%v", flagIncludeGames),
-				"include_dlc":               fmt.Sprintf("%v", flagIncludeDlc),
-				"include_software":          fmt.Sprintf("%v", flagIncludeSoftware),
-				"include_videos":            fmt.Sprintf("%v", flagIncludeVideos),
-				"include_hardware":          fmt.Sprintf("%v", flagIncludeHardware),
-				"last_appid":                fmt.Sprintf("%v", flagLastAppid),
-				"max_results":               fmt.Sprintf("%v", flagMaxResults),
+				"include_games": fmt.Sprintf("%v", flagIncludeGames),
+				"include_dlc": fmt.Sprintf("%v", flagIncludeDlc),
+				"include_software": fmt.Sprintf("%v", flagIncludeSoftware),
+				"include_videos": fmt.Sprintf("%v", flagIncludeVideos),
+				"include_hardware": fmt.Sprintf("%v", flagIncludeHardware),
+				"last_appid": fmt.Sprintf("%v", flagLastAppid),
+				"max_results": fmt.Sprintf("%v", flagMaxResults),
 			}, flagAll, "", "", "")
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -67,7 +89,6 @@ func newIstoreServiceGetAppListCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().IntVar(&flagIfModifiedSince, "if-modified-since", 0, "Return only items that have been modified since this date.")
 	cmd.Flags().StringVar(&flagHaveDescriptionLanguage, "have-description-language", "", "Return only items that have a description in this language.")
 	cmd.Flags().BoolVar(&flagIncludeGames, "include-games", false, "Include games (defaults to enabled)")

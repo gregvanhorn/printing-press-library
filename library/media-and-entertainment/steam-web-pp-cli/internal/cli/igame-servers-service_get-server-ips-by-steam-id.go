@@ -16,8 +16,8 @@ func newIgameServersServiceGetServerIpsBySteamIdCmd(flags *rootFlags) *cobra.Com
 	var flagServerSteamids string
 
 	cmd := &cobra.Command{
-		Use:     "get-server-ips-by-steam-id",
-		Short:   "Gets a list of server IP addresses given a list of SteamIDs",
+		Use:   "get-server-ips-by-steam-id",
+		Short: "Gets a list of server IP addresses given a list of SteamIDs",
 		Example: "  steam-web-pp-cli igame-servers-service get-server-ips-by-steam-id",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -33,10 +33,32 @@ func newIgameServersServiceGetServerIpsBySteamIdCmd(flags *rootFlags) *cobra.Com
 			if flagServerSteamids != "" {
 				params["server_steamids"] = fmt.Sprintf("%v", flagServerSteamids)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "igame-servers-service", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -53,7 +75,6 @@ func newIgameServersServiceGetServerIpsBySteamIdCmd(flags *rootFlags) *cobra.Com
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringVar(&flagServerSteamids, "server-steamids", "", "Server steamids")
 	_ = cmd.MarkFlagRequired("server-steamids")
 

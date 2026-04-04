@@ -22,8 +22,8 @@ func newIdota2Match570GetMatchHistoryCmd(flags *rootFlags) *cobra.Command {
 	var flagMatchesRequested string
 
 	cmd := &cobra.Command{
-		Use:     "get-match-history",
-		Short:   "GetMatchHistory operation of IDOTA2Match_570",
+		Use:   "get-match-history",
+		Short: "GetMatchHistory operation of IDOTA2Match_570",
 		Example: "  steam-web-pp-cli idota2-match-570 get-match-history",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -57,10 +57,32 @@ func newIdota2Match570GetMatchHistoryCmd(flags *rootFlags) *cobra.Command {
 			if flagMatchesRequested != "" {
 				params["matches_requested"] = fmt.Sprintf("%v", flagMatchesRequested)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "idota2-match-570", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {

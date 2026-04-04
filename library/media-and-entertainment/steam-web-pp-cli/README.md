@@ -1,16 +1,18 @@
-# steam-web-pp-cli
+# Steam Web CLI
 
-Query Steam player profiles, game libraries, achievements, and friends from the terminal.
+Access the Steam Web API for player profiles, game libraries, achievements, friends lists, match history, news, and more.
 
-Get your API key from [here](https://steamcommunity.com/dev/apikey)
+Learn more at [Steam](https://store.steampowered.com).
+
+## Prerequisites
+
+You need a Steam Web API key. Get one at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey).
+
+```bash
+export STEAM_API_KEY="your-key-here"
+```
 
 ## Install
-
-### Homebrew
-
-```
-brew install trevin-chow/tap/steam-web-pp-cli
-```
 
 ### Go
 
@@ -24,62 +26,64 @@ Download from [Releases](https://github.com/mvanhorn/printing-press-library/rele
 
 ## Quick Start
 
-### 1. Set your API key
-
 ```bash
-export STEAM_API_KEY=your_key_here
-```
-
-Or add to `~/.config/steam-web-pp-cli/config.toml`:
-
-```toml
-api_key = "your_key_here"
-```
-
-### 2. Verify setup
-
-```bash
+# Check setup
 steam-web-pp-cli doctor
+
+# Look up a player by vanity URL
+steam-web-pp-cli isteam-user resolve-vanity-url --vanityurl trevin
+
+# Get a player's profile
+steam-web-pp-cli isteam-user get-player-summaries --steamids 76561198000000000
+
+# List a player's games
+steam-web-pp-cli iplayer-service get-owned-games --steamid 76561198000000000
+
+# Get a player's friends
+steam-web-pp-cli isteam-user get-friend-list --steamid 76561198000000000
+
+# Check achievements for a game
+steam-web-pp-cli isteam-user-stats get-player-achievements --steamid 76561198000000000 --appid 440
+
+# Get news for a game
+steam-web-pp-cli isteam-news get-news-for-app --appid 730 --count 5
+
+# Current players for a game
+steam-web-pp-cli isteam-user-stats get-number-of-current-players --appid 570
 ```
 
-### 3. Try a command
+## Key Commands
 
-```bash
-# Look up a player by vanity URL or SteamID64
-steam-web-pp-cli player gabelogannewell
-
-# See their game library sorted by playtime
-steam-web-pp-cli games gabelogannewell --sort playtime --limit 10
-
-# Check current player count for CS2
-steam-web-pp-cli players-count 730
-```
+| What you want | Command |
+|---------------|---------|
+| Player profile | `isteam-user get-player-summaries --steamids <id>` |
+| Owned games | `iplayer-service get-owned-games --steamid <id>` |
+| Recent games | `iplayer-service get-recently-played-games --steamid <id>` |
+| Friends list | `isteam-user get-friend-list --steamid <id>` |
+| Player achievements | `isteam-user-stats get-player-achievements --steamid <id> --appid <appid>` |
+| Game stats | `isteam-user-stats get-user-stats-for-game --steamid <id> --appid <appid>` |
+| Game news | `isteam-news get-news-for-app --appid <appid>` |
+| Current players | `isteam-user-stats get-number-of-current-players --appid <appid>` |
+| Steam level | `iplayer-service get-steam-level --steamid <id>` |
+| Badges | `iplayer-service get-badges --steamid <id>` |
+| VAC bans | `isteam-user get-player-bans --steamids <id>` |
+| Resolve vanity URL | `isteam-user resolve-vanity-url --vanityurl <name>` |
+| Trade offers | `iecon-service get-trade-offers` |
+| App list | `isteam-apps get-app-list` |
+| Dota 2 matches | `idota2-match-570 get-match-history --account-id <id>` |
+| CS2 server status | `icsgoservers-730 get-game-servers-status` |
 
 ## Agent Usage
 
 This CLI is designed for AI agent consumption:
 
-- **Non-interactive** -- never prompts, every input is a flag or positional arg
-- **Pipeable** -- `--json` output to stdout, errors to stderr
-- **Filterable** -- `--select id,name` returns only fields you need
-- **Previewable** -- `--dry-run` shows the request without sending
-- **Retryable** -- creates return "already exists" on retry, deletes return "already deleted"
-- **Confirmable** -- `--yes` for explicit confirmation of destructive actions
-- **Cacheable** -- GET responses cached for 5 minutes, bypass with `--no-cache`
-- **Agent-safe by default** -- no colors or formatting unless `--human-friendly` is set
-- **Smart defaults** -- `--agent` sets `--json --compact --no-input --no-color --yes` in one flag
+- `--json` for structured output
+- `--select id,name` to filter fields
+- `--dry-run` to preview requests
+- `--agent` for all agent-friendly defaults at once
+- `--data-source auto|live|local` for data source control
 
-Exit codes: `0` success, `2` usage error, `3` not found, `4` auth error, `5` API error, `7` rate limited, `10` config error.
-
-### Vanity URL resolution
-
-All player commands accept either a 17-digit SteamID64 or a vanity URL name. The CLI resolves vanity names automatically via the Steam API.
-
-```bash
-# These are equivalent:
-steam-web-pp-cli player 76561198006409530
-steam-web-pp-cli player gabelogannewell
-```
+Exit codes: `0` success, `2` usage, `3` not found, `4` auth, `5` API error, `7` rate limited.
 
 ## Health Check
 
@@ -87,235 +91,37 @@ steam-web-pp-cli player gabelogannewell
 steam-web-pp-cli doctor
 ```
 
-Checks config file, API key, API reachability, and credential validity.
-
-```bash
-steam-web-pp-cli doctor --json   # Machine-readable output
-```
-
 ## Troubleshooting
 
 **Authentication errors (exit code 4)**
-- Verify your API key: `echo $STEAM_API_KEY`
-- Run `steam-web-pp-cli doctor` to check credentials
-- Get a key from https://steamcommunity.com/dev/apikey
+- Ensure `STEAM_API_KEY` is set: `export STEAM_API_KEY="your-key"`
+- Get a key at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey)
 
 **Not found errors (exit code 3)**
-- Check the SteamID64 or vanity name is correct
-- Use `steam-web-pp-cli resolve <name>` to verify resolution
-
-**Private profile errors (403)**
-- Some endpoints require the target profile to be public
-- `completionist` and `achievements` skip private profiles gracefully
-- `profile` detects private profiles and returns available data
+- Steam IDs are 17-digit numbers (e.g., 76561198000000000)
+- Use `resolve-vanity-url` to convert a username to a Steam ID
 
 **Rate limit errors (exit code 7)**
-- The CLI auto-retries with exponential backoff
-- Use `--rate-limit 1` to throttle requests to 1/sec
-- If persistent, wait a few minutes and try again
-
-**Empty results**
-- Some games have no achievements (use `schema <appid>` to check)
-- Free-to-play games may not appear without `include_played_free_games`
+- Steam's API allows ~100,000 calls/day
+- The CLI auto-retries with backoff
 
 ## Cookbook
 
-### Player lookup and profiles
-
 ```bash
-# Quick player summary
-steam-web-pp-cli player gabelogannewell
+# Look up someone by username, then get their games
+STEAMID=$(steam-web-pp-cli isteam-user resolve-vanity-url --vanityurl gaben --json | jq -r '.response.steamid')
+steam-web-pp-cli iplayer-service get-owned-games --steamid $STEAMID --json
 
-# Full profile with level, badges, game count, recent activity
-steam-web-pp-cli profile gabelogannewell
+# Get global achievement stats for CS2
+steam-web-pp-cli isteam-user-stats get-global-achievement-percentages-for-app --gameid 730 --json
 
-# Resolve vanity URL to SteamID64
-steam-web-pp-cli resolve gabelogannewell
+# Sync data locally for offline search
+steam-web-pp-cli sync
+steam-web-pp-cli search "counter-strike"
 
-# Get Steam level
-steam-web-pp-cli level gabelogannewell
+# Export for backup
+steam-web-pp-cli export --format jsonl > backup.jsonl
 ```
-
-### Game library analysis
-
-```bash
-# All games sorted by playtime, top 20
-steam-web-pp-cli games gabelogannewell --sort playtime --limit 20
-
-# Playtime statistics and distribution
-steam-web-pp-cli playtime gabelogannewell
-
-# Unplayed games (the backlog of shame)
-steam-web-pp-cli backlog gabelogannewell
-
-# Games with < 2 hours playtime
-steam-web-pp-cli backlog gabelogannewell --min-playtime 2
-```
-
-### Achievements and stats
-
-```bash
-# Player achievements for TF2
-steam-web-pp-cli achievements gabelogannewell 440
-
-# Rarest achievements a player has earned
-steam-web-pp-cli rare gabelogannewell 440
-
-# Achievement completion rates across library (top 20 most-played)
-steam-web-pp-cli completionist gabelogannewell --limit 20
-
-# Only show games where >80% complete
-steam-web-pp-cli completionist gabelogannewell --min-pct 80
-
-# Global achievement percentages for CS2
-steam-web-pp-cli global-achievements 730 --rare --limit 10
-
-# Full game schema (available achievements and stats)
-steam-web-pp-cli schema 440
-
-# Player stats for a specific game
-steam-web-pp-cli stats gabelogannewell 730
-```
-
-### Social and multiplayer
-
-```bash
-# Friends list with profile summaries
-steam-web-pp-cli friends gabelogannewell
-
-# Compare game libraries between two players
-steam-web-pp-cli compare player1 player2
-
-# Find games all players share (pick a game to play together)
-steam-web-pp-cli overlap player1 player2 player3
-
-# Check bans for one or more players
-steam-web-pp-cli bans 76561198006409530
-
-# Player's Steam groups
-steam-web-pp-cli groups gabelogannewell
-```
-
-### Game info
-
-```bash
-# Current player count for a game
-steam-web-pp-cli players-count 730
-
-# Also works with the "players" alias
-steam-web-pp-cli players 440
-
-# Recent news for a game
-steam-web-pp-cli news 730 --count 5
-
-# Recently played games
-steam-web-pp-cli recent gabelogannewell --count 10
-
-# Player badges with XP data
-steam-web-pp-cli badges gabelogannewell
-```
-
-### Scripting and pipelines
-
-```bash
-# JSON output for scripting
-steam-web-pp-cli games gabelogannewell --sort playtime --limit 5 --json
-
-# Compact output for agents (strips verbose fields)
-steam-web-pp-cli friends gabelogannewell --agent
-
-# Select specific fields
-steam-web-pp-cli games gabelogannewell --json --select appid,name,playtime_forever
-
-# Dry run to preview the request
-steam-web-pp-cli player gabelogannewell --dry-run
-
-# CSV output for spreadsheets
-steam-web-pp-cli games gabelogannewell --csv
-```
-
-## Commands
-
-### Wrapper Commands
-
-| Command | Description |
-|---------|-------------|
-| `player <id>` | Get player profile summary |
-| `games <id>` | List owned games with `--sort` and `--limit` |
-| `friends <id>` | List friends with profile summaries (batched) |
-| `achievements <id> <appid>` | Player achievements for a game |
-| `news <appid>` | Recent news for a game with `--count` |
-| `bans <id>...` | VAC and community ban status |
-| `recent <id>` | Recently played games with `--count` |
-| `badges <id>` | Player badges with XP |
-| `players-count <appid>` | Current online player count (alias: `players`) |
-| `resolve <vanity>` | Resolve vanity URL to SteamID64 |
-
-### Transcendence Commands
-
-| Command | Description |
-|---------|-------------|
-| `completionist <id>` | Achievement completion rates across library |
-| `compare <id1> <id2>` | Compare game libraries between two players |
-| `rare <id> <appid>` | Rarest achievements a player has earned |
-| `backlog <id>` | Unplayed/barely-played games |
-| `overlap <id>...` | Games owned by all listed players |
-| `profile <id>` | Full aggregated profile (level, badges, games, recent) |
-
-### Insight Commands
-
-| Command | Description |
-|---------|-------------|
-| `playtime <id>` | Playtime statistics and distribution |
-| `stats <id> <appid>` | Player in-game stats for a game |
-| `global-achievements <appid>` | Global achievement percentages with `--rare` / `--limit` |
-| `schema <appid>` | Achievement and stat schema for a game |
-| `groups <id>` | Player's Steam groups |
-| `level <id>` | Player's Steam level |
-
-### Raw API Commands
-
-The full Steam Web API is also available via interface commands (e.g. `isteam-user get-player-summaries`). Use `steam-web-pp-cli --help` to see all available interface commands.
-
-## Output Formats
-
-```bash
-# Human-readable table (default in terminal)
-steam-web-pp-cli games gabelogannewell --sort playtime --limit 10
-
-# JSON for scripting and agents (default when piped)
-steam-web-pp-cli games gabelogannewell --json
-
-# Filter specific fields
-steam-web-pp-cli games gabelogannewell --json --select appid,name
-
-# CSV for spreadsheets
-steam-web-pp-cli games gabelogannewell --csv
-
-# Plain tab-separated for piping
-steam-web-pp-cli games gabelogannewell --plain
-
-# Compact (agent-optimized, strips verbose fields)
-steam-web-pp-cli games gabelogannewell --compact
-
-# Dry run (show request without sending)
-steam-web-pp-cli player gabelogannewell --dry-run
-```
-
-## Configuration
-
-Config file: `~/.config/steam-web-pp-cli/config.toml`
-
-```toml
-api_key = "your_steam_api_key"
-base_url = "https://api.steampowered.com"   # optional, default
-```
-
-Environment variables (override config file):
-- `STEAM_API_KEY` -- Steam Web API key
-- `STEAM_KEY` -- Alternative env var for the API key
-- `STEAM_WEB_CONFIG` -- Custom config file path
-- `STEAM_WEB_BASE_URL` -- Override base URL
 
 ---
 

@@ -15,8 +15,8 @@ func newIeconDota2570GetTournamentPrizePoolCmd(flags *rootFlags) *cobra.Command 
 	var flagLeagueid string
 
 	cmd := &cobra.Command{
-		Use:     "get-tournament-prize-pool",
-		Short:   "GetTournamentPrizePool operation of IEconDOTA2_570",
+		Use:   "get-tournament-prize-pool",
+		Short: "GetTournamentPrizePool operation of IEconDOTA2_570",
 		Example: "  steam-web-pp-cli iecon-dota2-570 get-tournament-prize-pool",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -29,10 +29,32 @@ func newIeconDota2570GetTournamentPrizePoolCmd(flags *rootFlags) *cobra.Command 
 			if flagLeagueid != "" {
 				params["leagueid"] = fmt.Sprintf("%v", flagLeagueid)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "iecon-dota2-570", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {

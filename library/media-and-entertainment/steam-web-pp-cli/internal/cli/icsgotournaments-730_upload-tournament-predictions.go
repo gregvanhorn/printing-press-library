@@ -24,8 +24,8 @@ func newIcsgotournaments730UploadTournamentPredictionsCmd(flags *rootFlags) *cob
 	var stdinBody bool
 
 	cmd := &cobra.Command{
-		Use:     "upload-tournament-predictions",
-		Short:   "UploadTournamentPredictions operation of ICSGOTournaments_730",
+		Use:   "upload-tournament-predictions",
+		Short: "UploadTournamentPredictions operation of ICSGOTournaments_730",
 		Example: "  steam-web-pp-cli icsgotournaments-730 upload-tournament-predictions",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -62,9 +62,7 @@ func newIcsgotournaments730UploadTournamentPredictionsCmd(flags *rootFlags) *cob
 						return nil
 					}
 				} else {
-					var wrapped struct {
-						Data []map[string]any `json:"data"`
-					}
+					var wrapped struct{ Data []map[string]any `json:"data"` }
 					if json.Unmarshal(data, &wrapped) == nil && len(wrapped.Data) > 0 {
 						if err := printAutoTable(cmd.OutOrStdout(), wrapped.Data); err != nil {
 							fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)

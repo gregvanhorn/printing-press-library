@@ -17,8 +17,8 @@ func newIauthenticationServiceGetAuthSessionInfoCmd(flags *rootFlags) *cobra.Com
 	var stdinBody bool
 
 	cmd := &cobra.Command{
-		Use:     "get-auth-session-info",
-		Short:   "get metadata of specific auth session, this will also implicitly bind the calling account",
+		Use:   "get-auth-session-info",
+		Short: "get metadata of specific auth session, this will also implicitly bind the calling account",
 		Example: "  steam-web-pp-cli iauthentication-service get-auth-session-info",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -55,9 +55,7 @@ func newIauthenticationServiceGetAuthSessionInfoCmd(flags *rootFlags) *cobra.Com
 						return nil
 					}
 				} else {
-					var wrapped struct {
-						Data []map[string]any `json:"data"`
-					}
+					var wrapped struct{ Data []map[string]any `json:"data"` }
 					if json.Unmarshal(data, &wrapped) == nil && len(wrapped.Data) > 0 {
 						if err := printAutoTable(cmd.OutOrStdout(), wrapped.Data); err != nil {
 							fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)

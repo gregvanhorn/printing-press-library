@@ -23,9 +23,9 @@ func newIeconServiceGetTradeHistoryCmd(flags *rootFlags) *cobra.Command {
 	var flagIncludeTotal bool
 
 	cmd := &cobra.Command{
-		Use:     "get-trade-history",
+		Use:   "get-trade-history",
 		Aliases: []string{"list"},
-		Short:   "Gets a history of trades",
+		Short: "Gets a history of trades",
 		Example: "  steam-web-pp-cli iecon-service get-trade-history",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -62,10 +62,32 @@ func newIeconServiceGetTradeHistoryCmd(flags *rootFlags) *cobra.Command {
 			if flagIncludeTotal != false {
 				params["include_total"] = fmt.Sprintf("%v", flagIncludeTotal)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "iecon-service", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -82,7 +104,6 @@ func newIeconServiceGetTradeHistoryCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().IntVar(&flagMaxTrades, "max-trades", 0, "The number of trades to return information for")
 	_ = cmd.MarkFlagRequired("max-trades")
 	cmd.Flags().IntVar(&flagStartAfterTime, "start-after-time", 0, "The time of the last trade shown on the previous page of results, or the time of the first trade if navigating back")

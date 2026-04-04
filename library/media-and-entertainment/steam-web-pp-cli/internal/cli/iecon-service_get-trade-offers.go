@@ -24,8 +24,8 @@ func newIeconServiceGetTradeOffersCmd(flags *rootFlags) *cobra.Command {
 	var flagAll bool
 
 	cmd := &cobra.Command{
-		Use:     "get-trade-offers",
-		Short:   "Get a list of sent or received trade offers",
+		Use:   "get-trade-offers",
+		Short: "Get a list of sent or received trade offers",
 		Example: "  steam-web-pp-cli iecon-service get-trade-offers",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -34,20 +34,42 @@ func newIeconServiceGetTradeOffersCmd(flags *rootFlags) *cobra.Command {
 			}
 
 			path := "/IEconService/GetTradeOffers/v1"
-			data, err := paginatedGet(c, path, map[string]string{
-				"key":                    fmt.Sprintf("%v", flagKey),
-				"get_sent_offers":        fmt.Sprintf("%v", flagGetSentOffers),
-				"get_received_offers":    fmt.Sprintf("%v", flagGetReceivedOffers),
-				"get_descriptions":       fmt.Sprintf("%v", flagGetDescriptions),
-				"language":               fmt.Sprintf("%v", flagLanguage),
-				"active_only":            fmt.Sprintf("%v", flagActiveOnly),
-				"historical_only":        fmt.Sprintf("%v", flagHistoricalOnly),
+			data, prov, err := resolvePaginatedRead(c, flags, "iecon-service", path, map[string]string{
+				"key": fmt.Sprintf("%v", flagKey),
+				"get_sent_offers": fmt.Sprintf("%v", flagGetSentOffers),
+				"get_received_offers": fmt.Sprintf("%v", flagGetReceivedOffers),
+				"get_descriptions": fmt.Sprintf("%v", flagGetDescriptions),
+				"language": fmt.Sprintf("%v", flagLanguage),
+				"active_only": fmt.Sprintf("%v", flagActiveOnly),
+				"historical_only": fmt.Sprintf("%v", flagHistoricalOnly),
 				"time_historical_cutoff": fmt.Sprintf("%v", flagTimeHistoricalCutoff),
-				"cursor":                 fmt.Sprintf("%v", flagCursor),
+				"cursor": fmt.Sprintf("%v", flagCursor),
 			}, flagAll, "cursor", "", "")
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -64,7 +86,6 @@ func newIeconServiceGetTradeOffersCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().BoolVar(&flagGetSentOffers, "get-sent-offers", false, "Request the list of sent offers.")
 	_ = cmd.MarkFlagRequired("get-sent-offers")
 	cmd.Flags().BoolVar(&flagGetReceivedOffers, "get-received-offers", false, "Request the list of received offers.")

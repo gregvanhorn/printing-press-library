@@ -22,8 +22,8 @@ func newIauthenticationServiceUpdateAuthSessionWithMobileConfirmationCmd(flags *
 	var stdinBody bool
 
 	cmd := &cobra.Command{
-		Use:     "update-auth-session-with-mobile-confirmation",
-		Short:   "approve an authentication session via mobile 2fa",
+		Use:   "update-auth-session-with-mobile-confirmation",
+		Short: "approve an authentication session via mobile 2fa",
 		Example: "  steam-web-pp-cli iauthentication-service update-auth-session-with-mobile-confirmation",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -60,9 +60,7 @@ func newIauthenticationServiceUpdateAuthSessionWithMobileConfirmationCmd(flags *
 						return nil
 					}
 				} else {
-					var wrapped struct {
-						Data []map[string]any `json:"data"`
-					}
+					var wrapped struct{ Data []map[string]any `json:"data"` }
 					if json.Unmarshal(data, &wrapped) == nil && len(wrapped.Data) > 0 {
 						if err := printAutoTable(cmd.OutOrStdout(), wrapped.Data); err != nil {
 							fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)

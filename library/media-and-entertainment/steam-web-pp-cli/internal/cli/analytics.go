@@ -7,11 +7,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"sort"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/media-and-entertainment/steam-web-pp-cli/internal/store"
+	"github.com/spf13/cobra"
 )
 
 func newAnalyticsCmd(flags *rootFlags) *cobra.Command {
@@ -35,8 +34,7 @@ Data must be synced first with the sync command.`,
   steam-web-pp-cli analytics --type messages --group-by channel_id --limit 10 --json`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if dbPath == "" {
-				home, _ := os.UserHomeDir()
-				dbPath = filepath.Join(home, ".local", "share", "steam-web-pp-cli", "data.db")
+				dbPath = defaultDBPath("steam-web-pp-cli")
 			}
 
 			db, err := store.Open(dbPath)

@@ -10,9 +10,9 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/media-and-entertainment/steam-web-pp-cli/internal/client"
 	"github.com/mvanhorn/printing-press-library/library/media-and-entertainment/steam-web-pp-cli/internal/config"
+	"github.com/spf13/cobra"
 )
 
 var version = "1.0.0"
@@ -32,6 +32,7 @@ type rootFlags struct {
 	configPath   string
 	timeout      time.Duration
 	rateLimit    float64
+	dataSource   string
 }
 
 // Execute runs the CLI in non-interactive mode: never prompts, all values via flags or stdin.
@@ -40,7 +41,7 @@ func Execute() error {
 
 	rootCmd := &cobra.Command{
 		Use:           "steam-web-pp-cli",
-		Short:         "Query Steam player profiles, game libraries, achievements, and friends from the terminal",
+		Short:         "Look up Steam players, games, achievements, friends, and stats from the command line",
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Version:       version,
@@ -62,6 +63,7 @@ func Execute() error {
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable colored output")
 	rootCmd.PersistentFlags().BoolVar(&humanFriendly, "human-friendly", false, "Enable colored output and rich formatting")
 	rootCmd.PersistentFlags().BoolVar(&flags.agent, "agent", false, "Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)")
+	rootCmd.PersistentFlags().StringVar(&flags.dataSource, "data-source", "auto", "Data source for read commands: auto (live with local fallback), live (API only), local (synced data only)")
 	rootCmd.PersistentFlags().Float64Var(&flags.rateLimit, "rate-limit", 0, "Max requests per second (0 to disable)")
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
@@ -82,83 +84,64 @@ func Execute() error {
 				noColor = true
 			}
 		}
+		switch flags.dataSource {
+		case "auto", "live", "local":
+			// valid
+		default:
+			return fmt.Errorf("invalid --data-source value %q: must be auto, live, or local", flags.dataSource)
+		}
 		return nil
 	}
-	rootCmd.AddCommand(newIauthenticationServiceCmd(&flags))
-	rootCmd.AddCommand(newIbroadcastServiceCmd(&flags))
-	rootCmd.AddCommand(newIcheatReportingServiceCmd(&flags))
-	rootCmd.AddCommand(newIclientStats1046930Cmd(&flags))
-	rootCmd.AddCommand(newIcontentServerConfigServiceCmd(&flags))
-	rootCmd.AddCommand(newIcontentServerDirectoryServiceCmd(&flags))
-	rootCmd.AddCommand(newIcsgoplayers730Cmd(&flags))
-	rootCmd.AddCommand(newIcsgoservers730Cmd(&flags))
-	rootCmd.AddCommand(newIcsgotournaments730Cmd(&flags))
-	rootCmd.AddCommand(newIdota2Match570Cmd(&flags))
-	rootCmd.AddCommand(newIdota2MatchStats570Cmd(&flags))
-	rootCmd.AddCommand(newIdota2StreamSystem570Cmd(&flags))
-	rootCmd.AddCommand(newIdota2Ticket570Cmd(&flags))
-	rootCmd.AddCommand(newIeconDota2570Cmd(&flags))
-	rootCmd.AddCommand(newIeconItems1046930Cmd(&flags))
-	rootCmd.AddCommand(newIeconItems1269260Cmd(&flags))
-	rootCmd.AddCommand(newIeconItems440Cmd(&flags))
-	rootCmd.AddCommand(newIeconItems570Cmd(&flags))
-	rootCmd.AddCommand(newIeconItems583950Cmd(&flags))
-	rootCmd.AddCommand(newIeconItems620Cmd(&flags))
-	rootCmd.AddCommand(newIeconItems730Cmd(&flags))
-	rootCmd.AddCommand(newIeconServiceCmd(&flags))
-	rootCmd.AddCommand(newIgameNotificationsServiceCmd(&flags))
-	rootCmd.AddCommand(newIgameServersServiceCmd(&flags))
-	rootCmd.AddCommand(newIgcversion1046930Cmd(&flags))
-	rootCmd.AddCommand(newIgcversion1269260Cmd(&flags))
-	rootCmd.AddCommand(newIgcversion1422450Cmd(&flags))
-	rootCmd.AddCommand(newIgcversion440Cmd(&flags))
-	rootCmd.AddCommand(newIgcversion570Cmd(&flags))
-	rootCmd.AddCommand(newIgcversion583950Cmd(&flags))
-	rootCmd.AddCommand(newIgcversion730Cmd(&flags))
-	rootCmd.AddCommand(newIhelpRequestLogsServiceCmd(&flags))
-	rootCmd.AddCommand(newIinventoryServiceCmd(&flags))
-	rootCmd.AddCommand(newIplayerServiceCmd(&flags))
-	rootCmd.AddCommand(newIportal2Leaderboards620Cmd(&flags))
-	rootCmd.AddCommand(newIpublishedFileServiceCmd(&flags))
-	rootCmd.AddCommand(newIsteamAppsCmd(&flags))
-	rootCmd.AddCommand(newIsteamBroadcastCmd(&flags))
-	rootCmd.AddCommand(newIsteamCdnCmd(&flags))
-	rootCmd.AddCommand(newIsteamDirectoryCmd(&flags))
-	rootCmd.AddCommand(newIsteamEconomyCmd(&flags))
-	rootCmd.AddCommand(newIsteamNewsCmd(&flags))
-	rootCmd.AddCommand(newIsteamRemoteStorageCmd(&flags))
-	rootCmd.AddCommand(newIsteamUserCmd(&flags))
-	rootCmd.AddCommand(newIsteamUserAuthCmd(&flags))
-	rootCmd.AddCommand(newIsteamUserOauthCmd(&flags))
-	rootCmd.AddCommand(newIsteamUserStatsCmd(&flags))
-	rootCmd.AddCommand(newIsteamWebApiutilCmd(&flags))
-	rootCmd.AddCommand(newIstoreServiceCmd(&flags))
-	rootCmd.AddCommand(newItfitems440Cmd(&flags))
-	// Wrapper commands (10)
-	rootCmd.AddCommand(newPlayerCmd(&flags))
-	rootCmd.AddCommand(newGamesCmd(&flags))
-	rootCmd.AddCommand(newFriendsCmd(&flags))
-	rootCmd.AddCommand(newAchievementsCmd(&flags))
-	rootCmd.AddCommand(newNewsCmdWrapper(&flags))
-	rootCmd.AddCommand(newBansCmd(&flags))
-	rootCmd.AddCommand(newRecentCmd(&flags))
-	rootCmd.AddCommand(newBadgesCmd(&flags))
-	rootCmd.AddCommand(newPlayersCountCmd(&flags))
-	rootCmd.AddCommand(newResolveCmd(&flags))
-	// Transcendence commands (6)
-	rootCmd.AddCommand(newCompletionistCmd(&flags))
-	rootCmd.AddCommand(newCompareCmd(&flags))
-	rootCmd.AddCommand(newRareCmd(&flags))
-	rootCmd.AddCommand(newBacklogCmd(&flags))
-	rootCmd.AddCommand(newOverlapCmd(&flags))
-	rootCmd.AddCommand(newProfileCmd(&flags))
-	// Insight commands (6)
-	rootCmd.AddCommand(newPlaytimeCmd(&flags))
-	rootCmd.AddCommand(newStatsCmd(&flags))
-	rootCmd.AddCommand(newGlobalAchievementsCmd(&flags))
-	rootCmd.AddCommand(newSchemaCmd(&flags))
-	rootCmd.AddCommand(newGroupsCmd(&flags))
-	rootCmd.AddCommand(newLevelCmd(&flags))
+	rootCmd.AddCommand(newIauthenticationServiceCmd(&flags)) 
+	rootCmd.AddCommand(newIbroadcastServiceCmd(&flags)) 
+	rootCmd.AddCommand(newIcheatReportingServiceCmd(&flags)) 
+	rootCmd.AddCommand(newIclientStats1046930Cmd(&flags)) 
+	rootCmd.AddCommand(newIcontentServerConfigServiceCmd(&flags)) 
+	rootCmd.AddCommand(newIcontentServerDirectoryServiceCmd(&flags)) 
+	rootCmd.AddCommand(newIcsgoplayers730Cmd(&flags)) 
+	rootCmd.AddCommand(newIcsgoservers730Cmd(&flags)) 
+	rootCmd.AddCommand(newIcsgotournaments730Cmd(&flags)) 
+	rootCmd.AddCommand(newIdota2Match570Cmd(&flags)) 
+	rootCmd.AddCommand(newIdota2MatchStats570Cmd(&flags)) 
+	rootCmd.AddCommand(newIdota2StreamSystem570Cmd(&flags)) 
+	rootCmd.AddCommand(newIdota2Ticket570Cmd(&flags)) 
+	rootCmd.AddCommand(newIeconDota2570Cmd(&flags)) 
+	rootCmd.AddCommand(newIeconItems1046930Cmd(&flags)) 
+	rootCmd.AddCommand(newIeconItems1269260Cmd(&flags)) 
+	rootCmd.AddCommand(newIeconItems440Cmd(&flags)) 
+	rootCmd.AddCommand(newIeconItems570Cmd(&flags)) 
+	rootCmd.AddCommand(newIeconItems583950Cmd(&flags)) 
+	rootCmd.AddCommand(newIeconItems620Cmd(&flags)) 
+	rootCmd.AddCommand(newIeconItems730Cmd(&flags)) 
+	rootCmd.AddCommand(newIeconServiceCmd(&flags)) 
+	rootCmd.AddCommand(newIgameNotificationsServiceCmd(&flags)) 
+	rootCmd.AddCommand(newIgameServersServiceCmd(&flags)) 
+	rootCmd.AddCommand(newIgcversion1046930Cmd(&flags)) 
+	rootCmd.AddCommand(newIgcversion1269260Cmd(&flags)) 
+	rootCmd.AddCommand(newIgcversion1422450Cmd(&flags)) 
+	rootCmd.AddCommand(newIgcversion440Cmd(&flags)) 
+	rootCmd.AddCommand(newIgcversion570Cmd(&flags)) 
+	rootCmd.AddCommand(newIgcversion583950Cmd(&flags)) 
+	rootCmd.AddCommand(newIgcversion730Cmd(&flags)) 
+	rootCmd.AddCommand(newIhelpRequestLogsServiceCmd(&flags)) 
+	rootCmd.AddCommand(newIinventoryServiceCmd(&flags)) 
+	rootCmd.AddCommand(newIplayerServiceCmd(&flags)) 
+	rootCmd.AddCommand(newIportal2Leaderboards620Cmd(&flags)) 
+	rootCmd.AddCommand(newIpublishedFileServiceCmd(&flags)) 
+	rootCmd.AddCommand(newIsteamAppsCmd(&flags)) 
+	rootCmd.AddCommand(newIsteamBroadcastCmd(&flags)) 
+	rootCmd.AddCommand(newIsteamCdnCmd(&flags)) 
+	rootCmd.AddCommand(newIsteamDirectoryCmd(&flags)) 
+	rootCmd.AddCommand(newIsteamEconomyCmd(&flags)) 
+	rootCmd.AddCommand(newIsteamNewsCmd(&flags)) 
+	rootCmd.AddCommand(newIsteamRemoteStorageCmd(&flags)) 
+	rootCmd.AddCommand(newIsteamUserCmd(&flags)) 
+	rootCmd.AddCommand(newIsteamUserAuthCmd(&flags)) 
+	rootCmd.AddCommand(newIsteamUserOauthCmd(&flags)) 
+	rootCmd.AddCommand(newIsteamUserStatsCmd(&flags)) 
+	rootCmd.AddCommand(newIsteamWebApiutilCmd(&flags)) 
+	rootCmd.AddCommand(newIstoreServiceCmd(&flags)) 
+	rootCmd.AddCommand(newItfitems440Cmd(&flags)) 
 	rootCmd.AddCommand(newDoctorCmd(&flags))
 	rootCmd.AddCommand(newAuthCmd(&flags))
 	rootCmd.AddCommand(newExportCmd(&flags))

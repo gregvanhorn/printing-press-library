@@ -16,8 +16,8 @@ func newIeconServiceGetTradeOffersSummaryCmd(flags *rootFlags) *cobra.Command {
 	var flagTimeLastVisit int
 
 	cmd := &cobra.Command{
-		Use:     "get-trade-offers-summary",
-		Short:   "Get counts of pending and new trade offers",
+		Use:   "get-trade-offers-summary",
+		Short: "Get counts of pending and new trade offers",
 		Example: "  steam-web-pp-cli iecon-service get-trade-offers-summary",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -33,10 +33,32 @@ func newIeconServiceGetTradeOffersSummaryCmd(flags *rootFlags) *cobra.Command {
 			if flagTimeLastVisit != 0 {
 				params["time_last_visit"] = fmt.Sprintf("%v", flagTimeLastVisit)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "iecon-service", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -53,7 +75,6 @@ func newIeconServiceGetTradeOffersSummaryCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().IntVar(&flagTimeLastVisit, "time-last-visit", 0, "The time the user last visited. If not passed, will use the time the user last visited the trade offer page.")
 	_ = cmd.MarkFlagRequired("time-last-visit")
 

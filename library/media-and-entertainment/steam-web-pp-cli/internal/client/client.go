@@ -243,15 +243,19 @@ func (c *Client) do(method, path string, params map[string]string, body any) (js
 			req.Header.Set("Content-Type", "application/json")
 		}
 
+		q := req.URL.Query()
 		if params != nil {
-			q := req.URL.Query()
 			for k, v := range params {
 				if v != "" {
 					q.Set(k, v)
 				}
 			}
-			req.URL.RawQuery = q.Encode()
 		}
+		// Steam Web API uses key as query parameter, not Authorization header
+		if c.Config != nil && c.Config.APIKey != "" {
+			q.Set("key", c.Config.APIKey)
+		}
+		req.URL.RawQuery = q.Encode()
 
 		authHeader, err := c.authHeader()
 		if err != nil {

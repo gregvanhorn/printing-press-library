@@ -17,8 +17,8 @@ func newIsteamUserResolveVanityUrlCmd(flags *rootFlags) *cobra.Command {
 	var flagUrlType int
 
 	cmd := &cobra.Command{
-		Use:     "resolve-vanity-url",
-		Short:   "ResolveVanityURL operation of ISteamUser",
+		Use:   "resolve-vanity-url",
+		Short: "ResolveVanityURL operation of ISteamUser",
 		Example: "  steam-web-pp-cli isteam-user resolve-vanity-url",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -37,10 +37,32 @@ func newIsteamUserResolveVanityUrlCmd(flags *rootFlags) *cobra.Command {
 			if flagUrlType != 0 {
 				params["url_type"] = fmt.Sprintf("%v", flagUrlType)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "isteam-user", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -57,7 +79,6 @@ func newIsteamUserResolveVanityUrlCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringVar(&flagVanityurl, "vanityurl", "", "The vanity URL to get a SteamID for")
 	_ = cmd.MarkFlagRequired("vanityurl")
 	cmd.Flags().IntVar(&flagUrlType, "url-type", 0, "The type of vanity URL. 1 (default): Individual profile, 2: Group, 3: Official game group")

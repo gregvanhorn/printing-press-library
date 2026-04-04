@@ -22,8 +22,8 @@ func newIsteamCdnSetPerformanceStatsCmd(flags *rootFlags) *cobra.Command {
 	var stdinBody bool
 
 	cmd := &cobra.Command{
-		Use:     "set-performance-stats",
-		Short:   "SetPerformanceStats operation of ISteamCDN",
+		Use:   "set-performance-stats",
+		Short: "SetPerformanceStats operation of ISteamCDN",
 		Example: "  steam-web-pp-cli isteam-cdn set-performance-stats",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -60,9 +60,7 @@ func newIsteamCdnSetPerformanceStatsCmd(flags *rootFlags) *cobra.Command {
 						return nil
 					}
 				} else {
-					var wrapped struct {
-						Data []map[string]any `json:"data"`
-					}
+					var wrapped struct{ Data []map[string]any `json:"data"` }
 					if json.Unmarshal(data, &wrapped) == nil && len(wrapped.Data) > 0 {
 						if err := printAutoTable(cmd.OutOrStdout(), wrapped.Data); err != nil {
 							fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)
@@ -112,7 +110,6 @@ func newIsteamCdnSetPerformanceStatsCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringVar(&flagCdnname, "cdnname", "", "Steam name of CDN property")
 	_ = cmd.MarkFlagRequired("cdnname")
 	cmd.Flags().IntVar(&flagMbpsSent, "mbps-sent", 0, "Outgoing network traffic in Mbps")

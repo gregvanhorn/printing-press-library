@@ -17,9 +17,9 @@ func newIcsgoplayers730GetNextMatchSharingCodeCmd(flags *rootFlags) *cobra.Comma
 	var flagKnowncode string
 
 	cmd := &cobra.Command{
-		Use:     "get-next-match-sharing-code",
+		Use:   "get-next-match-sharing-code",
 		Aliases: []string{"list"},
-		Short:   "GetNextMatchSharingCode operation of ICSGOPlayers_730",
+		Short: "GetNextMatchSharingCode operation of ICSGOPlayers_730",
 		Example: "  steam-web-pp-cli icsgoplayers-730 get-next-match-sharing-code",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -38,10 +38,32 @@ func newIcsgoplayers730GetNextMatchSharingCodeCmd(flags *rootFlags) *cobra.Comma
 			if flagKnowncode != "" {
 				params["knowncode"] = fmt.Sprintf("%v", flagKnowncode)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "icsgoplayers-730", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {

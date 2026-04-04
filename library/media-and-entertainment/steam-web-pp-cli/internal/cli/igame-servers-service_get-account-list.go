@@ -15,9 +15,9 @@ func newIgameServersServiceGetAccountListCmd(flags *rootFlags) *cobra.Command {
 	var flagKey string
 
 	cmd := &cobra.Command{
-		Use:     "get-account-list",
+		Use:   "get-account-list",
 		Aliases: []string{"list"},
-		Short:   "Gets a list of game server accounts with their logon tokens",
+		Short: "Gets a list of game server accounts with their logon tokens",
 		Example: "  steam-web-pp-cli igame-servers-service get-account-list",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -30,10 +30,32 @@ func newIgameServersServiceGetAccountListCmd(flags *rootFlags) *cobra.Command {
 			if flagKey != "" {
 				params["key"] = fmt.Sprintf("%v", flagKey)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "igame-servers-service", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -50,7 +72,6 @@ func newIgameServersServiceGetAccountListCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 
 	return cmd
 }

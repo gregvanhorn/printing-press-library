@@ -15,9 +15,9 @@ func newIdota2Ticket570GetSteamIdforBadgeIdCmd(flags *rootFlags) *cobra.Command 
 	var flagBadgeID string
 
 	cmd := &cobra.Command{
-		Use:     "get-steam-idfor-badge-id",
+		Use:   "get-steam-idfor-badge-id",
 		Aliases: []string{"list"},
-		Short:   "GetSteamIDForBadgeID operation of IDOTA2Ticket_570",
+		Short: "GetSteamIDForBadgeID operation of IDOTA2Ticket_570",
 		Example: "  steam-web-pp-cli idota2-ticket-570 get-steam-idfor-badge-id",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -30,10 +30,32 @@ func newIdota2Ticket570GetSteamIdforBadgeIdCmd(flags *rootFlags) *cobra.Command 
 			if flagBadgeID != "" {
 				params["BadgeID"] = fmt.Sprintf("%v", flagBadgeID)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "idota2-ticket-570", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -49,8 +71,8 @@ func newIdota2Ticket570GetSteamIdforBadgeIdCmd(flags *rootFlags) *cobra.Command 
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagBadgeID, "badgeid", "", "The badge ID")
-	_ = cmd.MarkFlagRequired("badgeid")
+	cmd.Flags().StringVar(&flagBadgeID, "badge-id", "", "The badge ID")
+	_ = cmd.MarkFlagRequired("badge-id")
 
 	return cmd
 }

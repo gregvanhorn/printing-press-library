@@ -39,8 +39,8 @@
     {
       "name": "steam-web-pp-cli",
       "category": "media-and-entertainment",
-      "api": "Steam Web API",
-      "description": "Query Steam player profiles, game libraries, achievements, and friends from the terminal. 90/100 Grade A.",
+      "api": "Steam Web",
+      "description": "Look up Steam players, games, achievements, friends, and stats from the command line",
       "path": "library/media-and-entertainment/steam-web-pp-cli"
     }
   ]

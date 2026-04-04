@@ -30,9 +30,9 @@ func newIcheatReportingServiceReportCheatDataCmd(flags *rootFlags) *cobra.Comman
 	var stdinBody bool
 
 	cmd := &cobra.Command{
-		Use:     "report-cheat-data",
+		Use:   "report-cheat-data",
 		Aliases: []string{"create"},
-		Short:   "Reports cheat data. Only use on test account that is running the game but not in a multiplayer session.",
+		Short: "Reports cheat data. Only use on test account that is running the game but not in a multiplayer session.",
 		Example: "  steam-web-pp-cli icheat-reporting-service report-cheat-data",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -69,9 +69,7 @@ func newIcheatReportingServiceReportCheatDataCmd(flags *rootFlags) *cobra.Comman
 						return nil
 					}
 				} else {
-					var wrapped struct {
-						Data []map[string]any `json:"data"`
-					}
+					var wrapped struct{ Data []map[string]any `json:"data"` }
 					if json.Unmarshal(data, &wrapped) == nil && len(wrapped.Data) > 0 {
 						if err := printAutoTable(cmd.OutOrStdout(), wrapped.Data); err != nil {
 							fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)
@@ -121,7 +119,6 @@ func newIcheatReportingServiceReportCheatDataCmd(flags *rootFlags) *cobra.Comman
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "steamid of the user running and reporting the cheat.")
 	_ = cmd.MarkFlagRequired("steamid")
 	cmd.Flags().StringVar(&flagAppid, "appid", "", "The appid.")

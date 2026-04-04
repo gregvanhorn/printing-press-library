@@ -6,8 +6,8 @@ package cli
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/media-and-entertainment/steam-web-pp-cli/internal/config"
+	"github.com/spf13/cobra"
 )
 
 func newAuthCmd(flags *rootFlags) *cobra.Command {
@@ -25,8 +25,8 @@ func newAuthCmd(flags *rootFlags) *cobra.Command {
 
 func newAuthStatusCmd(flags *rootFlags) *cobra.Command {
 	return &cobra.Command{
-		Use:     "status",
-		Short:   "Show authentication status",
+		Use:   "status",
+		Short: "Show authentication status",
 		Example: "  steam-web-pp-cli auth status",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load(flags.configPath)
@@ -54,10 +54,10 @@ func newAuthStatusCmd(flags *rootFlags) *cobra.Command {
 
 func newAuthSetTokenCmd(flags *rootFlags) *cobra.Command {
 	return &cobra.Command{
-		Use:     "set-token <token>",
-		Short:   "Save an API token to the config file",
+		Use:   "set-token <token>",
+		Short: "Save an API token to the config file",
 		Example: "  steam-web-pp-cli auth set-token sk_live_abc123",
-		Args:    cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load(flags.configPath)
 			if err != nil {
@@ -77,8 +77,8 @@ func newAuthSetTokenCmd(flags *rootFlags) *cobra.Command {
 
 func newAuthLogoutCmd(flags *rootFlags) *cobra.Command {
 	return &cobra.Command{
-		Use:     "logout",
-		Short:   "Clear stored credentials",
+		Use:   "logout",
+		Short: "Clear stored credentials",
 		Example: "  steam-web-pp-cli auth logout",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load(flags.configPath)

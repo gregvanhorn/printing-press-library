@@ -55,8 +55,8 @@ func newIpublishedFileServiceQueryFilesCmd(flags *rootFlags) *cobra.Command {
 	var flagAll bool
 
 	cmd := &cobra.Command{
-		Use:     "query-files",
-		Short:   "Performs a search query for published files",
+		Use:   "query-files",
+		Short: "Performs a search query for published files",
 		Example: "  steam-web-pp-cli ipublished-file-service query-files",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -65,51 +65,73 @@ func newIpublishedFileServiceQueryFilesCmd(flags *rootFlags) *cobra.Command {
 			}
 
 			path := "/IPublishedFileService/QueryFiles/v1"
-			data, err := paginatedGet(c, path, map[string]string{
-				"key":                          fmt.Sprintf("%v", flagKey),
-				"query_type":                   fmt.Sprintf("%v", flagQueryType),
-				"page":                         fmt.Sprintf("%v", flagPage),
-				"cursor":                       fmt.Sprintf("%v", flagCursor),
-				"numperpage":                   fmt.Sprintf("%v", flagNumperpage),
-				"creator_appid":                fmt.Sprintf("%v", flagCreatorAppid),
-				"appid":                        fmt.Sprintf("%v", flagAppid),
-				"requiredtags":                 fmt.Sprintf("%v", flagRequiredtags),
-				"excludedtags":                 fmt.Sprintf("%v", flagExcludedtags),
-				"match_all_tags":               fmt.Sprintf("%v", flagMatchAllTags),
-				"required_flags":               fmt.Sprintf("%v", flagRequiredFlags),
-				"omitted_flags":                fmt.Sprintf("%v", flagOmittedFlags),
-				"search_text":                  fmt.Sprintf("%v", flagSearchText),
-				"filetype":                     fmt.Sprintf("%v", flagFiletype),
-				"child_publishedfileid":        fmt.Sprintf("%v", flagChildPublishedfileid),
-				"days":                         fmt.Sprintf("%v", flagDays),
-				"include_recent_votes_only":    fmt.Sprintf("%v", flagIncludeRecentVotesOnly),
-				"cache_max_age_seconds":        fmt.Sprintf("%v", flagCacheMaxAgeSeconds),
-				"language":                     fmt.Sprintf("%v", flagLanguage),
-				"required_kv_tags":             fmt.Sprintf("%v", flagRequiredKvTags),
-				"taggroups":                    fmt.Sprintf("%v", flagTaggroups),
-				"date_range_created":           fmt.Sprintf("%v", flagDateRangeCreated),
-				"date_range_updated":           fmt.Sprintf("%v", flagDateRangeUpdated),
+			data, prov, err := resolvePaginatedRead(c, flags, "ipublished-file-service", path, map[string]string{
+				"key": fmt.Sprintf("%v", flagKey),
+				"query_type": fmt.Sprintf("%v", flagQueryType),
+				"page": fmt.Sprintf("%v", flagPage),
+				"cursor": fmt.Sprintf("%v", flagCursor),
+				"numperpage": fmt.Sprintf("%v", flagNumperpage),
+				"creator_appid": fmt.Sprintf("%v", flagCreatorAppid),
+				"appid": fmt.Sprintf("%v", flagAppid),
+				"requiredtags": fmt.Sprintf("%v", flagRequiredtags),
+				"excludedtags": fmt.Sprintf("%v", flagExcludedtags),
+				"match_all_tags": fmt.Sprintf("%v", flagMatchAllTags),
+				"required_flags": fmt.Sprintf("%v", flagRequiredFlags),
+				"omitted_flags": fmt.Sprintf("%v", flagOmittedFlags),
+				"search_text": fmt.Sprintf("%v", flagSearchText),
+				"filetype": fmt.Sprintf("%v", flagFiletype),
+				"child_publishedfileid": fmt.Sprintf("%v", flagChildPublishedfileid),
+				"days": fmt.Sprintf("%v", flagDays),
+				"include_recent_votes_only": fmt.Sprintf("%v", flagIncludeRecentVotesOnly),
+				"cache_max_age_seconds": fmt.Sprintf("%v", flagCacheMaxAgeSeconds),
+				"language": fmt.Sprintf("%v", flagLanguage),
+				"required_kv_tags": fmt.Sprintf("%v", flagRequiredKvTags),
+				"taggroups": fmt.Sprintf("%v", flagTaggroups),
+				"date_range_created": fmt.Sprintf("%v", flagDateRangeCreated),
+				"date_range_updated": fmt.Sprintf("%v", flagDateRangeUpdated),
 				"excluded_content_descriptors": fmt.Sprintf("%v", flagExcludedContentDescriptors),
-				"admin_query":                  fmt.Sprintf("%v", flagAdminQuery),
-				"totalonly":                    fmt.Sprintf("%v", flagTotalonly),
-				"ids_only":                     fmt.Sprintf("%v", flagIdsOnly),
-				"return_vote_data":             fmt.Sprintf("%v", flagReturnVoteData),
-				"return_tags":                  fmt.Sprintf("%v", flagReturnTags),
-				"return_kv_tags":               fmt.Sprintf("%v", flagReturnKvTags),
-				"return_previews":              fmt.Sprintf("%v", flagReturnPreviews),
-				"return_children":              fmt.Sprintf("%v", flagReturnChildren),
-				"return_short_description":     fmt.Sprintf("%v", flagReturnShortDescription),
-				"return_for_sale_data":         fmt.Sprintf("%v", flagReturnForSaleData),
-				"return_metadata":              fmt.Sprintf("%v", flagReturnMetadata),
-				"return_playtime_stats":        fmt.Sprintf("%v", flagReturnPlaytimeStats),
-				"return_details":               fmt.Sprintf("%v", flagReturnDetails),
-				"strip_description_bbcode":     fmt.Sprintf("%v", flagStripDescriptionBbcode),
-				"desired_revision":             fmt.Sprintf("%v", flagDesiredRevision),
-				"return_reactions":             fmt.Sprintf("%v", flagReturnReactions),
+				"admin_query": fmt.Sprintf("%v", flagAdminQuery),
+				"totalonly": fmt.Sprintf("%v", flagTotalonly),
+				"ids_only": fmt.Sprintf("%v", flagIdsOnly),
+				"return_vote_data": fmt.Sprintf("%v", flagReturnVoteData),
+				"return_tags": fmt.Sprintf("%v", flagReturnTags),
+				"return_kv_tags": fmt.Sprintf("%v", flagReturnKvTags),
+				"return_previews": fmt.Sprintf("%v", flagReturnPreviews),
+				"return_children": fmt.Sprintf("%v", flagReturnChildren),
+				"return_short_description": fmt.Sprintf("%v", flagReturnShortDescription),
+				"return_for_sale_data": fmt.Sprintf("%v", flagReturnForSaleData),
+				"return_metadata": fmt.Sprintf("%v", flagReturnMetadata),
+				"return_playtime_stats": fmt.Sprintf("%v", flagReturnPlaytimeStats),
+				"return_details": fmt.Sprintf("%v", flagReturnDetails),
+				"strip_description_bbcode": fmt.Sprintf("%v", flagStripDescriptionBbcode),
+				"desired_revision": fmt.Sprintf("%v", flagDesiredRevision),
+				"return_reactions": fmt.Sprintf("%v", flagReturnReactions),
 			}, flagAll, "cursor", "", "")
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -126,7 +148,6 @@ func newIpublishedFileServiceQueryFilesCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringVar(&flagQueryType, "query-type", "", "enumeration EPublishedFileQueryType in clientenums.h")
 	_ = cmd.MarkFlagRequired("query-type")
 	cmd.Flags().IntVar(&flagPage, "page", 0, "Current page")

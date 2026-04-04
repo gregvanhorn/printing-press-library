@@ -50,8 +50,8 @@ func newIpublishedFileServiceGetUserFileCountCmd(flags *rootFlags) *cobra.Comman
 	var flagReturnApps bool
 
 	cmd := &cobra.Command{
-		Use:     "get-user-file-count",
-		Short:   "Retrieves a count of files published by a user. Uses the same messages as GetUserFiles but totalonly must be true.",
+		Use:   "get-user-file-count",
+		Short: "Retrieves a count of files published by a user. Uses the same messages as GetUserFiles but totalonly must be true.",
 		Example: "  steam-web-pp-cli ipublished-file-service get-user-file-count",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -169,10 +169,32 @@ func newIpublishedFileServiceGetUserFileCountCmd(flags *rootFlags) *cobra.Comman
 			if flagReturnApps != false {
 				params["return_apps"] = fmt.Sprintf("%v", flagReturnApps)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "ipublished-file-service", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -189,7 +211,6 @@ func newIpublishedFileServiceGetUserFileCountCmd(flags *rootFlags) *cobra.Comman
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "Steam ID of the user whose files are being requested.")
 	_ = cmd.MarkFlagRequired("steamid")
 	cmd.Flags().StringVar(&flagAppid, "appid", "", "App Id of the app that the files were published to.")

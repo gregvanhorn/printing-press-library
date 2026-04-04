@@ -15,9 +15,9 @@ func newIeconItems620GetPlayerItemsCmd(flags *rootFlags) *cobra.Command {
 	var flagSteamid string
 
 	cmd := &cobra.Command{
-		Use:     "get-player-items",
+		Use:   "get-player-items",
 		Aliases: []string{"list"},
-		Short:   "GetPlayerItems operation of IEconItems_620",
+		Short: "GetPlayerItems operation of IEconItems_620",
 		Example: "  steam-web-pp-cli iecon-items-620 get-player-items",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -30,10 +30,32 @@ func newIeconItems620GetPlayerItemsCmd(flags *rootFlags) *cobra.Command {
 			if flagSteamid != "" {
 				params["steamid"] = fmt.Sprintf("%v", flagSteamid)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "iecon-items-620", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {

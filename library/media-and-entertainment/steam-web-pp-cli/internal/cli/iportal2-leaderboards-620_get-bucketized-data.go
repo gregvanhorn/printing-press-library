@@ -15,9 +15,9 @@ func newIportal2Leaderboards620GetBucketizedDataCmd(flags *rootFlags) *cobra.Com
 	var flagLeaderboardName string
 
 	cmd := &cobra.Command{
-		Use:     "get-bucketized-data",
+		Use:   "get-bucketized-data",
 		Aliases: []string{"list"},
-		Short:   "GetBucketizedData operation of IPortal2Leaderboards_620",
+		Short: "GetBucketizedData operation of IPortal2Leaderboards_620",
 		Example: "  steam-web-pp-cli iportal2-leaderboards-620 get-bucketized-data",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -30,10 +30,32 @@ func newIportal2Leaderboards620GetBucketizedDataCmd(flags *rootFlags) *cobra.Com
 			if flagLeaderboardName != "" {
 				params["leaderboardName"] = fmt.Sprintf("%v", flagLeaderboardName)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "iportal2-leaderboards-620", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -49,8 +71,8 @@ func newIportal2Leaderboards620GetBucketizedDataCmd(flags *rootFlags) *cobra.Com
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagLeaderboardName, "leaderboardname", "", "The leaderboard name to fetch data for.")
-	_ = cmd.MarkFlagRequired("leaderboardname")
+	cmd.Flags().StringVar(&flagLeaderboardName, "leaderboard-name", "", "The leaderboard name to fetch data for.")
+	_ = cmd.MarkFlagRequired("leaderboard-name")
 
 	return cmd
 }

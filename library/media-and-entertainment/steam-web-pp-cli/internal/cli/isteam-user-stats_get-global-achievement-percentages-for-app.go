@@ -15,9 +15,9 @@ func newIsteamUserStatsGetGlobalAchievementPercentagesForAppCmd(flags *rootFlags
 	var flagGameid string
 
 	cmd := &cobra.Command{
-		Use:     "get-global-achievement-percentages-for-app",
+		Use:   "get-global-achievement-percentages-for-app",
 		Aliases: []string{"list"},
-		Short:   "GetGlobalAchievementPercentagesForApp operation of ISteamUserStats",
+		Short: "GetGlobalAchievementPercentagesForApp operation of ISteamUserStats",
 		Example: "  steam-web-pp-cli isteam-user-stats get-global-achievement-percentages-for-app",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -30,10 +30,32 @@ func newIsteamUserStatsGetGlobalAchievementPercentagesForAppCmd(flags *rootFlags
 			if flagGameid != "" {
 				params["gameid"] = fmt.Sprintf("%v", flagGameid)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "isteam-user-stats", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {

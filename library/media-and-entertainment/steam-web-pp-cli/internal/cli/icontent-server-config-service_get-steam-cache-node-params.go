@@ -17,9 +17,9 @@ func newIcontentServerConfigServiceGetSteamCacheNodeParamsCmd(flags *rootFlags) 
 	var flagCacheKey string
 
 	cmd := &cobra.Command{
-		Use:     "get-steam-cache-node-params",
+		Use:   "get-steam-cache-node-params",
 		Aliases: []string{"list"},
-		Short:   "Get the operational parameters for a SteamCache node (information the node uses to operate).",
+		Short: "Get the operational parameters for a SteamCache node (information the node uses to operate).",
 		Example: "  steam-web-pp-cli icontent-server-config-service get-steam-cache-node-params",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -38,10 +38,32 @@ func newIcontentServerConfigServiceGetSteamCacheNodeParamsCmd(flags *rootFlags) 
 			if flagCacheKey != "" {
 				params["cache_key"] = fmt.Sprintf("%v", flagCacheKey)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "icontent-server-config-service", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -58,7 +80,6 @@ func newIcontentServerConfigServiceGetSteamCacheNodeParamsCmd(flags *rootFlags) 
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringVar(&flagCacheId, "cache-id", "", "Unique ID number")
 	_ = cmd.MarkFlagRequired("cache-id")
 	cmd.Flags().StringVar(&flagCacheKey, "cache-key", "", "Valid current cache API key")

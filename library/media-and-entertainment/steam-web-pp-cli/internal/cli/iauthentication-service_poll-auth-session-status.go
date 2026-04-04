@@ -19,8 +19,8 @@ func newIauthenticationServicePollAuthSessionStatusCmd(flags *rootFlags) *cobra.
 	var stdinBody bool
 
 	cmd := &cobra.Command{
-		Use:     "poll-auth-session-status",
-		Short:   "poll during authentication process",
+		Use:   "poll-auth-session-status",
+		Short: "poll during authentication process",
 		Example: "  steam-web-pp-cli iauthentication-service poll-auth-session-status",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -57,9 +57,7 @@ func newIauthenticationServicePollAuthSessionStatusCmd(flags *rootFlags) *cobra.
 						return nil
 					}
 				} else {
-					var wrapped struct {
-						Data []map[string]any `json:"data"`
-					}
+					var wrapped struct{ Data []map[string]any `json:"data"` }
 					if json.Unmarshal(data, &wrapped) == nil && len(wrapped.Data) > 0 {
 						if err := printAutoTable(cmd.OutOrStdout(), wrapped.Data); err != nil {
 							fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)

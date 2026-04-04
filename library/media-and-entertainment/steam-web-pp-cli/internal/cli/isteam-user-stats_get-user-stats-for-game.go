@@ -17,8 +17,8 @@ func newIsteamUserStatsGetUserStatsForGameCmd(flags *rootFlags) *cobra.Command {
 	var flagAppid string
 
 	cmd := &cobra.Command{
-		Use:     "get-user-stats-for-game",
-		Short:   "GetUserStatsForGame operation of ISteamUserStats",
+		Use:   "get-user-stats-for-game",
+		Short: "GetUserStatsForGame operation of ISteamUserStats",
 		Example: "  steam-web-pp-cli isteam-user-stats get-user-stats-for-game",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -37,10 +37,32 @@ func newIsteamUserStatsGetUserStatsForGameCmd(flags *rootFlags) *cobra.Command {
 			if flagAppid != "" {
 				params["appid"] = fmt.Sprintf("%v", flagAppid)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "isteam-user-stats", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -57,7 +79,6 @@ func newIsteamUserStatsGetUserStatsForGameCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "SteamID of user")
 	_ = cmd.MarkFlagRequired("steamid")
 	cmd.Flags().StringVar(&flagAppid, "appid", "", "appid of game")

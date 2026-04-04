@@ -16,9 +16,9 @@ func newIclientStats1046930ReportEventCmd(flags *rootFlags) *cobra.Command {
 	var stdinBody bool
 
 	cmd := &cobra.Command{
-		Use:     "report-event",
+		Use:   "report-event",
 		Aliases: []string{"create"},
-		Short:   "ReportEvent operation of IClientStats_1046930",
+		Short: "ReportEvent operation of IClientStats_1046930",
 		Example: "  steam-web-pp-cli iclient-stats-1046930 report-event",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -55,9 +55,7 @@ func newIclientStats1046930ReportEventCmd(flags *rootFlags) *cobra.Command {
 						return nil
 					}
 				} else {
-					var wrapped struct {
-						Data []map[string]any `json:"data"`
-					}
+					var wrapped struct{ Data []map[string]any `json:"data"` }
 					if json.Unmarshal(data, &wrapped) == nil && len(wrapped.Data) > 0 {
 						if err := printAutoTable(cmd.OutOrStdout(), wrapped.Data); err != nil {
 							fmt.Fprintf(os.Stderr, "warning: table rendering failed, falling back to JSON: %v\n", err)

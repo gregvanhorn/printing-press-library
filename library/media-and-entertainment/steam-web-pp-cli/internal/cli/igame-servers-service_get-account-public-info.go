@@ -16,8 +16,8 @@ func newIgameServersServiceGetAccountPublicInfoCmd(flags *rootFlags) *cobra.Comm
 	var flagSteamid string
 
 	cmd := &cobra.Command{
-		Use:     "get-account-public-info",
-		Short:   "Gets public information about a given game server account",
+		Use:   "get-account-public-info",
+		Short: "Gets public information about a given game server account",
 		Example: "  steam-web-pp-cli igame-servers-service get-account-public-info",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -33,10 +33,32 @@ func newIgameServersServiceGetAccountPublicInfoCmd(flags *rootFlags) *cobra.Comm
 			if flagSteamid != "" {
 				params["steamid"] = fmt.Sprintf("%v", flagSteamid)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "igame-servers-service", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -53,7 +75,6 @@ func newIgameServersServiceGetAccountPublicInfoCmd(flags *rootFlags) *cobra.Comm
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringVar(&flagSteamid, "steamid", "", "The SteamID of the game server to get info on")
 	_ = cmd.MarkFlagRequired("steamid")
 

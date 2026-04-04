@@ -20,9 +20,9 @@ func newIsteamNewsGetNewsForAppCmd(flags *rootFlags) *cobra.Command {
 	var flagTags string
 
 	cmd := &cobra.Command{
-		Use:     "get-news-for-app",
+		Use:   "get-news-for-app",
 		Aliases: []string{"list"},
-		Short:   "GetNewsForApp operation of ISteamNews",
+		Short: "GetNewsForApp operation of ISteamNews",
 		Example: "  steam-web-pp-cli isteam-news get-news-for-app",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -50,10 +50,32 @@ func newIsteamNewsGetNewsForAppCmd(flags *rootFlags) *cobra.Command {
 			if flagTags != "" {
 				params["tags"] = fmt.Sprintf("%v", flagTags)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "isteam-news", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {

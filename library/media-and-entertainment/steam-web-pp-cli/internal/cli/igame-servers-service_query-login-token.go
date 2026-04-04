@@ -16,8 +16,8 @@ func newIgameServersServiceQueryLoginTokenCmd(flags *rootFlags) *cobra.Command {
 	var flagLoginToken string
 
 	cmd := &cobra.Command{
-		Use:     "query-login-token",
-		Short:   "Queries the status of the specified token, which must be owned by you",
+		Use:   "query-login-token",
+		Short: "Queries the status of the specified token, which must be owned by you",
 		Example: "  steam-web-pp-cli igame-servers-service query-login-token",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -33,10 +33,32 @@ func newIgameServersServiceQueryLoginTokenCmd(flags *rootFlags) *cobra.Command {
 			if flagLoginToken != "" {
 				params["login_token"] = fmt.Sprintf("%v", flagLoginToken)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "igame-servers-service", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -53,7 +75,6 @@ func newIgameServersServiceQueryLoginTokenCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringVar(&flagLoginToken, "login-token", "", "Login token to query")
 	_ = cmd.MarkFlagRequired("login-token")
 

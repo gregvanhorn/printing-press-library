@@ -15,8 +15,8 @@ func newIcontentServerDirectoryServiceGetClientUpdateHostsCmd(flags *rootFlags) 
 	var flagCachedSignature string
 
 	cmd := &cobra.Command{
-		Use:     "get-client-update-hosts",
-		Short:   "GetClientUpdateHosts operation of IContentServerDirectoryService",
+		Use:   "get-client-update-hosts",
+		Short: "GetClientUpdateHosts operation of IContentServerDirectoryService",
 		Example: "  steam-web-pp-cli icontent-server-directory-service get-client-update-hosts",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -29,10 +29,32 @@ func newIcontentServerDirectoryServiceGetClientUpdateHostsCmd(flags *rootFlags) 
 			if flagCachedSignature != "" {
 				params["cached_signature"] = fmt.Sprintf("%v", flagCachedSignature)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "icontent-server-directory-service", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {

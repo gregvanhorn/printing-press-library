@@ -18,8 +18,8 @@ func newIeconServiceGetTradeOfferCmd(flags *rootFlags) *cobra.Command {
 	var flagGetDescriptions bool
 
 	cmd := &cobra.Command{
-		Use:     "get-trade-offer",
-		Short:   "Gets a specific trade offer",
+		Use:   "get-trade-offer",
+		Short: "Gets a specific trade offer",
 		Example: "  steam-web-pp-cli iecon-service get-trade-offer",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -41,10 +41,32 @@ func newIeconServiceGetTradeOfferCmd(flags *rootFlags) *cobra.Command {
 			if flagGetDescriptions != false {
 				params["get_descriptions"] = fmt.Sprintf("%v", flagGetDescriptions)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "iecon-service", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -61,7 +83,6 @@ func newIeconServiceGetTradeOfferCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().StringVar(&flagTradeofferid, "tradeofferid", "", "Tradeofferid")
 	_ = cmd.MarkFlagRequired("tradeofferid")
 	cmd.Flags().StringVar(&flagLanguage, "language", "", "Language")

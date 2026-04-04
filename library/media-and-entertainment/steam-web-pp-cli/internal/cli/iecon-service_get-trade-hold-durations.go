@@ -17,8 +17,8 @@ func newIeconServiceGetTradeHoldDurationsCmd(flags *rootFlags) *cobra.Command {
 	var flagTradeOfferAccessToken string
 
 	cmd := &cobra.Command{
-		Use:     "get-trade-hold-durations",
-		Short:   "Returns the estimated hold duration and end date that a trade with a user would have",
+		Use:   "get-trade-hold-durations",
+		Short: "Returns the estimated hold duration and end date that a trade with a user would have",
 		Example: "  steam-web-pp-cli iecon-service get-trade-hold-durations",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -37,10 +37,32 @@ func newIeconServiceGetTradeHoldDurationsCmd(flags *rootFlags) *cobra.Command {
 			if flagTradeOfferAccessToken != "" {
 				params["trade_offer_access_token"] = fmt.Sprintf("%v", flagTradeOfferAccessToken)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "iecon-service", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {
@@ -57,7 +79,6 @@ func newIeconServiceGetTradeHoldDurationsCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagKey, "key", "", "Access key")
-	_ = cmd.MarkFlagRequired("key")
 	cmd.Flags().IntVar(&flagSteamidTarget, "steamid-target", 0, "User you are trading with")
 	_ = cmd.MarkFlagRequired("steamid-target")
 	cmd.Flags().StringVar(&flagTradeOfferAccessToken, "trade-offer-access-token", "", "A special token that allows for trade offers from non-friends.")

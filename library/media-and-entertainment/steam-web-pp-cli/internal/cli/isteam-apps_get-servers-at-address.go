@@ -15,8 +15,8 @@ func newIsteamAppsGetServersAtAddressCmd(flags *rootFlags) *cobra.Command {
 	var flagAddr string
 
 	cmd := &cobra.Command{
-		Use:     "get-servers-at-address",
-		Short:   "GetServersAtAddress operation of ISteamApps",
+		Use:   "get-servers-at-address",
+		Short: "GetServersAtAddress operation of ISteamApps",
 		Example: "  steam-web-pp-cli isteam-apps get-servers-at-address",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
@@ -29,10 +29,32 @@ func newIsteamAppsGetServersAtAddressCmd(flags *rootFlags) *cobra.Command {
 			if flagAddr != "" {
 				params["addr"] = fmt.Sprintf("%v", flagAddr)
 			}
-			data, err := c.Get(path, params)
+			data, prov, err := resolveRead(c, flags, "isteam-apps", false, path, params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
+			// Print provenance to stderr for human-facing output
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
+			// For JSON output, wrap with provenance envelope before passing through flags
+			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+				filtered := data
+				if flags.compact {
+					filtered = compactFields(filtered)
+				}
+				if flags.selectFields != "" {
+					filtered = filterFields(filtered, flags.selectFields)
+				}
+				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
+				if wrapErr != nil {
+					return wrapErr
+				}
+				return printOutput(cmd.OutOrStdout(), wrapped, true)
+			}
+			// For all other output modes (table, csv, plain, quiet), use the standard pipeline
 			if wantsHumanTable(cmd.OutOrStdout(), flags) {
 				var items []map[string]any
 				if json.Unmarshal(data, &items) == nil && len(items) > 0 {

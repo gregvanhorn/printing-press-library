@@ -9,9 +9,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"text/tabwriter"
+	"time"
+	"unicode"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -85,12 +88,12 @@ type cliError struct {
 	err  error
 }
 
-func (e *cliError) Error() string  { return e.err.Error() }
-func (e *cliError) Unwrap() error  { return e.err }
-func notFoundErr(err error) error  { return &cliError{code: 3, err: err} }
-func authErr(err error) error      { return &cliError{code: 4, err: err} }
-func apiErr(err error) error       { return &cliError{code: 5, err: err} }
-func configErr(err error) error    { return &cliError{code: 10, err: err} }
+func (e *cliError) Error() string { return e.err.Error() }
+func (e *cliError) Unwrap() error { return e.err }
+func notFoundErr(err error) error { return &cliError{code: 3, err: err} }
+func authErr(err error) error     { return &cliError{code: 4, err: err} }
+func apiErr(err error) error      { return &cliError{code: 5, err: err} }
+func configErr(err error) error   { return &cliError{code: 10, err: err} }
 func rateLimitErr(err error) error { return &cliError{code: 7, err: err} }
 
 // classifyAPIError maps API errors to structured exit codes with actionable hints.
@@ -226,7 +229,8 @@ func filterFields(data json.RawMessage, fields string) json.RawMessage {
 	for _, f := range strings.Split(fields, ",") {
 		f = strings.TrimSpace(f)
 		if f != "" {
-			wanted[f] = true
+			// Normalize to lowercase for case-insensitive matching
+			wanted[strings.ToLower(f)] = true
 		}
 	}
 	if len(wanted) == 0 {
@@ -240,7 +244,7 @@ func filterFields(data json.RawMessage, fields string) json.RawMessage {
 		for i, item := range items {
 			m := map[string]json.RawMessage{}
 			for k, v := range item {
-				if wanted[k] {
+				if fieldMatchesSelect(k, wanted) {
 					m[k] = v
 				}
 			}
@@ -255,7 +259,7 @@ func filterFields(data json.RawMessage, fields string) json.RawMessage {
 	if json.Unmarshal(data, &obj) == nil {
 		m := map[string]json.RawMessage{}
 		for k, v := range obj {
-			if wanted[k] {
+			if fieldMatchesSelect(k, wanted) {
 				m[k] = v
 			}
 		}
@@ -264,6 +268,37 @@ func filterFields(data json.RawMessage, fields string) json.RawMessage {
 	}
 
 	return data
+}
+
+// fieldMatchesSelect checks if a field name matches any of the wanted select fields.
+// Matches case-insensitively and converts camelCase/PascalCase to kebab-case for comparison.
+// "OrderDate" matches "orderdate", "order-date", or "OrderDate".
+func fieldMatchesSelect(fieldName string, wanted map[string]bool) bool {
+	lower := strings.ToLower(fieldName)
+	// Direct case-insensitive match: "ID" matches "id"
+	if wanted[lower] {
+		return true
+	}
+	// Convert original casing to kebab-case: "OrderDate" → "order-date"
+	kebab := camelToKebab(fieldName)
+	if kebab != lower && wanted[kebab] {
+		return true
+	}
+	return false
+}
+
+// camelToKebab converts "orderDate" or "orderdate" to "order-date" by splitting on
+// uppercase boundaries. For already-lowercase input, splits on known word boundaries.
+func camelToKebab(s string) string {
+	var b strings.Builder
+	runes := []rune(s)
+	for i, r := range runes {
+		if i > 0 && unicode.IsUpper(r) && unicode.IsLower(runes[i-1]) {
+			b.WriteByte('-')
+		}
+		b.WriteRune(unicode.ToLower(r))
+	}
+	return b.String()
 }
 
 // printOutputWithFlags routes output through the right format based on flags.
@@ -503,32 +538,40 @@ func wantsHumanTable(w io.Writer, flags *rootFlags) bool {
 	return isTerminal(w)
 }
 
+// formatCompact formats large numbers compactly (e.g., 1.2M, 728K).
+func formatCompact(n int64) string {
+	switch {
+	case n >= 1_000_000:
+		return fmt.Sprintf("%.1fM", float64(n)/1_000_000)
+	case n >= 10_000:
+		return fmt.Sprintf("%.0fK", float64(n)/1_000)
+	case n >= 1_000:
+		return fmt.Sprintf("%.1fK", float64(n)/1_000)
+	default:
+		return fmt.Sprintf("%d", n)
+	}
+}
+
 func printAutoTable(w io.Writer, items []map[string]any) error {
 	if len(items) == 0 {
 		return nil
 	}
 
-	// Collect headers from first item, prioritize common fields
-	priority := []string{"id", "name", "username", "title", "status", "type", "email", "description"}
-	headerSet := map[string]struct{}{}
-	for k := range items[0] {
-		headerSet[k] = struct{}{}
-	}
-
-	var headers []string
-	for _, p := range priority {
-		if _, ok := headerSet[p]; ok {
-			headers = append(headers, p)
-			delete(headerSet, p)
+	// Count scalar vs complex fields to decide format
+	scalarCount := 0
+	for _, v := range items[0] {
+		switch v.(type) {
+		case string, float64, bool, nil:
+			scalarCount++
 		}
 	}
-	// Add remaining headers sorted
-	var rest []string
-	for k := range headerSet {
-		rest = append(rest, k)
+
+	// Use sectional/card layout for complex items (many fields or nested data)
+	if len(items[0]) > 8 || scalarCount < len(items[0])-2 {
+		return printAutoCards(w, items)
 	}
-	sort.Strings(rest)
-	headers = append(headers, rest...)
+
+	headers := prioritizeHeaders(items[0])
 
 	// Limit to 6 columns max for readability
 	if len(headers) > 6 {
@@ -540,24 +583,7 @@ func printAutoTable(w io.Writer, items []map[string]any) error {
 	for _, item := range items {
 		row := make([]string, len(headers))
 		for i, h := range headers {
-			v := item[h]
-			switch val := v.(type) {
-			case string:
-				row[i] = truncate(val, 40)
-			case float64:
-				if val == float64(int64(val)) {
-					row[i] = fmt.Sprintf("%d", int64(val))
-				} else {
-					row[i] = fmt.Sprintf("%g", val)
-				}
-			case bool:
-				row[i] = fmt.Sprintf("%t", val)
-			case nil:
-				row[i] = ""
-			default:
-				b, _ := json.Marshal(val)
-				row[i] = truncate(string(b), 40)
-			}
+			row[i] = formatCellValue(item[h])
 		}
 		rows = append(rows, row)
 	}
@@ -574,4 +600,398 @@ func printAutoTable(w io.Writer, items []map[string]any) error {
 		fmt.Fprintln(tw, strings.Join(row, "\t"))
 	}
 	return tw.Flush()
+}
+
+// prioritizeHeaders orders scalar fields by importance for table display.
+func prioritizeHeaders(item map[string]any) []string {
+	return prioritizeFields(item, false)
+}
+
+// prioritizeAllHeaders orders all fields (including arrays) by importance for card display.
+func prioritizeAllHeaders(item map[string]any) []string {
+	return prioritizeFields(item, true)
+}
+
+// prioritizeFields orders fields by importance: identity → temporal → status → other.
+// When includeComplex is true, arrays and objects are included (for card layout).
+//
+// Uses exact-or-suffix matching to avoid false positives: "name" matches "Name" and
+// "UserName" but not "BuildingName" (because "Building" is not a known prefix that
+// indicates identity). The field is split on camelCase/snake_case boundaries and the
+// LAST segment is matched against patterns.
+func prioritizeFields(item map[string]any, includeComplex bool) []string {
+	// Priority tiers — matched against the last segment of the field name.
+	// "OrderDate" → last segment "date" → tier 1 (temporal).
+	// "BuildingName" → last segment "name" → tier 0... but we want to avoid this.
+	// Solution: exact match on the full lowered name OR suffix segment match,
+	// with a penalty for compound names that have a non-identity prefix.
+	type pattern struct {
+		word string
+		tier int
+	}
+	// Exact matches (full field name, case-insensitive) — highest confidence
+	exactMatches := map[string]int{
+		"id": 0, "name": 0, "title": 0, "slug": 0, "key": 0,
+		"date": 1, "created": 1, "updated": 1, "createdat": 1, "updatedat": 1,
+		"status": 2, "state": 2, "statuscode": 2,
+		"summary": 3, "description": 3, "price": 3, "amount": 3, "total": 3,
+		"cost": 3, "points": 3, "score": 3,
+		"type": 4, "kind": 4, "category": 4, "email": 4, "phone": 4, "url": 4,
+	}
+	// Suffix patterns — match when the field ends with this word (after splitting)
+	suffixMatches := map[string]int{
+		"id": 0, "name": 0, "title": 0,
+		"date": 1, "time": 1,
+		"status": 2, "state": 2, "code": 2,
+		"price": 3, "amount": 3, "total": 3, "cost": 3,
+		"summary": 3, "description": 3, "points": 3, "score": 3,
+		"type": 4, "kind": 4, "category": 4, "method": 4,
+	}
+
+	numTiers := 5
+
+	type scored struct {
+		name  string
+		tier  int
+		index int
+	}
+
+	var all []scored
+	idx := 0
+	for k, v := range item {
+		if !includeComplex {
+			switch v.(type) {
+			case []any, map[string]any:
+				continue
+			}
+		}
+		// Skip values that won't render usefully in cards
+		if includeComplex {
+			formatted := formatCellValue(v)
+			if formatted == "" {
+				continue
+			}
+		}
+
+		tier := numTiers // default: unclassified
+		lower := strings.ToLower(k)
+
+		// 1. Exact match on full field name
+		if t, ok := exactMatches[lower]; ok {
+			tier = t
+		} else {
+			// 2. Split camelCase into segments and match the last one
+			segments := splitCamelCase(lower)
+			if len(segments) > 0 {
+				lastSeg := segments[len(segments)-1]
+				if t, ok := suffixMatches[lastSeg]; ok {
+					// Compound names with identity suffixes (BuildingName, TipTime)
+					// get demoted one tier because the prefix dilutes the signal
+					if len(segments) > 1 {
+						tier = t + 1
+					} else {
+						tier = t
+					}
+				}
+			}
+		}
+
+		// Demote booleans to last
+		if _, ok := v.(bool); ok && tier >= numTiers {
+			tier = numTiers + 1
+		}
+		all = append(all, scored{name: k, tier: tier, index: idx})
+		idx++
+	}
+
+	sort.Slice(all, func(i, j int) bool {
+		if all[i].tier != all[j].tier {
+			return all[i].tier < all[j].tier
+		}
+		return all[i].index < all[j].index
+	})
+
+	headers := make([]string, len(all))
+	for i, s := range all {
+		headers[i] = s.name
+	}
+	return headers
+}
+
+// splitCamelCase splits "OrderDate" → ["order", "date"], "statusCode" → ["status", "code"],
+// "page_size" → ["page", "size"].
+func splitCamelCase(s string) []string {
+	var segments []string
+	var current strings.Builder
+	runes := []rune(s)
+	for i, r := range runes {
+		if r == '_' || r == '-' {
+			if current.Len() > 0 {
+				segments = append(segments, current.String())
+				current.Reset()
+			}
+			continue
+		}
+		if i > 0 && unicode.IsUpper(r) && unicode.IsLower(runes[i-1]) {
+			if current.Len() > 0 {
+				segments = append(segments, current.String())
+				current.Reset()
+			}
+		}
+		current.WriteRune(unicode.ToLower(r))
+	}
+	if current.Len() > 0 {
+		segments = append(segments, current.String())
+	}
+	return segments
+}
+
+// printAutoCards renders items as labeled cards — one block per item.
+// Used for complex responses with many fields or nested data.
+func printAutoCards(w io.Writer, items []map[string]any) error {
+	headers := prioritizeAllHeaders(items[0])
+
+	// Find the longest header for alignment (from fields we'll actually show)
+	maxLen := 0
+	for _, h := range headers {
+		if len(h) > maxLen {
+			maxLen = len(h)
+		}
+	}
+
+	for i, item := range items {
+		if i > 0 {
+			fmt.Fprintln(w)
+		}
+
+		// Card header: use first priority field as the card title
+		titleVal := formatCellValue(item[headers[0]])
+		if len(headers) > 1 {
+			secondVal := formatCellValue(item[headers[1]])
+			if secondVal != "" {
+				fmt.Fprintf(w, "%s %s — %s\n", bold(strings.ToUpper(headers[0])), titleVal, secondVal)
+			} else {
+				fmt.Fprintf(w, "%s %s\n", bold(strings.ToUpper(headers[0])), titleVal)
+			}
+		} else {
+			fmt.Fprintf(w, "%s %s\n", bold(strings.ToUpper(headers[0])), titleVal)
+		}
+
+		// Remaining fields indented — skip empty, zero, and false values
+		for _, h := range headers[2:] {
+			v := formatCellValue(item[h])
+			if v == "" || v == "false" || v == "0" || v == "[]" || v == "null" {
+				continue
+			}
+			// Multi-line values (nested arrays) start with \n
+			if strings.HasPrefix(v, "\n") {
+				fmt.Fprintf(w, "  %s:%s\n", h, v)
+			} else {
+				fmt.Fprintf(w, "  %-*s  %s\n", maxLen, h+":", v)
+			}
+		}
+	}
+	return nil
+}
+
+func formatCellValue(v any) string {
+	switch val := v.(type) {
+	case string:
+		// Format ISO dates as just the date portion
+		if len(val) >= 19 && val[4] == '-' && val[7] == '-' && val[10] == 'T' {
+			return val[:10]
+		}
+		return truncate(val, 60)
+	case float64:
+		if val == float64(int64(val)) {
+			return fmt.Sprintf("%d", int64(val))
+		}
+		return fmt.Sprintf("%.2f", val)
+	case bool:
+		return fmt.Sprintf("%t", val)
+	case nil:
+		return ""
+	case []any:
+		if len(val) == 0 {
+			return ""
+		}
+		// If array contains objects, format each as a summary line
+		if obj, isObj := val[0].(map[string]any); isObj {
+			_ = obj
+			return formatObjectArray(val)
+		}
+		// Flatten simple arrays into comma-separated string
+		parts := make([]string, 0, len(val))
+		for _, item := range val {
+			if s, ok := item.(string); ok {
+				parts = append(parts, s)
+			} else {
+				b, _ := json.Marshal(item)
+				parts = append(parts, string(b))
+			}
+		}
+		return truncate(strings.Join(parts, ", "), 60)
+	case map[string]any:
+		return formatSingleObject(val)
+	default:
+		b, _ := json.Marshal(val)
+		return truncate(string(b), 60)
+	}
+}
+
+// formatObjectArray renders an array of objects as multi-line summary.
+// Each object is summarized by its most descriptive fields: name/title, qty, size, price.
+func formatObjectArray(items []any) string {
+	var lines []string
+	for _, raw := range items {
+		obj, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		lines = append(lines, formatObjectSummary(obj))
+	}
+	if len(lines) == 0 {
+		return ""
+	}
+	// Multi-line: newline-prefixed so the card renderer can indent
+	return "\n" + strings.Join(lines, "\n")
+}
+
+// formatObjectSummary extracts the most useful fields from an object into a one-line summary.
+// Looks for: qty/count → name/title → size → price, in that order.
+func formatObjectSummary(obj map[string]any) string {
+	var parts []string
+
+	// Quantity
+	qty := findField(obj, "qty", "count", "quantity")
+	if qty != "" && qty != "1" && qty != "0" {
+		parts = append(parts, qty+"x")
+	} else if qty == "1" {
+		parts = append(parts, "1x")
+	}
+
+	// Name — check nested objects too (e.g., Side1.Name)
+	name := findField(obj, "name", "title", "label", "description")
+	if name == "" {
+		// Check nested objects for name
+		for _, key := range []string{"Side1", "side1", "Item", "item", "Product", "product"} {
+			if nested, ok := obj[key].(map[string]any); ok {
+				name = findField(nested, "name", "title", "label")
+				if name != "" {
+					break
+				}
+			}
+		}
+	}
+	if name != "" {
+		parts = append(parts, name)
+	}
+
+	// Size
+	size := findField(obj, "sizename", "size_name")
+	if size == "" {
+		size = findField(obj, "catname", "cat_name", "category")
+	}
+	if size != "" {
+		parts = append(parts, "—")
+		parts = append(parts, size)
+	}
+
+	// Price
+	price := findField(obj, "extprice", "price", "amount", "total")
+	if price != "" && price != "0" {
+		parts = append(parts, fmt.Sprintf("($%s)", price))
+	}
+
+	if len(parts) == 0 {
+		// Fallback: JSON summary
+		b, _ := json.Marshal(obj)
+		return truncate(string(b), 80)
+	}
+	return "    " + strings.Join(parts, " ")
+}
+
+// formatSingleObject renders a single object by its most descriptive fields.
+func formatSingleObject(obj map[string]any) string {
+	name := findField(obj, "name", "title", "label", "description")
+	if name != "" {
+		return name
+	}
+	id := findField(obj, "id", "key", "code")
+	if id != "" {
+		return id
+	}
+	return ""
+}
+
+// findField searches an object for a field name (case-insensitive) and returns its formatted value.
+func findField(obj map[string]any, names ...string) string {
+	for _, name := range names {
+		for k, v := range obj {
+			if strings.EqualFold(k, name) {
+				return formatCellValue(v)
+			}
+		}
+	}
+	return ""
+}
+
+// DataProvenance describes where data came from and when it was last synced.
+type DataProvenance struct {
+	Source       string     `json:"source"`                  // "live" or "local"
+	SyncedAt    *time.Time `json:"synced_at,omitempty"`     // when local data was last synced
+	Reason      string     `json:"reason,omitempty"`        // why local was used: "user_requested", "api_unreachable", "no_search_endpoint"
+	ResourceType string    `json:"resource_type,omitempty"` // which resource type was queried
+}
+
+// printProvenance writes a one-line provenance message to stderr.
+func printProvenance(cmd *cobra.Command, count int, prov DataProvenance) {
+	if prov.Source == "live" {
+		fmt.Fprintf(cmd.ErrOrStderr(), "%d results (live)\n", count)
+		return
+	}
+	age := "unknown"
+	if prov.SyncedAt != nil {
+		d := time.Since(*prov.SyncedAt)
+		switch {
+		case d < time.Minute:
+			age = "just now"
+		case d < time.Hour:
+			age = fmt.Sprintf("%d minutes ago", int(d.Minutes()))
+		case d < 24*time.Hour:
+			age = fmt.Sprintf("%d hours ago", int(d.Hours()))
+		default:
+			age = fmt.Sprintf("%d days ago", int(d.Hours()/24))
+		}
+	}
+	prefix := ""
+	if prov.Reason == "api_unreachable" {
+		prefix = "API unreachable. "
+	}
+	fmt.Fprintf(cmd.ErrOrStderr(), "%s%d results (cached, synced %s)\n", prefix, count, age)
+}
+
+// wrapWithProvenance wraps JSON data in a provenance envelope: {"results": ..., "meta": {...}}.
+func wrapWithProvenance(data json.RawMessage, prov DataProvenance) (json.RawMessage, error) {
+	meta := map[string]any{"source": prov.Source}
+	if prov.SyncedAt != nil {
+		meta["synced_at"] = prov.SyncedAt.UTC().Format(time.RFC3339)
+	}
+	if prov.Reason != "" {
+		meta["reason"] = prov.Reason
+	}
+	if prov.ResourceType != "" {
+		meta["resource_type"] = prov.ResourceType
+	}
+	envelope := map[string]any{
+		"results": json.RawMessage(data),
+		"meta":    meta,
+	}
+	return json.Marshal(envelope)
+}
+
+// defaultDBPath returns the canonical path for the local SQLite database.
+func defaultDBPath(name string) string {
+	home, _ := os.UserHomeDir()
+	return filepath.Join(home, ".local", "share", name, "data.db")
 }
