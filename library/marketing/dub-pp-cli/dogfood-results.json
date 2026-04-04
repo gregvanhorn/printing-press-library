@@ -1,0 +1,60 @@
+{
+  "dir": "/Users/tmchow/printing-press/library/dub-pp-cli",
+  "spec_path": "/tmp/dub-openapi.json",
+  "verdict": "FAIL",
+  "path_check": {
+    "tested": 5,
+    "valid": 5,
+    "valid_pct": 100
+  },
+  "auth_check": {
+    "spec_scheme": "bearer token format (expects \"Bearer \" prefix)",
+    "generated_format": "unknown",
+    "match": false,
+    "detail": "spec expects \"Bearer\" but generated client uses \"unknown\""
+  },
+  "dead_flags": {
+    "total": 14,
+    "dead": 0
+  },
+  "dead_functions": {
+    "total": 43,
+    "dead": 0
+  },
+  "pipeline_check": {
+    "sync_calls_domain": true,
+    "search_calls_domain": true,
+    "domain_tables": 4,
+    "detail": "sync uses domain-specific Upsert methods; search uses domain-specific Search methods; 4 domain tables found"
+  },
+  "example_check": {
+    "tested": 10,
+    "with_examples": 10,
+    "valid_examples": 10,
+    "detail": "10/10 commands have examples"
+  },
+  "wiring_check": {
+    "command_tree": {
+      "defined": 86,
+      "registered": 83,
+      "unregistered": [
+        "bounties-submissions-approve-bounty",
+        "bounties-submissions-list-bounty",
+        "bounties-submissions-reject-bounty"
+      ]
+    },
+    "config_consistency": {
+      "consistent": true
+    },
+    "workflow_completeness": {
+      "skipped": true,
+      "total_steps": 0,
+      "mapped_steps": 0,
+      "detail": "no workflow_verify.yaml found"
+    }
+  },
+  "issues": [
+    "auth protocol mismatch",
+    "3 unregistered commands: bounties-submissions-approve-bounty, bounties-submissions-list-bounty, bounties-submissions-reject-bounty"
+  ]
+}
