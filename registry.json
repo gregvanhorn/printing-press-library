@@ -13,49 +13,112 @@
       "category": "marketing",
       "api": "Dub",
       "description": "Create short links, track analytics, manage domains, and run affiliate programs via the Dub API",
-      "path": "library/marketing/dub-pp-cli"
+      "path": "library/marketing/dub-pp-cli",
+      "mcp": {
+        "binary": "dub-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 53,
+        "public_tool_count": 0,
+        "auth_type": "api_key",
+        "env_vars": ["DUB_TOKEN"],
+        "mcp_ready": "full"
+      }
     },
     {
       "name": "espn-pp-cli",
       "category": "media-and-entertainment",
       "api": "ESPN",
       "description": "ESPN sports CLI with live scores, standings, stats, and offline search across 10 leagues",
-      "path": "library/media-and-entertainment/espn-pp-cli"
+      "path": "library/media-and-entertainment/espn-pp-cli",
+      "mcp": {
+        "binary": "espn-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 3,
+        "public_tool_count": 3,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full"
+      }
     },
     {
       "name": "linear-pp-cli",
       "category": "project-management",
       "api": "Linear",
       "description": "Offline-capable, agent-native CLI for the Linear API with SQLite-backed sync, search, and cross-entity queries.",
-      "path": "library/project-management/linear-pp-cli"
+      "path": "library/project-management/linear-pp-cli",
+      "mcp": {
+        "binary": "linear-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 63,
+        "public_tool_count": 0,
+        "auth_type": "api_key",
+        "env_vars": ["LINEAR_API_KEY"],
+        "mcp_ready": "full"
+      }
     },
     {
       "name": "pagliacci-pizza-pp-cli",
       "category": "other",
       "api": "Pagliacci Pizza",
       "description": "Order pizza, browse menus, manage rewards, and track deliveries from Pagliacci Pizza",
-      "path": "library/other/pagliacci-pizza-pp-cli"
+      "path": "library/other/pagliacci-pizza-pp-cli",
+      "mcp": {
+        "binary": "pagliacci-pizza-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 41,
+        "public_tool_count": 7,
+        "auth_type": "composed",
+        "env_vars": [],
+        "mcp_ready": "partial"
+      }
     },
     {
       "name": "postman-explore-pp-cli",
       "category": "developer-tools",
       "api": "Postman Explore",
       "description": "Search and browse the Postman API Network",
-      "path": "library/developer-tools/postman-explore-pp-cli"
+      "path": "library/developer-tools/postman-explore-pp-cli",
+      "mcp": {
+        "binary": "postman-explore-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 9,
+        "public_tool_count": 9,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full"
+      }
     },
     {
       "name": "steam-web-pp-cli",
       "category": "media-and-entertainment",
       "api": "Steam Web",
       "description": "Look up Steam players, games, achievements, friends, and stats from the command line",
-      "path": "library/media-and-entertainment/steam-web-pp-cli"
+      "path": "library/media-and-entertainment/steam-web-pp-cli",
+      "mcp": {
+        "binary": "steam-web-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 164,
+        "public_tool_count": 29,
+        "auth_type": "api_key",
+        "env_vars": ["STEAM_WEB_API_KEY"],
+        "mcp_ready": "full"
+      }
     },
     {
       "name": "cal-com-pp-cli",
       "category": "productivity",
       "api": "Cal.com",
       "description": "Manage bookings, event types, schedules, and availability via the Cal.com API",
-      "path": "library/productivity/cal-com-pp-cli"
+      "path": "library/productivity/cal-com-pp-cli",
+      "mcp": {
+        "binary": "cal-com-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 288,
+        "public_tool_count": 0,
+        "auth_type": "api_key",
+        "env_vars": ["CAL_COM_TOKEN"],
+        "mcp_ready": "full"
+      }
     }
   ]
 }
