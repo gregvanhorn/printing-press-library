@@ -17,9 +17,9 @@ builds:
       - linux_arm64
       - windows_amd64
       - windows_arm64
-  - id: postman-explore-mcp
-    main: ./cmd/postman-explore-mcp
-    binary: postman-explore-mcp
+  - id: postman-explore-pp-mcp
+    main: ./cmd/postman-explore-pp-mcp
+    binary: postman-explore-pp-mcp
     env:
       - CGO_ENABLED=0
     ldflags:
@@ -52,4 +52,4 @@ All requests go through a proxy endpoint as POST requests with a JSON body conta
 No authentication required for public browsing and search."
     install: |
       bin.install "postman-explore-pp-cli"
-      bin.install "postman-explore-mcp"
+      bin.install "postman-explore-pp-mcp"

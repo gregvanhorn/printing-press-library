@@ -98,20 +98,20 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("menu-cache_get",
-			mcplib.WithDescription("Get full cached menu"),
+			mcplib.WithDescription("Get full cached menu (public)"),
 			mcplib.WithString("storeId", mcplib.Required(), mcplib.Description("Store ID")),
 		),
 		makeAPIHandler("GET", "/MenuCache/{storeId}", []string{"storeId", }),
 	)
 	s.AddTool(
 		mcplib.NewTool("menu-slices_list",
-			mcplib.WithDescription("List available pizza slices"),
+			mcplib.WithDescription("List available pizza slices (public)"),
 		),
 		makeAPIHandler("GET", "/MenuSlices", []string{ }),
 	)
 	s.AddTool(
 		mcplib.NewTool("menu-top_get",
-			mcplib.WithDescription("Get featured menu items"),
+			mcplib.WithDescription("Get featured menu items (public)"),
 			mcplib.WithString("storeId", mcplib.Required(), mcplib.Description("Store ID")),
 		),
 		makeAPIHandler("GET", "/MenuTop/{storeId}", []string{"storeId", }),
@@ -206,14 +206,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("quote-store_get",
-			mcplib.WithDescription("Get store-specific pricing"),
+			mcplib.WithDescription("Get store-specific pricing (public)"),
 			mcplib.WithString("storeId", mcplib.Required(), mcplib.Description("Store ID")),
 		),
 		makeAPIHandler("GET", "/QuoteStore/{storeId}", []string{"storeId", }),
 	)
 	s.AddTool(
 		mcplib.NewTool("quote-store_list",
-			mcplib.WithDescription("List store availability and pricing"),
+			mcplib.WithDescription("List store availability and pricing (public)"),
 		),
 		makeAPIHandler("GET", "/QuoteStore", []string{ }),
 	)
@@ -237,7 +237,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("store_list",
-			mcplib.WithDescription("List all Pagliacci Pizza stores"),
+			mcplib.WithDescription("List all Pagliacci Pizza stores (public)"),
 		),
 		makeAPIHandler("GET", "/Store", []string{ }),
 	)
@@ -261,7 +261,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("time-window-days_get",
-			mcplib.WithDescription("Get available days for service"),
+			mcplib.WithDescription("Get available days for service (public)"),
 			mcplib.WithString("storeId", mcplib.Required(), mcplib.Description("Store ID")),
 			mcplib.WithString("serviceType", mcplib.Description("Service type: PICK for pickup, DEL for delivery")),
 		),
@@ -269,7 +269,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("time-windows_get-by-date",
-			mcplib.WithDescription("Get time slots for a specific day"),
+			mcplib.WithDescription("Get time slots for a specific day (public)"),
 			mcplib.WithString("storeId", mcplib.Required(), mcplib.Description("Store ID")),
 			mcplib.WithString("serviceType", mcplib.Description("Service type: PICK for pickup, DEL for delivery")),
 			mcplib.WithString("date", mcplib.Required(), mcplib.Description("Date in YYYYMMDD format")),
@@ -278,7 +278,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("time-windows_get-today",
-			mcplib.WithDescription("Get today's time slots"),
+			mcplib.WithDescription("Get today's time slots (public)"),
 			mcplib.WithString("storeId", mcplib.Required(), mcplib.Description("Store ID")),
 			mcplib.WithString("serviceType", mcplib.Description("Service type: PICK for pickup, DEL for delivery")),
 		),
@@ -292,7 +292,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("version_get",
-			mcplib.WithDescription("Get API version"),
+			mcplib.WithDescription("Get API version (public)"),
 		),
 		makeAPIHandler("GET", "/Version", []string{ }),
 	)

@@ -17,9 +17,9 @@ builds:
       - linux_arm64
       - windows_amd64
       - windows_arm64
-  - id: linear-mcp
-    main: ./cmd/linear-mcp
-    binary: linear-mcp
+  - id: linear-pp-mcp
+    main: ./cmd/linear-pp-mcp
+    binary: linear-pp-mcp
     env:
       - CGO_ENABLED=0
     ldflags:
@@ -48,4 +48,4 @@ brews:
     description: "CLI for the Linear project management GraphQL API"
     install: |
       bin.install "linear-pp-cli"
-      bin.install "linear-mcp"
+      bin.install "linear-pp-mcp"

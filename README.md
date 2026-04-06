@@ -1,28 +1,84 @@
 # Printing Press Library
 
-The curated collection of CLIs built by the [CLI Printing Press](https://github.com/mvanhorn/cli-printing-press).
+The curated collection of CLIs and MCP servers built by the [CLI Printing Press](https://github.com/mvanhorn/cli-printing-press).
 
-Every CLI in this library was generated from an API spec, verified through the press's quality gates, and submitted via the `/printing-press publish` skill. They're not wrappers — they have local SQLite sync, offline search, workflow commands, and agent-optimized output.
+Every entry in this library was generated from an API spec, verified through the press's quality gates, and submitted via the `/printing-press publish` skill. They're not wrappers — they have local SQLite sync, offline search, workflow commands, and agent-optimized output.
+
+The printing press generates both CLIs and MCP servers from the same spec. CLIs are the efficiency layer — fewer tokens, composable with pipes, works with any shell-based agent. MCP servers are the discovery layer — show up in Claude Desktop, Cursor, and marketplace listings. Use the CLI to set up auth and explore interactively. Use the MCP to let your AI editor call the API.
 
 ## Published CLIs
 
-| CLI | Category | API | What it does |
-|-----|----------|-----|-------------|
-| **[espn-pp-cli](library/media-and-entertainment/espn-pp-cli/)** | Media & Entertainment | ESPN | Sports data — scores, stats, standings, schedules, news, odds across 17 sports and 139 leagues. No API key required. |
-| **[linear-pp-cli](library/project-management/linear-pp-cli/)** | Project Management | Linear | Issues, cycles, teams, projects via GraphQL. Local sync, stale detection, team health scoring. |
+### Works immediately (no auth required)
 
-## Install from the Library
+| CLI | MCP | API | Tools | What it does |
+|-----|-----|-----|-------|-------------|
+| **[espn-pp-cli](library/media-and-entertainment/espn-pp-cli/)** | espn-pp-mcp | ESPN | 3 | Sports data — scores, stats, standings, schedules, news, odds across 17 sports and 139 leagues. |
+| **[postman-explore-pp-cli](library/developer-tools/postman-explore-pp-cli/)** | postman-explore-pp-mcp | Postman Explore | 9 | Search and browse the Postman API Network. |
 
-Each CLI is a standalone Go module. You need [Go 1.23+](https://go.dev/dl/) installed.
+### API key required
 
-### go install (recommended)
+| CLI | MCP | API | Tools | What it does |
+|-----|-----|-----|-------|-------------|
+| **[dub-pp-cli](library/marketing/dub-pp-cli/)** | dub-pp-mcp | Dub | 53 | Create short links, track analytics, manage domains, and run affiliate programs. |
+| **[linear-pp-cli](library/project-management/linear-pp-cli/)** | linear-pp-mcp | Linear | 63 | Issues, cycles, teams, projects via GraphQL. Local sync, stale detection, team health scoring. |
+| **[steam-web-pp-cli](library/media-and-entertainment/steam-web-pp-cli/)** | steam-web-pp-mcp | Steam Web | 164 (29 public) | Look up Steam players, games, achievements, friends, and stats. 29 tools work without an API key. |
+| **[cal-com-pp-cli](library/productivity/cal-com-pp-cli/)** | cal-com-pp-mcp | Cal.com | 288 | Manage bookings, event types, schedules, and availability. |
+
+### Partial MCP (some tools work without auth)
+
+| CLI | MCP | API | Tools | What it does |
+|-----|-----|-----|-------|-------------|
+| **[pagliacci-pizza-pp-cli](library/other/pagliacci-pizza-pp-cli/)** | pagliacci-pizza-pp-mcp | Pagliacci Pizza | 41 (10 public) | Order pizza, browse menus, manage rewards. 10 tools (stores, menus, pricing, scheduling) work without login. |
+
+### CLI only (no MCP server)
+
+| CLI | API | What it does |
+|-----|-----|-------------|
+| **[agent-capture-pp-cli](library/developer-tools/agent-capture-pp-cli/)** | agent-capture | Record, screenshot, and convert macOS windows and screens for AI agent evidence. |
+
+## Install
+
+Each CLI is a standalone Go module with both a CLI and MCP binary. You need [Go 1.23+](https://go.dev/dl/) installed.
+
+### CLI (go install)
 
 ```bash
-# ESPN — sports scores, stats, standings
+# ESPN — sports scores, stats, standings (no auth)
 go install github.com/mvanhorn/printing-press-library/library/media-and-entertainment/espn-pp-cli/cmd/espn-pp-cli@latest
 
-# Linear — issues, cycles, team health
+# Dub — link management (set DUB_TOKEN env var)
+go install github.com/mvanhorn/printing-press-library/library/marketing/dub-pp-cli/cmd/dub-pp-cli@latest
+
+# Linear — project management (set LINEAR_API_KEY env var)
 go install github.com/mvanhorn/printing-press-library/library/project-management/linear-pp-cli/cmd/linear-pp-cli@latest
+
+# Cal.com — scheduling (set CAL_COM_TOKEN env var)
+go install github.com/mvanhorn/printing-press-library/library/productivity/cal-com-pp-cli/cmd/cal-com-pp-cli@latest
+
+# Steam Web — gaming data (set STEAM_WEB_API_KEY env var)
+go install github.com/mvanhorn/printing-press-library/library/media-and-entertainment/steam-web-pp-cli/cmd/steam-web-pp-cli@latest
+
+# Postman Explore — API network browser (no auth)
+go install github.com/mvanhorn/printing-press-library/library/developer-tools/postman-explore-pp-cli/cmd/postman-explore-pp-cli@latest
+
+# Pagliacci Pizza — pizza ordering (browser login for full access)
+go install github.com/mvanhorn/printing-press-library/library/other/pagliacci-pizza-pp-cli/cmd/pagliacci-pizza-pp-cli@latest
+```
+
+### MCP Server (Claude Desktop / Cursor)
+
+```bash
+# Install the MCP binary
+go install github.com/mvanhorn/printing-press-library/library/media-and-entertainment/espn-pp-cli/cmd/espn-pp-mcp@latest
+
+# Add to Claude Code
+claude mcp add espn-pp-mcp -- espn-pp-mcp
+
+# With API key (example: Dub)
+claude mcp add dub-pp-mcp -e DUB_TOKEN=your-key -- dub-pp-mcp
+
+# With API key (example: Steam Web)
+claude mcp add steam-web-pp-mcp -e STEAM_WEB_API_KEY=your-key -- steam-web-pp-mcp
 ```
 
 The binary lands in your `$GOPATH/bin` (or `$HOME/go/bin` by default). Make sure that's on your `PATH`.
@@ -32,7 +88,8 @@ The binary lands in your `$GOPATH/bin` (or `$HOME/go/bin` by default). Make sure
 ```bash
 git clone https://github.com/mvanhorn/printing-press-library.git
 cd printing-press-library/library/<category>/<cli-name>
-go install ./cmd/<cli-name>
+go install ./cmd/<cli-name>       # CLI
+go install ./cmd/<cli-name-pp-mcp>   # MCP server (if available)
 ```
 
 Check each CLI's own README for usage, configuration, and required environment variables.
@@ -44,8 +101,10 @@ library/
   <category>/
     <cli-name>/
       cmd/
+        <cli-name>/           # CLI binary
+        <cli-name-pp-mcp>/    # MCP server binary
       internal/
-      .printing-press.json    # provenance manifest
+      .printing-press.json    # provenance manifest (includes MCP metadata)
       .manuscripts/           # research + verification artifacts
         <run-id>/
           research/
@@ -90,25 +149,27 @@ CLIs may be improved after generation (emboss passes, manual refinements). The m
 
 ## Registry
 
-`registry.json` at the repo root is a machine-readable index of all CLIs:
+`registry.json` at the repo root is a machine-readable index of all CLIs with MCP metadata:
 
 ```json
 {
   "schema_version": 1,
   "entries": [
     {
-      "cli_name": "espn-pp-cli",
-      "api_name": "espn",
+      "name": "espn-pp-cli",
       "category": "media-and-entertainment",
-      "description": "ESPN sports data CLI — scores, stats, standings across 17 sports",
-      "path": "library/media-and-entertainment/espn-pp-cli"
-    },
-    {
-      "cli_name": "linear-pp-cli",
-      "api_name": "linear",
-      "category": "project-management",
-      "description": "Linear project management CLI with offline sync and team health",
-      "path": "library/project-management/linear-pp-cli"
+      "api": "ESPN",
+      "description": "ESPN sports CLI with live scores, standings, stats, and offline search",
+      "path": "library/media-and-entertainment/espn-pp-cli",
+      "mcp": {
+        "binary": "espn-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 3,
+        "public_tool_count": 3,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full"
+      }
     }
   ]
 }

@@ -16,9 +16,9 @@ clean:
 	rm -rf bin/
 
 build-mcp:
-	go build -o bin/pagliacci-pizza-mcp ./cmd/pagliacci-pizza-mcp
+	go build -o bin/pagliacci-pizza-pp-mcp ./cmd/pagliacci-pizza-pp-mcp
 
 install-mcp:
-	go install ./cmd/pagliacci-pizza-mcp
+	go install ./cmd/pagliacci-pizza-pp-mcp
 
 build-all: build build-mcp

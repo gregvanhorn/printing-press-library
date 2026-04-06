@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"os"
 
+	mcptools "github.com/mvanhorn/printing-press-library/library/productivity/cal-com-pp-cli/internal/mcp"
 	"github.com/mark3labs/mcp-go/server"
-	mcptools "github.com/mvanhorn/printing-press-library/library/developer-tools/postman-explore-pp-cli/internal/mcp"
 )
 
 func main() {
 	s := server.NewMCPServer(
-		"postman-explore-mcp",
+		"cal-com-pp-mcp",
 		"1.0.0",
 		server.WithToolCapabilities(false),
 	)

@@ -16,9 +16,9 @@ clean:
 	rm -rf bin/
 
 build-mcp:
-	go build -o bin/linear-mcp ./cmd/linear-mcp
+	go build -o bin/linear-pp-mcp ./cmd/linear-pp-mcp
 
 install-mcp:
-	go install ./cmd/linear-mcp
+	go install ./cmd/linear-pp-mcp
 
 build-all: build build-mcp

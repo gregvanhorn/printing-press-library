@@ -16,9 +16,9 @@ clean:
 	rm -rf bin/
 
 build-mcp:
-	go build -o bin/espn-mcp ./cmd/espn-mcp
+	go build -o bin/espn-pp-mcp ./cmd/espn-pp-mcp
 
 install-mcp:
-	go install ./cmd/espn-mcp
+	go install ./cmd/espn-pp-mcp
 
 build-all: build build-mcp

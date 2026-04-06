@@ -8,12 +8,12 @@ import (
 	"os"
 
 	"github.com/mark3labs/mcp-go/server"
-	mcptools "github.com/mvanhorn/printing-press-library/library/media-and-entertainment/steam-web-pp-cli/internal/mcp"
+	mcptools "github.com/mvanhorn/printing-press-library/library/developer-tools/postman-explore-pp-cli/internal/mcp"
 )
 
 func main() {
 	s := server.NewMCPServer(
-		"steam-web-mcp",
+		"postman-explore-pp-mcp",
 		"1.0.0",
 		server.WithToolCapabilities(false),
 	)

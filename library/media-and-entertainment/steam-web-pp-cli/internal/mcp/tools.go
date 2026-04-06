@@ -728,79 +728,79 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("igcversion-1046930_get-client-version",
-			mcplib.WithDescription("GetClientVersion operation of IGCVersion_1046930"),
+			mcplib.WithDescription("GetClientVersion operation of IGCVersion_1046930 (public)"),
 		),
 		makeAPIHandler("GET", "/IGCVersion_1046930/GetClientVersion/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("igcversion-1046930_get-server-version",
-			mcplib.WithDescription("GetServerVersion operation of IGCVersion_1046930"),
+			mcplib.WithDescription("GetServerVersion operation of IGCVersion_1046930 (public)"),
 		),
 		makeAPIHandler("GET", "/IGCVersion_1046930/GetServerVersion/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("igcversion-1269260_get-client-version",
-			mcplib.WithDescription("GetClientVersion operation of IGCVersion_1269260"),
+			mcplib.WithDescription("GetClientVersion operation of IGCVersion_1269260 (public)"),
 		),
 		makeAPIHandler("GET", "/IGCVersion_1269260/GetClientVersion/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("igcversion-1269260_get-server-version",
-			mcplib.WithDescription("GetServerVersion operation of IGCVersion_1269260"),
+			mcplib.WithDescription("GetServerVersion operation of IGCVersion_1269260 (public)"),
 		),
 		makeAPIHandler("GET", "/IGCVersion_1269260/GetServerVersion/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("igcversion-1422450_get-client-version",
-			mcplib.WithDescription("GetClientVersion operation of IGCVersion_1422450"),
+			mcplib.WithDescription("GetClientVersion operation of IGCVersion_1422450 (public)"),
 		),
 		makeAPIHandler("GET", "/IGCVersion_1422450/GetClientVersion/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("igcversion-1422450_get-server-version",
-			mcplib.WithDescription("GetServerVersion operation of IGCVersion_1422450"),
+			mcplib.WithDescription("GetServerVersion operation of IGCVersion_1422450 (public)"),
 		),
 		makeAPIHandler("GET", "/IGCVersion_1422450/GetServerVersion/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("igcversion-440_get-client-version",
-			mcplib.WithDescription("GetClientVersion operation of IGCVersion_440"),
+			mcplib.WithDescription("GetClientVersion operation of IGCVersion_440 (public)"),
 		),
 		makeAPIHandler("GET", "/IGCVersion_440/GetClientVersion/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("igcversion-440_get-server-version",
-			mcplib.WithDescription("GetServerVersion operation of IGCVersion_440"),
+			mcplib.WithDescription("GetServerVersion operation of IGCVersion_440 (public)"),
 		),
 		makeAPIHandler("GET", "/IGCVersion_440/GetServerVersion/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("igcversion-570_get-client-version",
-			mcplib.WithDescription("GetClientVersion operation of IGCVersion_570"),
+			mcplib.WithDescription("GetClientVersion operation of IGCVersion_570 (public)"),
 		),
 		makeAPIHandler("GET", "/IGCVersion_570/GetClientVersion/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("igcversion-570_get-server-version",
-			mcplib.WithDescription("GetServerVersion operation of IGCVersion_570"),
+			mcplib.WithDescription("GetServerVersion operation of IGCVersion_570 (public)"),
 		),
 		makeAPIHandler("GET", "/IGCVersion_570/GetServerVersion/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("igcversion-583950_get-client-version",
-			mcplib.WithDescription("GetClientVersion operation of IGCVersion_583950"),
+			mcplib.WithDescription("GetClientVersion operation of IGCVersion_583950 (public)"),
 		),
 		makeAPIHandler("GET", "/IGCVersion_583950/GetClientVersion/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("igcversion-583950_get-server-version",
-			mcplib.WithDescription("GetServerVersion operation of IGCVersion_583950"),
+			mcplib.WithDescription("GetServerVersion operation of IGCVersion_583950 (public)"),
 		),
 		makeAPIHandler("GET", "/IGCVersion_583950/GetServerVersion/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("igcversion-730_get-server-version",
-			mcplib.WithDescription("GetServerVersion operation of IGCVersion_730"),
+			mcplib.WithDescription("GetServerVersion operation of IGCVersion_730 (public)"),
 		),
 		makeAPIHandler("GET", "/IGCVersion_730/GetServerVersion/v1", []string{}),
 	)
@@ -1082,21 +1082,21 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-apps_get-sdrconfig",
-			mcplib.WithDescription("GetSDRConfig operation of ISteamApps"),
+			mcplib.WithDescription("GetSDRConfig operation of ISteamApps (public)"),
 			mcplib.WithString("appid", mcplib.Required(), mcplib.Description("AppID of game")),
 		),
 		makeAPIHandler("GET", "/ISteamApps/GetSDRConfig/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-apps_get-servers-at-address",
-			mcplib.WithDescription("GetServersAtAddress operation of ISteamApps"),
+			mcplib.WithDescription("GetServersAtAddress operation of ISteamApps (public)"),
 			mcplib.WithString("addr", mcplib.Required(), mcplib.Description("IP or IP:queryport to list")),
 		),
 		makeAPIHandler("GET", "/ISteamApps/GetServersAtAddress/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-apps_up-to-date-check",
-			mcplib.WithDescription("UpToDateCheck operation of ISteamApps"),
+			mcplib.WithDescription("UpToDateCheck operation of ISteamApps (public)"),
 			mcplib.WithString("appid", mcplib.Required(), mcplib.Description("AppID of game")),
 			mcplib.WithString("version", mcplib.Required(), mcplib.Description("The installed version of the game")),
 		),
@@ -1132,7 +1132,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-directory_get-cmlist",
-			mcplib.WithDescription("GetCMList operation of ISteamDirectory"),
+			mcplib.WithDescription("GetCMList operation of ISteamDirectory (public)"),
 			mcplib.WithString("cellid", mcplib.Required(), mcplib.Description("Client's Steam cell ID")),
 			mcplib.WithString("maxcount", mcplib.Description("Max number of servers to return")),
 		),
@@ -1140,7 +1140,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-directory_get-cmlist-for-connect",
-			mcplib.WithDescription("GetCMListForConnect operation of ISteamDirectory"),
+			mcplib.WithDescription("GetCMListForConnect operation of ISteamDirectory (public)"),
 			mcplib.WithString("cellid", mcplib.Description("Client's Steam cell ID, uses IP location if blank")),
 			mcplib.WithString("cmtype", mcplib.Description("Optional CM type filter")),
 			mcplib.WithString("realm", mcplib.Description("Optional Steam Realm filter")),
@@ -1151,7 +1151,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-directory_get-steam-pipe-domains",
-			mcplib.WithDescription("GetSteamPipeDomains operation of ISteamDirectory"),
+			mcplib.WithDescription("GetSteamPipeDomains operation of ISteamDirectory (public)"),
 		),
 		makeAPIHandler("GET", "/ISteamDirectory/GetSteamPipeDomains/v1", []string{}),
 	)
@@ -1177,7 +1177,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-news_get-news-for-app",
-			mcplib.WithDescription("GetNewsForApp operation of ISteamNews"),
+			mcplib.WithDescription("GetNewsForApp operation of ISteamNews (public)"),
 			mcplib.WithString("appid", mcplib.Required(), mcplib.Description("AppID to retrieve news for")),
 			mcplib.WithString("maxlength", mcplib.Description("Maximum length for the content to return, if this is 0 the full content is returned, if it's less then a blurb is...")),
 			mcplib.WithString("enddate", mcplib.Description("Retrieve posts earlier than this date (unix epoch timestamp)")),
@@ -1188,7 +1188,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-news_get-news-for-app-isteamnews",
-			mcplib.WithDescription("GetNewsForApp operation of ISteamNews"),
+			mcplib.WithDescription("GetNewsForApp operation of ISteamNews (public)"),
 			mcplib.WithString("appid", mcplib.Required(), mcplib.Description("AppID to retrieve news for")),
 			mcplib.WithString("maxlength", mcplib.Description("Maximum length for the content to return, if this is 0 the full content is returned, if it's less then a blurb is...")),
 			mcplib.WithString("enddate", mcplib.Description("Retrieve posts earlier than this date (unix epoch timestamp)")),
@@ -1200,13 +1200,13 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-remote-storage_get-collection-details",
-			mcplib.WithDescription("GetCollectionDetails operation of ISteamRemoteStorage"),
+			mcplib.WithDescription("GetCollectionDetails operation of ISteamRemoteStorage (public)"),
 		),
 		makeAPIHandler("POST", "/ISteamRemoteStorage/GetCollectionDetails/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-remote-storage_get-published-file-details",
-			mcplib.WithDescription("GetPublishedFileDetails operation of ISteamRemoteStorage"),
+			mcplib.WithDescription("GetPublishedFileDetails operation of ISteamRemoteStorage (public)"),
 		),
 		makeAPIHandler("POST", "/ISteamRemoteStorage/GetPublishedFileDetails/v1", []string{}),
 	)
@@ -1287,21 +1287,21 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-user-stats_get-global-achievement-percentages-for-app",
-			mcplib.WithDescription("GetGlobalAchievementPercentagesForApp operation of ISteamUserStats"),
+			mcplib.WithDescription("GetGlobalAchievementPercentagesForApp operation of ISteamUserStats (public)"),
 			mcplib.WithString("gameid", mcplib.Required(), mcplib.Description("GameID to retrieve the achievement percentages for")),
 		),
 		makeAPIHandler("GET", "/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-user-stats_get-global-achievement-percentages-for-app-isteamuserstats",
-			mcplib.WithDescription("GetGlobalAchievementPercentagesForApp operation of ISteamUserStats"),
+			mcplib.WithDescription("GetGlobalAchievementPercentagesForApp operation of ISteamUserStats (public)"),
 			mcplib.WithString("gameid", mcplib.Required(), mcplib.Description("GameID to retrieve the achievement percentages for")),
 		),
 		makeAPIHandler("GET", "/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-user-stats_get-global-stats-for-game",
-			mcplib.WithDescription("GetGlobalStatsForGame operation of ISteamUserStats"),
+			mcplib.WithDescription("GetGlobalStatsForGame operation of ISteamUserStats (public)"),
 			mcplib.WithString("appid", mcplib.Required(), mcplib.Description("AppID that we're getting global stats for")),
 			mcplib.WithString("count", mcplib.Required(), mcplib.Description("Number of stats get data for")),
 			mcplib.WithString("name[0]", mcplib.Required(), mcplib.Description("Names of stat to get data for")),
@@ -1312,7 +1312,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-user-stats_get-number-of-current-players",
-			mcplib.WithDescription("GetNumberOfCurrentPlayers operation of ISteamUserStats"),
+			mcplib.WithDescription("GetNumberOfCurrentPlayers operation of ISteamUserStats (public)"),
 			mcplib.WithString("appid", mcplib.Required(), mcplib.Description("AppID that we're getting user count for")),
 		),
 		makeAPIHandler("GET", "/ISteamUserStats/GetNumberOfCurrentPlayers/v1", []string{}),
@@ -1365,13 +1365,13 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-web-apiutil_get-server-info",
-			mcplib.WithDescription("GetServerInfo operation of ISteamWebAPIUtil"),
+			mcplib.WithDescription("GetServerInfo operation of ISteamWebAPIUtil (public)"),
 		),
 		makeAPIHandler("GET", "/ISteamWebAPIUtil/GetServerInfo/v1", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("isteam-web-apiutil_get-supported-apilist",
-			mcplib.WithDescription("GetSupportedAPIList operation of ISteamWebAPIUtil"),
+			mcplib.WithDescription("GetSupportedAPIList operation of ISteamWebAPIUtil (public)"),
 			mcplib.WithString("key", mcplib.Description("access key")),
 		),
 		makeAPIHandler("GET", "/ISteamWebAPIUtil/GetSupportedAPIList/v1", []string{}),

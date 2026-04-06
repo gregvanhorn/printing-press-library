@@ -17,9 +17,9 @@ builds:
       - linux_arm64
       - windows_amd64
       - windows_arm64
-  - id: espn-mcp
-    main: ./cmd/espn-mcp
-    binary: espn-mcp
+  - id: espn-pp-mcp
+    main: ./cmd/espn-pp-mcp
+    binary: espn-pp-mcp
     env:
       - CGO_ENABLED=0
     ldflags:
@@ -48,4 +48,4 @@ brews:
     description: "CLI for espn (generated from docs)"
     install: |
       bin.install "espn-pp-cli"
-      bin.install "espn-mcp"
+      bin.install "espn-pp-mcp"
