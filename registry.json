@@ -49,6 +49,13 @@
       "api": "Steam Web",
       "description": "Look up Steam players, games, achievements, friends, and stats from the command line",
       "path": "library/media-and-entertainment/steam-web-pp-cli"
+    },
+    {
+      "name": "cal-com-pp-cli",
+      "category": "productivity",
+      "api": "Cal.com",
+      "description": "Manage bookings, event types, schedules, and availability via the Cal.com API",
+      "path": "library/productivity/cal-com-pp-cli"
     }
   ]
 }

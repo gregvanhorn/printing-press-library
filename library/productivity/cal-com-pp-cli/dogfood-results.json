@@ -1,0 +1,57 @@
+{
+  "dir": "/Users/tmchow/printing-press/library/cal-com-pp-cli",
+  "spec_path": "/Users/tmchow/printing-press/manuscripts/cal-com-pp-cli/20260405-183800/research/cal-com-openapi-v2.json",
+  "verdict": "PASS",
+  "path_check": {
+    "tested": 6,
+    "valid": 6,
+    "valid_pct": 100
+  },
+  "auth_check": {
+    "spec_scheme": "bearer token format (expects \"Bearer \" prefix)",
+    "generated_format": "Bearer ",
+    "match": true,
+    "detail": "spec and generated client both use \"Bearer\""
+  },
+  "dead_flags": {
+    "total": 15,
+    "dead": 0
+  },
+  "dead_functions": {
+    "total": 47,
+    "dead": 0
+  },
+  "pipeline_check": {
+    "sync_calls_domain": true,
+    "search_calls_domain": true,
+    "domain_tables": 2,
+    "detail": "sync uses domain-specific Upsert methods; search uses domain-specific Search methods; 2 domain tables found"
+  },
+  "example_check": {
+    "tested": 10,
+    "with_examples": 10,
+    "valid_examples": 10,
+    "detail": "10/10 commands have examples"
+  },
+  "wiring_check": {
+    "command_tree": {
+      "defined": 338,
+      "registered": 338
+    },
+    "config_consistency": {
+      "consistent": true
+    },
+    "workflow_completeness": {
+      "skipped": true,
+      "total_steps": 0,
+      "mapped_steps": 0,
+      "detail": "no workflow_verify.yaml found"
+    }
+  },
+  "novel_features_check": {
+    "planned": 0,
+    "found": 0,
+    "skipped": true
+  },
+  "issues": null
+}
