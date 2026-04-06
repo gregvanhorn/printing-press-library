@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mvanhorn/printing-press-library/library/developer-tools/agent-capture-pp-cli/internal/capture"
-	"github.com/mvanhorn/printing-press-library/library/developer-tools/agent-capture-pp-cli/internal/gif"
+	"github.com/mvanhorn/agent-capture-pp-cli/internal/capture"
+	"github.com/mvanhorn/agent-capture-pp-cli/internal/gif"
 	"github.com/spf13/cobra"
 )
 
@@ -25,8 +25,11 @@ Specify the output format via extension: .gif records then converts, .mp4/.mov r
   agent-capture pipeline --app "Finder" --duration 8 --max-size 5mb evidence.gif
 
   # Record directly to MP4 (no conversion step)
-  agent-capture pipeline --app "Terminal" --duration 10 demo.mp4`,
-	Args: cobra.ExactArgs(1),
+  agent-capture pipeline --app "Terminal" --duration 10 demo.mp4
+
+  # Pipeline with -o flag
+  agent-capture pipeline --app "Preview" --duration 5 -o demo.gif`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: runPipeline,
 }
 
@@ -40,6 +43,7 @@ var (
 	pipeWidth    int
 	pipeMaxSize  string
 	pipeCursor   bool
+	pipeOutput   string
 )
 
 func init() {
@@ -52,11 +56,15 @@ func init() {
 	pipelineCmd.Flags().IntVar(&pipeWidth, "width", 0, "GIF output width (auto aspect ratio)")
 	pipelineCmd.Flags().StringVar(&pipeMaxSize, "max-size", "10mb", "Maximum GIF file size")
 	pipelineCmd.Flags().BoolVar(&pipeCursor, "cursor", false, "Show cursor in recording")
+	pipelineCmd.Flags().StringVarP(&pipeOutput, "output", "o", "", "Output file path (alternative to positional arg)")
 	pipelineCmd.MarkFlagRequired("duration")
 }
 
 func runPipeline(cmd *cobra.Command, args []string) error {
-	output := args[0]
+	output, err := resolveOutput(pipeOutput, args, 0, "")
+	if err != nil {
+		return err
+	}
 	ctx := context.Background()
 	start := time.Now()
 

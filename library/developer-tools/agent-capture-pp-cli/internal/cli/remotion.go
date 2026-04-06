@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/mvanhorn/printing-press-library/library/developer-tools/agent-capture-pp-cli/internal/gif"
+	"github.com/mvanhorn/agent-capture-pp-cli/internal/gif"
 	"github.com/spf13/cobra"
 )
 
@@ -34,8 +34,11 @@ var remotionRenderCmd = &cobra.Command{
   agent-capture remotion render --entry src/index.ts --comp MyDemo --max-size 5mb demo.gif
 
   # Pass props to the composition
-  agent-capture remotion render --entry src/index.ts --comp MyDemo --props '{"title":"Hello"}' demo.gif`,
-	Args: cobra.ExactArgs(1),
+  agent-capture remotion render --entry src/index.ts --comp MyDemo --props '{"title":"Hello"}' demo.gif
+
+  # Render with -o flag
+  agent-capture remotion render --entry src/index.ts --comp MyDemo -o demo.gif`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: runRemotionRender,
 }
 
@@ -45,6 +48,7 @@ var (
 	remCodec   string
 	remProps   string
 	remMaxSize string
+	remOutput  string
 )
 
 // ── still subcommand ──
@@ -59,16 +63,20 @@ var remotionStillCmd = &cobra.Command{
   agent-capture remotion still --entry src/index.ts --comp MyDemo --frame 90 hero.png
 
   # Pass props
-  agent-capture remotion still --entry src/index.ts --comp MyDemo --props '{"slide":2}' slide2.png`,
-	Args: cobra.ExactArgs(1),
+  agent-capture remotion still --entry src/index.ts --comp MyDemo --props '{"slide":2}' slide2.png
+
+  # Still with -o flag
+  agent-capture remotion still --entry src/index.ts --comp MyDemo -o hero.png`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: runRemotionStill,
 }
 
 var (
-	remStillEntry string
-	remStillComp  string
-	remStillFrame int
-	remStillProps string
+	remStillEntry  string
+	remStillComp   string
+	remStillFrame  int
+	remStillProps  string
+	remStillOutput string
 )
 
 func init() {
@@ -81,6 +89,7 @@ func init() {
 	remotionRenderCmd.Flags().StringVar(&remCodec, "codec", "gif", "Output codec: gif, mp4")
 	remotionRenderCmd.Flags().StringVar(&remProps, "props", "", "JSON props to pass to the composition")
 	remotionRenderCmd.Flags().StringVar(&remMaxSize, "max-size", "", "Maximum GIF size (e.g., 5mb). Auto-reduces if exceeded.")
+	remotionRenderCmd.Flags().StringVarP(&remOutput, "output", "o", "", "Output file path (alternative to positional arg)")
 	remotionRenderCmd.MarkFlagRequired("entry")
 	remotionRenderCmd.MarkFlagRequired("comp")
 
@@ -89,6 +98,7 @@ func init() {
 	remotionStillCmd.Flags().StringVar(&remStillComp, "comp", "", "Composition ID to render (required)")
 	remotionStillCmd.Flags().IntVar(&remStillFrame, "frame", 0, "Frame number to render (default 0)")
 	remotionStillCmd.Flags().StringVar(&remStillProps, "props", "", "JSON props to pass to the composition")
+	remotionStillCmd.Flags().StringVarP(&remStillOutput, "output", "o", "", "Output file path (alternative to positional arg)")
 	remotionStillCmd.MarkFlagRequired("entry")
 	remotionStillCmd.MarkFlagRequired("comp")
 }
@@ -103,7 +113,10 @@ func checkRemotion() error {
 func runRemotionRender(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 	start := time.Now()
-	output := args[0]
+	output, err := resolveOutput(remOutput, args, 0, "")
+	if err != nil {
+		return err
+	}
 
 	if err := checkRemotion(); err != nil {
 		return err
@@ -171,7 +184,10 @@ func runRemotionRender(cmd *cobra.Command, args []string) error {
 func runRemotionStill(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 	start := time.Now()
-	output := args[0]
+	output, err := resolveOutput(remStillOutput, args, 0, "")
+	if err != nil {
+		return err
+	}
 
 	if err := checkRemotion(); err != nil {
 		return err

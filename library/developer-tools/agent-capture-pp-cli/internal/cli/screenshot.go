@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mvanhorn/printing-press-library/library/developer-tools/agent-capture-pp-cli/internal/capture"
-	"github.com/mvanhorn/printing-press-library/library/developer-tools/agent-capture-pp-cli/internal/code"
+	"github.com/mvanhorn/agent-capture-pp-cli/internal/capture"
+	"github.com/mvanhorn/agent-capture-pp-cli/internal/code"
 	"github.com/spf13/cobra"
 )
 
@@ -31,8 +31,11 @@ Supports PNG and JPG output formats.`,
   agent-capture screenshot --region 0,0,800,600 /tmp/region.png
 
   # Screenshot with JSON metadata output
-  agent-capture screenshot --app "Preview" --json /tmp/preview.png`,
-	Args: cobra.ExactArgs(1),
+  agent-capture screenshot --app "Preview" --json /tmp/preview.png
+
+  # Screenshot with -o flag (alternative to positional arg)
+  agent-capture screenshot --code main.go -o /tmp/code.png`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: runScreenshot,
 }
 
@@ -48,6 +51,7 @@ var (
 	ssStdin    bool
 	ssLang     string
 	ssTheme    string
+	ssOutput   string
 )
 
 func init() {
@@ -62,10 +66,14 @@ func init() {
 	screenshotCmd.Flags().BoolVar(&ssStdin, "stdin", false, "Read code from stdin (use with --code -)")
 	screenshotCmd.Flags().StringVar(&ssLang, "lang", "", "Language for syntax highlighting (auto-detect from extension)")
 	screenshotCmd.Flags().StringVar(&ssTheme, "theme", "dracula", "Theme for code screenshots: dracula, nord, monokai, github, solarized")
+	screenshotCmd.Flags().StringVarP(&ssOutput, "output", "o", "", "Output file path (alternative to positional arg)")
 }
 
 func runScreenshot(cmd *cobra.Command, args []string) error {
-	output := args[0]
+	output, err := resolveOutput(ssOutput, args, 0, "")
+	if err != nil {
+		return err
+	}
 	ctx := context.Background()
 	start := time.Now()
 

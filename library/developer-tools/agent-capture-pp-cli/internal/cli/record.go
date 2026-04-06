@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/mvanhorn/printing-press-library/library/developer-tools/agent-capture-pp-cli/internal/capture"
+	"github.com/mvanhorn/agent-capture-pp-cli/internal/capture"
 	"github.com/spf13/cobra"
 )
 
@@ -23,8 +23,11 @@ Duration-based recording - specify how long, and the recording stops automatical
   agent-capture record --display 1 --duration 30 --fps 30 /tmp/screen.mov
 
   # Record with cursor visible
-  agent-capture record --app "Finder" --duration 5 --cursor /tmp/finder.mp4`,
-	Args: cobra.ExactArgs(1),
+  agent-capture record --app "Finder" --duration 5 --cursor /tmp/finder.mp4
+
+  # Record with -o flag
+  agent-capture record --app "Preview" --duration 10 -o /tmp/demo.mp4`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: runRecord,
 }
 
@@ -41,6 +44,7 @@ var (
 	recQuality    string
 	recCountdown  int
 	recHighlights bool
+	recOutput     string
 )
 
 func init() {
@@ -56,12 +60,16 @@ func init() {
 	recordCmd.Flags().StringVar(&recQuality, "quality", "medium", "Quality preset: low, medium, high")
 	recordCmd.Flags().IntVar(&recCountdown, "countdown", 0, "Countdown seconds before recording starts")
 	recordCmd.Flags().BoolVar(&recHighlights, "highlight-clicks", false, "Highlight mouse clicks in recording")
+	recordCmd.Flags().StringVarP(&recOutput, "output", "o", "", "Output file path (alternative to positional arg)")
 
 	recordCmd.MarkFlagRequired("duration")
 }
 
 func runRecord(cmd *cobra.Command, args []string) error {
-	output := args[0]
+	output, err := resolveOutput(recOutput, args, 0, "")
+	if err != nil {
+		return err
+	}
 	ctx := context.Background()
 	start := time.Now()
 

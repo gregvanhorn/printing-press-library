@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/mvanhorn/printing-press-library/library/developer-tools/agent-capture-pp-cli/internal/gif"
+	"github.com/mvanhorn/agent-capture-pp-cli/internal/gif"
 	"github.com/spf13/cobra"
 )
 
@@ -23,8 +23,11 @@ Uses two-pass palette generation for high quality output with small file sizes.`
   agent-capture convert demo.mp4 demo.gif --max-size 5mb --width 640
 
   # Adjust framerate
-  agent-capture convert demo.mp4 demo.gif --fps 12`,
-	Args: cobra.ExactArgs(2),
+  agent-capture convert demo.mp4 demo.gif --fps 12
+
+  # Convert with -o flag
+  agent-capture convert demo.mp4 -o demo.gif`,
+	Args: cobra.RangeArgs(1, 2),
 	RunE: runConvert,
 }
 
@@ -32,17 +35,22 @@ var (
 	convFPS     int
 	convWidth   int
 	convMaxSize string
+	convOutput  string
 )
 
 func init() {
 	convertCmd.Flags().IntVar(&convFPS, "fps", 12, "Output GIF frame rate")
 	convertCmd.Flags().IntVar(&convWidth, "width", 0, "Output width in pixels (auto aspect ratio)")
 	convertCmd.Flags().StringVar(&convMaxSize, "max-size", "10mb", "Maximum output file size (e.g., 5mb, 10mb)")
+	convertCmd.Flags().StringVarP(&convOutput, "output", "o", "", "Output GIF file path (alternative to positional arg)")
 }
 
 func runConvert(cmd *cobra.Command, args []string) error {
 	input := args[0]
-	output := args[1]
+	output, err := resolveOutput(convOutput, args, 1, "")
+	if err != nil {
+		return err
+	}
 	ctx := context.Background()
 	start := time.Now()
 

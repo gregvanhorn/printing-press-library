@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mvanhorn/printing-press-library/library/developer-tools/agent-capture-pp-cli/internal/gif"
+	"github.com/mvanhorn/agent-capture-pp-cli/internal/gif"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +28,10 @@ and optional GIF auto-reduce. VHS must be installed separately.`,
   agent-capture vhs demo.tape --max-size 5mb
 
   # Override VHS theme
-  agent-capture vhs demo.tape --theme Dracula`,
+  agent-capture vhs demo.tape --theme Dracula
+
+  # VHS with -o flag
+  agent-capture vhs demo.tape -o /tmp/demo.gif`,
 	Args: cobra.RangeArgs(1, 2),
 	RunE: runVHS,
 }
@@ -36,11 +39,13 @@ and optional GIF auto-reduce. VHS must be installed separately.`,
 var (
 	vhsMaxSize string
 	vhsTheme   string
+	vhsOutput  string
 )
 
 func init() {
 	vhsCmd.Flags().StringVar(&vhsMaxSize, "max-size", "", "Maximum output GIF size (e.g., 5mb). Auto-reduces if exceeded.")
 	vhsCmd.Flags().StringVar(&vhsTheme, "theme", "", "VHS theme override (e.g., Dracula, Nord)")
+	vhsCmd.Flags().StringVarP(&vhsOutput, "output", "o", "", "Output GIF file path (alternative to positional arg)")
 }
 
 func runVHS(cmd *cobra.Command, args []string) error {
@@ -59,10 +64,11 @@ func runVHS(cmd *cobra.Command, args []string) error {
 		return errorf("VHS not found. Install: brew install vhs")
 	}
 
-	// Determine output path
-	output := strings.TrimSuffix(filepath.Base(tapeFile), filepath.Ext(tapeFile)) + ".gif"
-	if len(args) > 1 {
-		output = args[1]
+	// Determine output path: -o flag > positional arg > auto-derive from tape filename
+	autoDerive := strings.TrimSuffix(filepath.Base(tapeFile), filepath.Ext(tapeFile)) + ".gif"
+	output, err := resolveOutput(vhsOutput, args, 1, autoDerive)
+	if err != nil {
+		return err
 	}
 
 	// Build VHS command
