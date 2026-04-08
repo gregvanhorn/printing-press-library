@@ -17,7 +17,7 @@
       "mcp": {
         "binary": "dub-pp-mcp",
         "transport": "stdio",
-        "tool_count": 53,
+        "tool_count": 50,
         "public_tool_count": 0,
         "auth_type": "api_key",
         "env_vars": ["DUB_TOKEN"],
@@ -36,8 +36,8 @@
       "mcp": {
         "binary": "espn-pp-mcp",
         "transport": "stdio",
-        "tool_count": 3,
-        "public_tool_count": 3,
+        "tool_count": 1,
+        "public_tool_count": 1,
         "auth_type": "none",
         "env_vars": [],
         "mcp_ready": "full",
@@ -71,8 +71,8 @@
       "mcp": {
         "binary": "pagliacci-pizza-pp-mcp",
         "transport": "stdio",
-        "tool_count": 41,
-        "public_tool_count": 10,
+        "tool_count": 38,
+        "public_tool_count": 21,
         "auth_type": "composed",
         "env_vars": [],
         "mcp_ready": "partial",
@@ -90,8 +90,8 @@
       "mcp": {
         "binary": "postman-explore-pp-mcp",
         "transport": "stdio",
-        "tool_count": 9,
-        "public_tool_count": 9,
+        "tool_count": 6,
+        "public_tool_count": 6,
         "auth_type": "none",
         "env_vars": [],
         "mcp_ready": "full",
@@ -109,8 +109,8 @@
       "mcp": {
         "binary": "steam-web-pp-mcp",
         "transport": "stdio",
-        "tool_count": 164,
-        "public_tool_count": 29,
+        "tool_count": 161,
+        "public_tool_count": 0,
         "auth_type": "api_key",
         "env_vars": ["STEAM_WEB_API_KEY"],
         "mcp_ready": "full",
@@ -128,7 +128,7 @@
       "mcp": {
         "binary": "cal-com-pp-mcp",
         "transport": "stdio",
-        "tool_count": 288,
+        "tool_count": 285,
         "public_tool_count": 0,
         "auth_type": "api_key",
         "env_vars": ["CAL_COM_TOKEN"],

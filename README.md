@@ -164,8 +164,8 @@ CLIs may be improved after generation (emboss passes, manual refinements). The m
       "mcp": {
         "binary": "espn-pp-mcp",
         "transport": "stdio",
-        "tool_count": 3,
-        "public_tool_count": 3,
+        "tool_count": 1,
+        "public_tool_count": 1,
         "auth_type": "none",
         "env_vars": [],
         "mcp_ready": "full"
