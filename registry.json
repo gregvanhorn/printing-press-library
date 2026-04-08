@@ -21,7 +21,10 @@
         "public_tool_count": 0,
         "auth_type": "api_key",
         "env_vars": ["DUB_TOKEN"],
-        "mcp_ready": "full"
+        "mcp_ready": "full",
+        "manifest_checksum": "sha256:c55f10f8cab350320609c2463dd83bf073d102661bd2b741dc5d6697f48fca8d",
+        "spec_format": "openapi3",
+        "manifest_url": "library/marketing/dub-pp-cli/tools-manifest.json"
       }
     },
     {
@@ -37,7 +40,10 @@
         "public_tool_count": 3,
         "auth_type": "none",
         "env_vars": [],
-        "mcp_ready": "full"
+        "mcp_ready": "full",
+        "manifest_checksum": "sha256:9ac1e69b66632589781e5386946ca9d6544c6ffacc117a28c635213e1e05d795",
+        "spec_format": "openapi3",
+        "manifest_url": "library/media-and-entertainment/espn-pp-cli/tools-manifest.json"
       }
     },
     {
@@ -69,7 +75,10 @@
         "public_tool_count": 10,
         "auth_type": "composed",
         "env_vars": [],
-        "mcp_ready": "partial"
+        "mcp_ready": "partial",
+        "manifest_checksum": "sha256:a091019421be7ba98f81894faec69400b2f2caf2c5d42d1beb1f26c8750867f1",
+        "spec_format": "openapi3",
+        "manifest_url": "library/other/pagliacci-pizza-pp-cli/tools-manifest.json"
       }
     },
     {
@@ -85,7 +94,10 @@
         "public_tool_count": 9,
         "auth_type": "none",
         "env_vars": [],
-        "mcp_ready": "full"
+        "mcp_ready": "full",
+        "manifest_checksum": "sha256:96bc481c9a47f57eeb494f39dcfc75265894eca19b675964ab61a4a1025b10bc",
+        "spec_format": "openapi3",
+        "manifest_url": "library/developer-tools/postman-explore-pp-cli/tools-manifest.json"
       }
     },
     {
@@ -101,7 +113,10 @@
         "public_tool_count": 29,
         "auth_type": "api_key",
         "env_vars": ["STEAM_WEB_API_KEY"],
-        "mcp_ready": "full"
+        "mcp_ready": "full",
+        "manifest_checksum": "sha256:d0020c2f50dfa9be7cd655e89d027dcde08aa868ac992b5cddf1e258ad745a2f",
+        "spec_format": "openapi3",
+        "manifest_url": "library/media-and-entertainment/steam-web-pp-cli/tools-manifest.json"
       }
     },
     {
@@ -117,7 +132,10 @@
         "public_tool_count": 0,
         "auth_type": "api_key",
         "env_vars": ["CAL_COM_TOKEN"],
-        "mcp_ready": "full"
+        "mcp_ready": "full",
+        "manifest_checksum": "sha256:dd568fada6bf4f8ba272b1075d6c1a6f0899c2deb15f4af954bf914f14a0e280",
+        "spec_format": "openapi3",
+        "manifest_url": "library/productivity/cal-com-pp-cli/tools-manifest.json"
       }
     }
   ]

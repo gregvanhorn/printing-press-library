@@ -1,0 +1,28 @@
+{
+  "api_name": "espn-fantasy-football",
+  "base_url": "https://lm-api-reads.fantasy.espn.com",
+  "description": "ESPN Fantasy Football league data (public, no auth required)",
+  "mcp_ready": "full",
+  "auth": {
+    "type": "none"
+  },
+  "required_headers": [],
+  "tools": [
+    {
+      "name": "v3_get-league",
+      "description": "Get fantasy football league details by ID",
+      "method": "GET",
+      "path": "/apis/v3/games/ffl/seasons/2024/segments/0/leagues/{league_id}",
+      "no_auth": true,
+      "params": [
+        {
+          "name": "league_id",
+          "type": "string",
+          "location": "path",
+          "description": "The league_id identifier",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

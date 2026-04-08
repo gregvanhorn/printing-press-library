@@ -1,0 +1,179 @@
+{
+  "api_name": "postman-explore",
+  "base_url": "https://www.postman.com/_api/ws/proxy",
+  "description": "Undocumented internal API powering the Postman API Network explore site (postman.com/explore).\nAll requests go through a proxy endpoint as POST requests with a JSON body containing\n{service, method, path, body?}. This spec models the logical endpoints directly.\n\nNo authentication required for public browsing and search.",
+  "mcp_ready": "full",
+  "auth": {
+    "type": "none"
+  },
+  "required_headers": [],
+  "tools": [
+    {
+      "name": "category_get",
+      "description": "Get details for a specific category",
+      "method": "GET",
+      "path": "/v2/api/category/{slug}",
+      "no_auth": true,
+      "params": [
+        {
+          "name": "slug",
+          "type": "string",
+          "location": "path",
+          "description": "Category URL slug (e.g., artificial-intelligence, devops)",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "category_list-categories",
+      "description": "List all API categories",
+      "method": "GET",
+      "path": "/v2/api/category",
+      "no_auth": true,
+      "params": [
+        {
+          "name": "sort",
+          "type": "string",
+          "location": "query",
+          "description": "Sort order"
+        }
+      ]
+    },
+    {
+      "name": "networkentity_get-network-entity-counts",
+      "description": "Get total counts of entities on the network",
+      "method": "GET",
+      "path": "/v1/api/networkentity/count",
+      "no_auth": true,
+      "params": [
+        {
+          "name": "flattenAPIVersions",
+          "type": "bool",
+          "location": "query",
+          "description": "Flatten apiversions"
+        }
+      ]
+    },
+    {
+      "name": "networkentity_list-network-entities",
+      "description": "Browse public entities on the API network",
+      "method": "GET",
+      "path": "/v1/api/networkentity",
+      "no_auth": true,
+      "params": [
+        {
+          "name": "entityType",
+          "type": "string",
+          "location": "query",
+          "description": "Type of entity to browse",
+          "required": true
+        },
+        {
+          "name": "limit",
+          "type": "int",
+          "location": "query",
+          "description": "Number of results per page"
+        },
+        {
+          "name": "offset",
+          "type": "int",
+          "location": "query",
+          "description": "Pagination offset"
+        },
+        {
+          "name": "sort",
+          "type": "string",
+          "location": "query",
+          "description": "Sort order for results"
+        },
+        {
+          "name": "categoryId",
+          "type": "int",
+          "location": "query",
+          "description": "Filter by category ID (numeric, from categories endpoint)"
+        }
+      ]
+    },
+    {
+      "name": "search-all_search_all",
+      "description": "Full-text search across the public API network",
+      "method": "POST",
+      "path": "/search-all",
+      "no_auth": true,
+      "params": [
+        {
+          "name": "domain",
+          "type": "string",
+          "location": "body",
+          "description": "Search domain scope"
+        },
+        {
+          "name": "from",
+          "type": "int",
+          "location": "body",
+          "description": "Pagination offset"
+        },
+        {
+          "name": "mergeEntities",
+          "type": "bool",
+          "location": "body",
+          "description": "Merge entities"
+        },
+        {
+          "name": "nested",
+          "type": "bool",
+          "location": "body",
+          "description": "Nested"
+        },
+        {
+          "name": "nonNestedRequests",
+          "type": "bool",
+          "location": "body",
+          "description": "Non nested requests"
+        },
+        {
+          "name": "queryIndices",
+          "type": "array",
+          "location": "body",
+          "description": "Entity types to search across",
+          "required": true
+        },
+        {
+          "name": "queryText",
+          "type": "string",
+          "location": "body",
+          "description": "Search query text",
+          "required": true
+        },
+        {
+          "name": "size",
+          "type": "int",
+          "location": "body",
+          "description": "Number of results to return",
+          "required": true
+        }
+      ]
+    },
+    {
+      "name": "team_list",
+      "description": "List publisher teams on the API network",
+      "method": "GET",
+      "path": "/v1/api/team",
+      "no_auth": true,
+      "params": [
+        {
+          "name": "limit",
+          "type": "int",
+          "location": "query",
+          "description": "Limit"
+        },
+        {
+          "name": "sort",
+          "type": "string",
+          "location": "query",
+          "description": "Sort"
+        }
+      ]
+    }
+  ]
+}
