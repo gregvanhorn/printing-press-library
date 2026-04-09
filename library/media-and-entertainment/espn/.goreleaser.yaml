@@ -9,7 +9,7 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -X github.com/user/espn-pp-cli/internal/cli.version={{ .Version }}
+      - -s -w -X github.com/mvanhorn/printing-press-library/library/media-and-entertainment/espn/internal/cli.version={{ .Version }}
     targets:
       - darwin_amd64
       - darwin_arm64
@@ -42,10 +42,10 @@ checksum:
 brews:
   - name: espn-pp-cli
     repository:
-      owner: user
+      owner: trevin-chow
       name: homebrew-tap
-    homepage: "https://github.com/user/espn-pp-cli"
-    description: "CLI for espn (generated from docs)"
+    homepage: "https://github.com/mvanhorn/printing-press-library"
+    description: "ESPN Sports API CLI — scores, standings, news, and game data across 17 sports and 139 leagues"
     install: |
       bin.install "espn-pp-cli"
       bin.install "espn-pp-mcp"

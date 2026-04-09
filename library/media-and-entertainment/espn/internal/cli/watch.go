@@ -1,208 +1,125 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 )
 
 func newWatchCmd(flags *rootFlags) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "watch",
-		Short: "Manage a multi-sport team watchlist",
-		Example: `  espn-pp-cli watch add "Lakers" --league nba
-  espn-pp-cli watch add "Chiefs" --league nfl
-  espn-pp-cli watch list
-  espn-pp-cli watch scores
-  espn-pp-cli watch remove "Lakers" --league nba`,
-	}
-
-	cmd.AddCommand(newWatchAddCmd(flags))
-	cmd.AddCommand(newWatchRemoveCmd(flags))
-	cmd.AddCommand(newWatchListCmd(flags))
-	cmd.AddCommand(newWatchScoresCmd(flags))
-	return cmd
-}
-
-func newWatchAddCmd(flags *rootFlags) *cobra.Command {
-	var league string
+	var eventID string
+	var interval time.Duration
 
 	cmd := &cobra.Command{
-		Use:   "add <team>",
-		Short: "Add a team to the watchlist",
-		Example: `  espn-pp-cli watch add "Lakers" --league nba
-  espn-pp-cli watch add "Chiefs" --league nfl --json`,
-		Args: cobra.ExactArgs(1),
+		Use:   "watch <sport> <league>",
+		Short: "Live score updates for a game (polls every 30s)",
+		Example: `  espn-pp-cli watch football nfl --event 401547417
+  espn-pp-cli watch basketball nba --event 401584793 --interval 15s`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			spec, err := resolveLeagueSpec(league)
+			if len(args) < 1 {
+				return cmd.Help()
+			}
+			if len(args) < 2 {
+				return usageErr(fmt.Errorf("league is required\nUsage: watch <sport> <league> --event <id>"))
+			}
+			if eventID == "" {
+				return usageErr(fmt.Errorf("--event is required"))
+			}
+			sport, league := args[0], args[1]
+
+			c, err := flags.newClient()
 			if err != nil {
 				return err
 			}
-			client := newESPNClient(flags)
-			db, err := openStoreIfExists("")
-			if err != nil {
-				return err
-			}
-			if db != nil {
-				defer db.Close()
-			}
 
-			team, err := resolveTeam(client, db, spec, args[0])
-			if err != nil {
-				return err
-			}
-			if team == nil || team.ID == "" {
-				return notFoundErr(fmt.Errorf("team %q not found in %s", args[0], spec.Key))
-			}
+			path := fmt.Sprintf("/%s/%s/scoreboard", sport, league)
+			w := cmd.OutOrStdout()
 
-			items, err := loadWatchlist()
-			if err != nil {
-				return err
-			}
-			for _, item := range items {
-				if item.League == spec.Key && item.TeamID == team.ID {
-					return printOutputWithFlags(cmd.OutOrStdout(), marshalRaw(item), flags)
-				}
-			}
+			fmt.Fprintf(w, "Watching event %s (%s/%s) — polling every %s. Press Ctrl+C to stop.\n\n",
+				eventID, sport, league, interval)
 
-			entry := watchItem{
-				League:       spec.Key,
-				Sport:        spec.Sport,
-				TeamID:       team.ID,
-				Name:         firstNonEmpty(team.Name, team.DisplayName, args[0]),
-				DisplayName:  team.DisplayName,
-				Abbreviation: team.Abbreviation,
-				AddedAt:      time.Now().Format(time.RFC3339),
-			}
-			if err := confirmMutation(flags, cmd.ErrOrStderr(), fmt.Sprintf("Add %q to the %s watchlist?", entry.Name, spec.Key)); err != nil {
-				return err
-			}
-			items = append(items, entry)
-			if !flags.dryRun {
-				if err := saveWatchlist(items); err != nil {
-					return err
-				}
-			}
-			return printOutputWithFlags(cmd.OutOrStdout(), marshalRaw(entry), flags)
-		},
-	}
-	cmd.Flags().StringVar(&league, "league", "nfl", "League key")
-	return cmd
-}
-
-func newWatchRemoveCmd(flags *rootFlags) *cobra.Command {
-	var league string
-
-	cmd := &cobra.Command{
-		Use:   "remove <team>",
-		Short: "Remove a team from the watchlist",
-		Example: `  espn-pp-cli watch remove "Lakers" --league nba
-  espn-pp-cli watch remove "Chiefs" --league nfl`,
-		Args: cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			spec, err := resolveLeagueSpec(league)
-			if err != nil {
-				return err
-			}
-			items, err := loadWatchlist()
-			if err != nil {
-				return err
-			}
-			if len(items) == 0 {
-				return notFoundErr(fmt.Errorf("watchlist is empty"))
-			}
-
-			var (
-				removed *watchItem
-				next    []watchItem
-			)
-			target := strings.ToLower(strings.TrimSpace(args[0]))
-			for i := range items {
-				item := items[i]
-				if item.League == spec.Key && (strings.ToLower(item.TeamID) == target ||
-					strings.ToLower(item.Name) == target ||
-					strings.ToLower(item.DisplayName) == target ||
-					strings.ToLower(item.Abbreviation) == target) {
-					copyItem := item
-					removed = &copyItem
+			var lastScore string
+			for {
+				data, err := c.Get(path, nil)
+				if err != nil {
+					fmt.Fprintf(cmd.ErrOrStderr(), "[%s] error: %v\n", time.Now().Format("15:04:05"), err)
+					time.Sleep(interval)
 					continue
 				}
-				next = append(next, item)
-			}
-			if removed == nil {
-				return notFoundErr(fmt.Errorf("team %q is not on the %s watchlist", args[0], spec.Key))
-			}
-			if err := confirmMutation(flags, cmd.ErrOrStderr(), fmt.Sprintf("Remove %q from the %s watchlist?", removed.Name, spec.Key)); err != nil {
-				return err
-			}
-			if !flags.dryRun {
-				if err := saveWatchlist(next); err != nil {
-					return err
+
+				event := findEventByID(data, eventID)
+				if event == nil {
+					fmt.Fprintf(cmd.ErrOrStderr(), "[%s] event %s not found in scoreboard\n", time.Now().Format("15:04:05"), eventID)
+					time.Sleep(interval)
+					continue
 				}
+
+				ev := parseOneScoreEvent(event)
+				if ev == nil {
+					time.Sleep(interval)
+					continue
+				}
+
+				currentScore := fmt.Sprintf("%s %s - %s %s", ev.AwayTeam, ev.AwayScore, ev.HomeTeam, ev.HomeScore)
+
+				// JSON mode: emit every poll
+				if flags.asJSON || (!isTerminal(cmd.OutOrStdout()) && !humanFriendly) {
+					out := map[string]any{
+						"timestamp":  time.Now().UTC().Format(time.RFC3339),
+						"event_id":   ev.ID,
+						"away_team":  ev.AwayTeam,
+						"away_score": ev.AwayScore,
+						"home_team":  ev.HomeTeam,
+						"home_score": ev.HomeScore,
+						"status":     ev.Status,
+						"detail":     ev.Detail,
+					}
+					enc := json.NewEncoder(w)
+					enc.Encode(out)
+				} else {
+					// Only print if score changed or first poll
+					if currentScore != lastScore {
+						fmt.Fprintf(w, "[%s] %s  %s\n",
+							time.Now().Format("15:04:05"),
+							currentScore,
+							ev.Detail)
+						lastScore = currentScore
+					}
+				}
+
+				// If game is finished, exit
+				if ev.Status == "post" {
+					fmt.Fprintf(w, "\nFinal: %s\n", currentScore)
+					return nil
+				}
+
+				time.Sleep(interval)
 			}
-			return printOutputWithFlags(cmd.OutOrStdout(), marshalRaw(removed), flags)
 		},
 	}
 
-	cmd.Flags().StringVar(&league, "league", "nfl", "League key")
+	cmd.Flags().StringVar(&eventID, "event", "", "ESPN event/game ID (required)")
+	cmd.Flags().DurationVar(&interval, "interval", 30*time.Second, "Poll interval (e.g. 15s, 1m)")
+
 	return cmd
 }
 
-func newWatchListCmd(flags *rootFlags) *cobra.Command {
-	return &cobra.Command{
-		Use:   "list",
-		Short: "Show the current watchlist",
-		Example: `  espn-pp-cli watch list
-  espn-pp-cli watch list --json`,
-		Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			items, err := loadWatchlist()
-			if err != nil {
-				return err
-			}
-			return printOutputWithFlags(cmd.OutOrStdout(), marshalRaw(items), flags)
-		},
+func findEventByID(data json.RawMessage, eventID string) json.RawMessage {
+	var resp struct {
+		Events []json.RawMessage `json:"events"`
 	}
-}
-
-func newWatchScoresCmd(flags *rootFlags) *cobra.Command {
-	var date string
-
-	cmd := &cobra.Command{
-		Use:   "scores",
-		Short: "Show scores for all watched teams",
-		Example: `  espn-pp-cli watch scores
-  espn-pp-cli watch scores --date 20260329
-  espn-pp-cli watch scores --json`,
-		Args: cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			items, err := loadWatchlist()
-			if err != nil {
-				return err
-			}
-			if len(items) == 0 {
-				return printOutputWithFlags(cmd.OutOrStdout(), marshalRaw([]map[string]any{}), flags)
-			}
-			client := newESPNClient(flags)
-			leagues := map[string]bool{}
-			for _, item := range items {
-				leagues[item.League] = true
-			}
-
-			var rows []map[string]any
-			for leagueKey := range leagues {
-				leagueRows, err := scoreRowsForLeague(client, leagueKey, date)
-				if err != nil {
-					return classifyAPIError(err)
-				}
-				rows = append(rows, leagueRows...)
-			}
-			return printOutputWithFlags(cmd.OutOrStdout(), marshalRaw(filterWatchlistScores(items, rows)), flags)
-		},
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil
 	}
-
-	cmd.Flags().StringVar(&date, "date", "", "Scoreboard date in YYYYMMDD format")
-	return cmd
+	for _, raw := range resp.Events {
+		var ev struct {
+			ID string `json:"id"`
+		}
+		if json.Unmarshal(raw, &ev) == nil && ev.ID == eventID {
+			return raw
+		}
+	}
+	return nil
 }

@@ -33,19 +33,15 @@
       "name": "espn",
       "category": "media-and-entertainment",
       "api": "ESPN",
-      "description": "ESPN sports CLI with live scores, standings, stats, and offline search across 10 leagues",
+      "description": "Live scores, standings, news, and game history across 17 sports from ESPN",
       "path": "library/media-and-entertainment/espn",
       "mcp": {
         "binary": "espn-pp-mcp",
         "transport": "stdio",
-        "tool_count": 1,
-        "public_tool_count": 1,
+        "tool_count": 7,
         "auth_type": "none",
-        "env_vars": [],
         "mcp_ready": "full",
-        "manifest_checksum": "sha256:9ac1e69b66632589781e5386946ca9d6544c6ffacc117a28c635213e1e05d795",
-        "spec_format": "openapi3",
-        "manifest_url": "library/media-and-entertainment/espn/tools-manifest.json"
+        "spec_format": "internal"
       }
     },
     {
