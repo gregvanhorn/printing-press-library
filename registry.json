@@ -9,6 +9,13 @@
       "path": "library/developer-tools/agent-capture"
     },
     {
+      "name": "dominos-pp-cli",
+      "category": "commerce",
+      "api": "Dominos Pizza",
+      "description": "Order pizza, browse menus, track deliveries, and manage rewards from the terminal",
+      "path": "library/commerce/dominos-pp-cli"
+    },
+    {
       "name": "dub",
       "category": "marketing",
       "api": "Dub",
