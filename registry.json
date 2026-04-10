@@ -148,6 +148,13 @@
       "api": "HubSpot",
       "description": "Manage HubSpot CRM contacts, companies, deals, tickets, engagements, pipelines, and associations with offline search and pipeline analytics",
       "path": "library/sales-and-crm/hubspot"
+    },
+    {
+      "name": "trigger-dev",
+      "category": "developer-tools",
+      "api": "Trigger.dev",
+      "description": "Monitor runs, trigger tasks, manage schedules, and detect failures via the Trigger.dev API",
+      "path": "library/developer-tools/trigger-dev"
     }
   ]
 }
