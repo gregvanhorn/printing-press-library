@@ -9,7 +9,7 @@ builds:
     env:
       - CGO_ENABLED=0
     ldflags:
-      - -s -w -X github.com/mvanhorn/printing-press-library/library/other/pagliacci-pizza-pp-cli/internal/cli.version={{ .Version }}
+      - -s -w -X github.com/mvanhorn/printing-press-library/library/other/pagliacci-pizza/internal/cli.version={{ .Version }}
     targets:
       - darwin_amd64
       - darwin_arm64
@@ -17,9 +17,9 @@ builds:
       - linux_arm64
       - windows_amd64
       - windows_arm64
-  - id: pagliacci-pizza-pp-mcp
-    main: ./cmd/pagliacci-pizza-pp-mcp
-    binary: pagliacci-pizza-pp-mcp
+  - id: pagliacci-pizza-mcp
+    main: ./cmd/pagliacci-pizza-mcp
+    binary: pagliacci-pizza-mcp
     env:
       - CGO_ENABLED=0
     ldflags:
@@ -48,4 +48,4 @@ brews:
     description: "REST API for Pagliacci Pizza - Seattle's favorite pizza. Browse stores, menus, slices, time windows, manage rewards, view order history, and place orders. Authenticated endpoints use the custom PagliacciAuth scheme with a required Version-Num header."
     install: |
       bin.install "pagliacci-pizza-pp-cli"
-      bin.install "pagliacci-pizza-pp-mcp"
+      bin.install "pagliacci-pizza-mcp"

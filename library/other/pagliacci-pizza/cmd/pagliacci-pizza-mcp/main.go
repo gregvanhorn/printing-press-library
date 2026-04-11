@@ -13,7 +13,7 @@ import (
 
 func main() {
 	s := server.NewMCPServer(
-		"pagliacci-pizza-pp-mcp",
+		"pagliacci-pizza-mcp",
 		"1.0.0",
 		server.WithToolCapabilities(false),
 	)
