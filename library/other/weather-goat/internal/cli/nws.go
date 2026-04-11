@@ -10,6 +10,37 @@ import (
 
 const nwsBaseURL = "https://api.weather.gov"
 
+// openMeteoGet performs a GET to any Open-Meteo subdomain endpoint
+// (air-quality, archive, marine, etc.) that isn't on the main forecast base URL.
+func openMeteoGet(fullURL string, params map[string]string) (json.RawMessage, error) {
+	req, err := http.NewRequest("GET", fullURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating request: %w", err)
+	}
+	q := req.URL.Query()
+	for k, v := range params {
+		if v != "" {
+			q.Set(k, v)
+		}
+	}
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := nwsHTTPClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading response: %w", err)
+	}
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, truncate(string(body), 200))
+	}
+	return json.RawMessage(body), nil
+}
+
 var nwsHTTPClient = &http.Client{Timeout: 15 * time.Second}
 
 // nwsGet performs a GET request against the NWS API with the required User-Agent header.

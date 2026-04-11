@@ -85,7 +85,7 @@ func newNormalCmd(flags *rootFlags) *cobra.Command {
 					"timezone":         "auto",
 					"temperature_unit": "fahrenheit",
 				}
-				histData, err := c.Get("/archive", histParams)
+				histData, err := openMeteoGet("https://archive-api.open-meteo.com/v1/archive", histParams)
 				if err != nil {
 					continue // skip years we can't fetch
 				}

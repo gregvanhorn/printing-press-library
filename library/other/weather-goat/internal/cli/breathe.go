@@ -37,11 +37,6 @@ func newBreatheCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 
-			c, clientErr := flags.newClient()
-			if clientErr != nil {
-				return clientErr
-			}
-
 			params := map[string]string{
 				"latitude":  fmt.Sprintf("%f", lat),
 				"longitude": fmt.Sprintf("%f", lon),
@@ -49,7 +44,8 @@ func newBreatheCmd(flags *rootFlags) *cobra.Command {
 				"timezone":  "auto",
 			}
 
-			data, err := c.Get("/air-quality", params)
+			// Air quality API uses a different subdomain than the forecast API
+			data, err := openMeteoGet("https://air-quality-api.open-meteo.com/v1/air-quality", params)
 			if err != nil {
 				return classifyAPIError(err)
 			}
