@@ -11,7 +11,7 @@ Unified router for the Printing Press CLI library. Discover CLIs, install them, 
 
 ## Registry
 
-The registry is at `${CLAUDE_SKILL_DIR}/registry.json`. Read it only when the task requires it — do not read preemptively. Fallback: read `registry.json` from the repository root.
+The registry is at `${CLAUDE_SKILL_DIR}/references/registry.json`. Read it only when the task requires it — do not read preemptively. Fallback: read `registry.json` from the repository root.
 
 The registry contains entries with these fields:
 - `name` — short identifier (e.g., `espn`, `linear`, `dominos-pp-cli`)
@@ -37,7 +37,7 @@ Parse `$ARGUMENTS` to determine intent:
 
 ## Mode 1: Discovery
 
-Read `${CLAUDE_SKILL_DIR}/registry.json`.
+Read `${CLAUDE_SKILL_DIR}/references/registry.json`.
 
 **No arguments:** Show a summary table of all CLIs grouped by category. For each entry, show name, API, description, auth type (from `mcp.auth_type` or "CLI only"), and MCP tool count if available.
 
@@ -151,7 +151,7 @@ Triggered when the first word of `$ARGUMENTS` exactly matches a registry entry `
 
 Triggered when arguments don't match a CLI name and don't start with `install`.
 
-1. Read `${CLAUDE_SKILL_DIR}/registry.json`.
+1. Read `${CLAUDE_SKILL_DIR}/references/registry.json`.
 2. Scan each entry for relevance to the user's query. Prefer matches on `description` and `api` over `name` and `category` — a query like "track my short links" should match Dub (description: "Create short links, track analytics...") even though "short links" doesn't appear in the name or category. Use natural language understanding — e.g., "lakers score" matches ESPN ("Live scores, standings, news, and game history across 17 sports").
 3. **Single strong match:** Proceed as Explicit Use (Mode 4) with that CLI.
 4. **Multiple plausible matches:** Present the options with name, API, and description, and ask which the user wants.
