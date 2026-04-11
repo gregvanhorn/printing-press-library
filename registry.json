@@ -139,6 +139,25 @@
       }
     },
     {
+      "name": "movie-goat",
+      "category": "media-and-entertainment",
+      "api": "TMDb + OMDb",
+      "description": "Multi-source movie ratings (TMDb + OMDb), streaming availability, and cross-taste recommendations",
+      "path": "library/media-and-entertainment/movie-goat",
+      "mcp": {
+        "binary": "movie-goat-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 25,
+        "public_tool_count": 0,
+        "auth_type": "bearer_token",
+        "env_vars": [
+          "TMDB_API_KEY"
+        ],
+        "mcp_ready": "full",
+        "spec_format": "internal"
+      }
+    },
+    {
       "name": "pagliacci-pizza",
       "category": "other",
       "api": "Pagliacci Pizza",

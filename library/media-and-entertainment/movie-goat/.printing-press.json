@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-04-11T07:55:25.270461Z",
+  "printing_press_version": "1.3.2-0.20260411051745-33d1ba11eb8c+dirty",
+  "api_name": "movie-goat",
+  "cli_name": "movie-goat-pp-cli",
+  "mcp_binary": "movie-goat-pp-mcp",
+  "mcp_tool_count": 25,
+  "mcp_ready": "full",
+  "auth_type": "bearer_token",
+  "auth_env_vars": [
+    "TMDB_API_KEY"
+  ]
+}
