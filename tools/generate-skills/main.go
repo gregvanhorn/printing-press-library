@@ -175,7 +175,7 @@ func main() {
 		}
 
 		// Write skill file
-		skillDir := filepath.Join("skills", skillName)
+		skillDir := filepath.Join("plugin", "skills", skillName)
 		skillFile := filepath.Join(skillDir, "SKILL.md")
 
 		// Downgrade protection: don't overwrite an enriched skill with a registry-only one.
@@ -387,7 +387,7 @@ func buildEnrichedDescription(entry RegistryEntry, domainCommands []DomainComman
 
 // existingSkillDirs returns the sorted set of pp-* directory names under skills/.
 func existingSkillDirs() []string {
-	entries, err := os.ReadDir("skills")
+	entries, err := os.ReadDir(filepath.Join("plugin", "skills"))
 	if err != nil {
 		return nil
 	}
@@ -423,7 +423,7 @@ func maybeUpdatePluginVersion(beforeDirs, afterDirs []string) {
 		return
 	}
 
-	pluginPath := filepath.Join(".claude-plugin", "plugin.json")
+	pluginPath := filepath.Join("plugin", ".claude-plugin", "plugin.json")
 	data, err := os.ReadFile(pluginPath)
 	if err != nil {
 		log.Printf("Warning: could not read %s for version bump: %v", pluginPath, err)
