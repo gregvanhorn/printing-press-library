@@ -87,7 +87,7 @@
       "category": "sales-and-crm",
       "api": "HubSpot",
       "description": "Manage HubSpot CRM contacts, companies, deals, tickets, engagements, pipelines, and associations with offline search and pipeline analytics",
-      "path": "library/sales-and-crm/hubspot-pp-cli",
+      "path": "library/sales-and-crm/hubspot",
       "mcp": {
         "binary": "hubspot-pp-mcp",
         "transport": "stdio",
