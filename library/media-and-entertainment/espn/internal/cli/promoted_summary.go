@@ -13,22 +13,16 @@ import (
 
 func newSummaryPromotedCmd(flags *rootFlags) *cobra.Command {
 	var flagEvent string
-	var flagTeam string
-	var flagLast int
 
 	cmd := &cobra.Command{
 		Use:   "summary <sport> <league>",
 		Short: "Get detailed game summary including box score, leaders, scoring plays, odds, and win probability",
-		Long:  "Shortcut for 'summary get'. Get detailed game summary including box score, leaders, scoring plays, odds, and win probability.\nUse --team to look up the most recent game automatically instead of providing --event.",
-		Example: `  espn-pp-cli summary basketball nba --team warriors
-  espn-pp-cli summary basketball nba --team GS --last 2
-  espn-pp-cli summary football nfl --event 401547417
+		Long:  "Shortcut for 'summary get'. Get detailed game summary including box score, leaders, scoring plays, odds, and win probability",
+		Example: `  espn-pp-cli summary football nfl --event 401547417
   espn-pp-cli summary basketball nba --event 401584793 --json`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			hasEvent := cmd.Flags().Changed("event")
-			hasTeam := cmd.Flags().Changed("team")
-			if !hasEvent && !hasTeam && !flags.dryRun {
-				return fmt.Errorf("either --event or --team is required")
+			if !cmd.Flags().Changed("event") && !flags.dryRun {
+				return fmt.Errorf("required flag \"%s\" not set", "event")
 			}
 			c, err := flags.newClient()
 			if err != nil {
@@ -39,27 +33,11 @@ func newSummaryPromotedCmd(flags *rootFlags) *cobra.Command {
 			if len(args) < 1 {
 				return usageErr(fmt.Errorf("sport is required\nUsage: %s %s <%s>", cmd.Root().Name(), cmd.CommandPath(), "sport"))
 			}
-			sport := args[0]
-			path = replacePathParam(path, "sport", sport)
+			path = replacePathParam(path, "sport", args[0])
 			if len(args) < 2 {
 				return usageErr(fmt.Errorf("league is required\nUsage: %s %s <%s>", cmd.Root().Name(), cmd.CommandPath(), "league"))
 			}
-			league := args[1]
-			path = replacePathParam(path, "league", league)
-
-			// Resolve event ID from --team if --event not provided
-			if !hasEvent && hasTeam {
-				teamID, resolveErr := resolveTeamID(c, sport, league, flagTeam)
-				if resolveErr != nil {
-					return resolveErr
-				}
-				eventID, eventErr := resolveLastEventID(c, sport, league, teamID, flagLast)
-				if eventErr != nil {
-					return eventErr
-				}
-				flagEvent = eventID
-			}
-
+			path = replacePathParam(path, "league", args[1])
 			params := map[string]string{}
 			if flagEvent != "" {
 				params["event"] = fmt.Sprintf("%v", flagEvent)
@@ -73,7 +51,14 @@ func newSummaryPromotedCmd(flags *rootFlags) *cobra.Command {
 			data = extractResponseData(data)
 
 			// Print provenance to stderr
-			printProvenance(cmd, countResponseItems(data), prov)
+			{
+				var countItems []json.RawMessage
+				if json.Unmarshal(data, &countItems) != nil {
+					// Single object, not an array
+					countItems = []json.RawMessage{data}
+				}
+				printProvenance(cmd, len(countItems), prov)
+			}
 			// CSV bypasses JSON pipe path so --csv works when piped
 			if flags.csv {
 				return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
@@ -109,8 +94,6 @@ func newSummaryPromotedCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagEvent, "event", "", "ESPN event or game ID")
-	cmd.Flags().StringVar(&flagTeam, "team", "", "Team name, abbreviation, or ID (resolves most recent game)")
-	cmd.Flags().IntVar(&flagLast, "last", 1, "Which completed game to show (1=most recent, 2=second most recent)")
 
 	// Wire sibling endpoints and sub-resources as subcommands
 

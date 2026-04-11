@@ -42,7 +42,11 @@ func newTeamsListCmd(flags *rootFlags) *cobra.Command {
 				return classifyAPIError(err)
 			}
 			// Print provenance to stderr for human-facing output
-			printProvenance(cmd, countResponseItems(data), prov)
+			{
+				var countItems []json.RawMessage
+				_ = json.Unmarshal(data, &countItems)
+				printProvenance(cmd, len(countItems), prov)
+			}
 			// For JSON output, wrap with provenance envelope before passing through flags
 			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
 				filtered := data

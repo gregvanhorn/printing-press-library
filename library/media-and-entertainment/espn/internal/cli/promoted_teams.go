@@ -15,13 +15,12 @@ func newTeamsPromotedCmd(flags *rootFlags) *cobra.Command {
 	var flagSeason int
 
 	cmd := &cobra.Command{
-		Use:   "teams <sport> <league> <team_name_or_id>",
+		Use:   "teams <sport> <league> <team_id>",
 		Short: "Get past and upcoming schedule for a specific team",
-		Long:  "Shortcut for 'teams schedule'. Get past and upcoming schedule for a specific team.\nAccepts team name, abbreviation, or numeric ID.",
-		Example: `  espn-pp-cli teams basketball nba warriors
-  espn-pp-cli teams football nfl 12 --season 2025
-  espn-pp-cli teams basketball nba GS --json
-  espn-pp-cli teams list football nfl`,
+		Long:  "Shortcut for 'teams schedule'. Get past and upcoming schedule for a specific team",
+		Example: `  espn-pp-cli teams football nfl 12 --season 2025
+  espn-pp-cli teams list football nfl
+  espn-pp-cli teams get basketball nba 13 --json`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
@@ -38,13 +37,9 @@ func newTeamsPromotedCmd(flags *rootFlags) *cobra.Command {
 			}
 			path = replacePathParam(path, "league", args[1])
 			if len(args) < 3 {
-				return usageErr(fmt.Errorf("team name or ID is required\nUsage: %s %s <%s>", cmd.Root().Name(), cmd.CommandPath(), "team_name_or_id"))
+				return usageErr(fmt.Errorf("team_id is required\nUsage: %s %s <%s>", cmd.Root().Name(), cmd.CommandPath(), "team_id"))
 			}
-			teamID, resolveErr := resolveTeamID(c, args[0], args[1], args[2])
-			if resolveErr != nil {
-				return resolveErr
-			}
-			path = replacePathParam(path, "team_id", teamID)
+			path = replacePathParam(path, "team_id", args[2])
 			params := map[string]string{}
 			if flagSeason != 0 {
 				params["season"] = fmt.Sprintf("%v", flagSeason)
@@ -58,7 +53,14 @@ func newTeamsPromotedCmd(flags *rootFlags) *cobra.Command {
 			data = extractResponseData(data)
 
 			// Print provenance to stderr
-			printProvenance(cmd, countResponseItems(data), prov)
+			{
+				var countItems []json.RawMessage
+				if json.Unmarshal(data, &countItems) != nil {
+					// Single object, not an array
+					countItems = []json.RawMessage{data}
+				}
+				printProvenance(cmd, len(countItems), prov)
+			}
 			// CSV bypasses JSON pipe path so --csv works when piped
 			if flags.csv {
 				return printOutputWithFlags(cmd.OutOrStdout(), data, flags)

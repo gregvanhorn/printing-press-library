@@ -962,17 +962,6 @@ type DataProvenance struct {
 	ResourceType string     `json:"resource_type,omitempty"` // which resource type was queried
 }
 
-// countResponseItems returns the number of top-level items in a JSON response.
-// For arrays, returns the array length. For objects, returns 1.
-func countResponseItems(data json.RawMessage) int {
-	var items []json.RawMessage
-	if json.Unmarshal(data, &items) == nil {
-		return len(items)
-	}
-	// Single object, not an array
-	return 1
-}
-
 // printProvenance writes a one-line provenance message to stderr.
 func printProvenance(cmd *cobra.Command, count int, prov DataProvenance) {
 	if prov.Source == "live" {

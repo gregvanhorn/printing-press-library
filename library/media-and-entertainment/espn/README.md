@@ -7,7 +7,7 @@ Live scores, standings, news, and game history across 17 sports from ESPN
 ### Go
 
 ```
-go install github.com/mvanhorn/printing-press-library/library/other/github.com/mvanhorn/printing-press-library/library/media-and-entertainment/espn/cmd/espn-pp-cli@latest
+go install github.com/mvanhorn/printing-press-library/library/media-and-entertainment/espn/cmd/espn-pp-cli@latest
 ```
 
 ### Binary

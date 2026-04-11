@@ -32,6 +32,7 @@ func newSyncCmd(flags *rootFlags) *cobra.Command {
 	var since string
 	var concurrency int
 	var dbPath string
+	var maxPages int
 	var dates string
 	var sport string
 	var league string
@@ -136,7 +137,7 @@ are automatically chunked into monthly requests.`,
 				go func() {
 					defer wg.Done()
 					for resource := range work {
-						res := syncResource(c, db, resource, sinceTS, full)
+						res := syncResource(c, db, resource, sinceTS, full, maxPages)
 						results <- res
 					}
 				}()
@@ -186,6 +187,7 @@ are automatically chunked into monthly requests.`,
 	cmd.Flags().StringVar(&since, "since", "", "Incremental sync duration (e.g. 7d, 24h, 1w, 30m)")
 	cmd.Flags().IntVar(&concurrency, "concurrency", 4, "Number of parallel sync workers")
 	cmd.Flags().StringVar(&dbPath, "db", "", "Database path (default: ~/.local/share/espn-pp-cli/data.db)")
+	cmd.Flags().IntVar(&maxPages, "max-pages", 10, "Maximum pages to fetch per resource (0 = unlimited)")
 	cmd.Flags().StringVar(&dates, "dates", "", "Date range for historical sync (YYYYMMDD-YYYYMMDD, e.g. 20250901-20260209)")
 	cmd.Flags().StringVar(&sport, "sport", "", "Sport to sync (football, basketball, baseball, hockey)")
 	cmd.Flags().StringVar(&league, "league", "", "League to sync (nfl, nba, mlb, nhl)")
@@ -198,7 +200,7 @@ are automatically chunked into monthly requests.`,
 func syncResource(c interface {
 	Get(string, map[string]string) (json.RawMessage, error)
 	RateLimit() float64
-}, db *store.Store, resource, sinceTS string, full bool) syncResult {
+}, db *store.Store, resource, sinceTS string, full bool, maxPages int) syncResult {
 	started := time.Now()
 
 	if !humanFriendly {
@@ -224,6 +226,7 @@ func syncResource(c interface {
 	pageSize := determinePaginationDefaults()
 
 	var progressCount int64
+	pagesFetched := 0
 
 	for {
 		params := map[string]string{}
@@ -296,6 +299,16 @@ func syncResource(c interface {
 		if err := db.SaveSyncState(resource, nextCursor, totalCount); err != nil {
 			// Non-fatal: log and continue
 			fmt.Fprintf(os.Stderr, "\nwarning: failed to save sync state for %s: %v\n", resource, err)
+		}
+
+		pagesFetched++
+
+		// Enforce page ceiling to prevent runaway syncs on large-catalog APIs
+		if maxPages > 0 && pagesFetched >= maxPages {
+			if humanFriendly {
+				fmt.Fprintf(os.Stderr, "\n  %s: reached --max-pages limit (%d pages, %d items)\n", resource, maxPages, totalCount)
+			}
+			break
 		}
 
 		// Determine if there are more pages

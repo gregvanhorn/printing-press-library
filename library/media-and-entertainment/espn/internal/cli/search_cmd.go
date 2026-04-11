@@ -34,35 +34,66 @@ func newSearchCmd(flags *rootFlags) *cobra.Command {
 			}
 			defer db.Close()
 
-			// Search events
+			// Search domain-specific tables
 			events, err := db.SearchEvents(query, limit)
 			if err != nil {
-				// FTS might fail if no data synced yet
 				events = nil
 			}
 
-			// Search news
 			news, err := db.SearchNews(query, limit)
 			if err != nil {
 				news = nil
 			}
 
+			// Also search the generic resources table (populated by write-through
+			// caching from live API calls). This catches data that was looked up
+			// live but never synced into domain-specific tables.
+			general, _ := db.Search(query, limit)
+
 			// Filter by sport/league if specified
 			if sport != "" || league != "" {
 				events = filterByField(events, sport, league)
 				news = filterByField(news, sport, league)
+				general = filterByField(general, sport, league)
+			}
+
+			// Deduplicate general results against domain results
+			seen := make(map[string]bool)
+			for _, items := range [][]json.RawMessage{events, news} {
+				for _, raw := range items {
+					var obj map[string]json.RawMessage
+					if json.Unmarshal(raw, &obj) == nil {
+						if id, ok := obj["id"]; ok {
+							seen[string(id)] = true
+						}
+					}
+				}
+			}
+			var extra []json.RawMessage
+			for _, raw := range general {
+				var obj map[string]json.RawMessage
+				if json.Unmarshal(raw, &obj) == nil {
+					if id, ok := obj["id"]; ok {
+						if !seen[string(id)] {
+							extra = append(extra, raw)
+							seen[string(id)] = true
+						}
+					}
+				}
 			}
 
 			type searchResults struct {
-				Events []json.RawMessage `json:"events"`
-				News   []json.RawMessage `json:"news"`
-				Total  int               `json:"total"`
+				Events  []json.RawMessage `json:"events"`
+				News    []json.RawMessage `json:"news"`
+				General []json.RawMessage `json:"general,omitempty"`
+				Total   int               `json:"total"`
 			}
 
 			results := searchResults{
-				Events: events,
-				News:   news,
-				Total:  len(events) + len(news),
+				Events:  events,
+				News:    news,
+				General: extra,
+				Total:   len(events) + len(news) + len(extra),
 			}
 
 			if results.Events == nil {
@@ -121,6 +152,35 @@ func newSearchCmd(flags *rootFlags) *cobra.Command {
 						truncate(jsonStrAny(article, "headline"), 40),
 						truncate(jsonStrAny(article, "byline"), 20),
 						truncate(jsonStrAny(article, "published"), 10))
+				}
+				tw.Flush()
+			}
+
+			if len(extra) > 0 {
+				if len(events) > 0 || len(news) > 0 {
+					fmt.Fprintln(w)
+				}
+				fmt.Fprintf(w, "%s (%d)\n", bold("CACHED"), len(extra))
+				tw := newTabWriter(w)
+				fmt.Fprintf(tw, "  %s\t%s\n", bold("ID"), bold("SNIPPET"))
+				for _, raw := range extra {
+					var obj map[string]any
+					if json.Unmarshal(raw, &obj) != nil {
+						continue
+					}
+					id := jsonStrAny(obj, "id")
+					// Try common title/name fields for a useful snippet
+					snippet := jsonStrAny(obj, "headline")
+					if snippet == "" {
+						snippet = jsonStrAny(obj, "shortName")
+					}
+					if snippet == "" {
+						snippet = jsonStrAny(obj, "name")
+					}
+					if snippet == "" {
+						snippet = jsonStrAny(obj, "description")
+					}
+					fmt.Fprintf(tw, "  %s\t%s\n", truncate(id, 15), truncate(snippet, 50))
 				}
 				tw.Flush()
 			}
