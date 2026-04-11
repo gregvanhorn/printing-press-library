@@ -1,5 +1,5 @@
 ---
-name: printing-press-library
+name: ppl
 description: "Discover, install, and use Printing Press CLI tools and MCP servers for any API. This skill should be used when the user wants to browse available CLIs, install a CLI or MCP server, run a Printing Press CLI command, or search for a tool by topic — including sports scores, project management, scheduling, link analytics, CRM, pizza ordering, API exploration, background jobs, and more. Trigger phrases: 'find a cli', 'install espn', 'browse tools', 'what CLIs are available', 'run espn scores', 'check the lakers score', 'look up my Linear tickets', 'shorten a link'."
 argument-hint: "<query> | <cli-name> <query> | install <name> cli|mcp"
 allowed-tools: "Read Bash"
@@ -52,8 +52,8 @@ Example output:
 **Search query** (arguments that don't match a CLI name or `install`): Match the query against `name`, `api`, `description`, and `category` fields. Show matching entries in the same table format.
 
 After showing results, suggest next steps:
-- "To install: `/printing-press-library install <name> cli`"
-- "To use directly: `/printing-press-library <name> <your question>`"
+- "To install: `/ppl install <name> cli`"
+- "To use directly: `/ppl <name> <your question>`"
 
 ## Mode 2: CLI Installation
 
