@@ -15,7 +15,7 @@ import (
 	"github.com/mvanhorn/printing-press-library/library/media-and-entertainment/movie-goat/internal/config"
 )
 
-var version = "1.0.0"
+var version = "1.1.0"
 
 type rootFlags struct {
 	asJSON       bool
