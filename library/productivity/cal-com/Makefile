@@ -16,9 +16,9 @@ clean:
 	rm -rf bin/
 
 build-mcp:
-	go build -o bin/cal-com-pp-mcp ./cmd/cal-com-pp-mcp
+	go build -o bin/cal-com-mcp ./cmd/cal-com-mcp
 
 install-mcp:
-	go install ./cmd/cal-com-pp-mcp
+	go install ./cmd/cal-com-mcp
 
 build-all: build build-mcp
