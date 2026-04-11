@@ -9,6 +9,21 @@
       "path": "library/developer-tools/agent-capture"
     },
     {
+      "name": "archive-is",
+      "category": "media-and-entertainment",
+      "api": "Archive.today",
+      "description": "Bypass paywalls and look up web archives via archive.today. Hero command: find or create an archive for any URL with lookup-before-submit, Wayback Machine fallback, and agent-hints on stderr when called non-interactively.",
+      "path": "library/media-and-entertainment/archive-is",
+      "mcp": {
+        "binary": "archive-is-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 6,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full"
+      }
+    },
+    {
       "name": "cal-com",
       "category": "productivity",
       "api": "Cal.com",
@@ -99,6 +114,22 @@
         ],
         "mcp_ready": "full",
         "spec_format": "openapi3"
+      }
+    },
+    {
+      "name": "hackernews",
+      "category": "media-and-entertainment",
+      "api": "Hacker News",
+      "description": "Browse, search, and analyze Hacker News \u2014 front page, Show HN, Ask HN, Who is Hiring, topic pulse, and pipe-friendly output",
+      "path": "library/media-and-entertainment/hackernews",
+      "mcp": {
+        "binary": "hackernews-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 10,
+        "public_tool_count": 10,
+        "auth_type": "none",
+        "mcp_ready": "full",
+        "spec_format": "internal"
       }
     },
     {
@@ -273,21 +304,6 @@
         "env_vars": [
           "TRIGGER_SECRET_KEY"
         ],
-        "mcp_ready": "full"
-      }
-    },
-    {
-      "name": "archive-is",
-      "category": "media-and-entertainment",
-      "api": "Archive.today",
-      "description": "Bypass paywalls and look up web archives via archive.today. Hero command: find or create an archive for any URL with lookup-before-submit, Wayback Machine fallback, and agent-hints on stderr when called non-interactively.",
-      "path": "library/media-and-entertainment/archive-is",
-      "mcp": {
-        "binary": "archive-is-pp-mcp",
-        "transport": "stdio",
-        "tool_count": 6,
-        "auth_type": "none",
-        "env_vars": [],
         "mcp_ready": "full"
       }
     }
