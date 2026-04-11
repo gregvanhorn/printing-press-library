@@ -83,6 +83,25 @@
       }
     },
     {
+      "name": "flightgoat",
+      "category": "other",
+      "api": "flightgoat",
+      "description": "Free Google Flights search, Kayak nonstop route explorer, and optional FlightAware live tracking in one CLI. No API key required for search.",
+      "path": "library/other/flightgoat",
+      "mcp": {
+        "binary": "flightgoat-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 58,
+        "public_tool_count": 0,
+        "auth_type": "api_key",
+        "env_vars": [
+          "FLIGHTGOAT_API_KEY_AUTH"
+        ],
+        "mcp_ready": "full",
+        "spec_format": "openapi3"
+      }
+    },
+    {
       "name": "hubspot-pp-cli",
       "category": "sales-and-crm",
       "api": "HubSpot",
@@ -98,6 +117,13 @@
         ],
         "mcp_ready": "full"
       }
+    },
+    {
+      "name": "instacart",
+      "category": "commerce",
+      "api": "Instacart",
+      "description": "Natural-language Instacart CLI that talks directly to the web GraphQL API. Add items to your cart, search products, and manage carts across retailers without browser automation.",
+      "path": "library/commerce/instacart"
     },
     {
       "name": "kalshi",
@@ -247,6 +273,21 @@
         "env_vars": [
           "TRIGGER_SECRET_KEY"
         ],
+        "mcp_ready": "full"
+      }
+    },
+    {
+      "name": "archive-is",
+      "category": "media-and-entertainment",
+      "api": "Archive.today",
+      "description": "Bypass paywalls and look up web archives via archive.today. Hero command: find or create an archive for any URL with lookup-before-submit, Wayback Machine fallback, and agent-hints on stderr when called non-interactively.",
+      "path": "library/media-and-entertainment/archive-is",
+      "mcp": {
+        "binary": "archive-is-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 6,
+        "auth_type": "none",
+        "env_vars": [],
         "mcp_ready": "full"
       }
     }
