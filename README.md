@@ -6,6 +6,40 @@ Every entry in this library was generated from an API spec, verified through the
 
 The printing press generates both CLIs and MCP servers from the same spec. CLIs are the efficiency layer — fewer tokens, composable with pipes, works with any shell-based agent. MCP servers are the discovery layer — show up in Claude Desktop, Cursor, and marketplace listings. Use the CLI to set up auth and explore interactively. Use the MCP to let your AI editor call the API.
 
+## Claude Code Plugin
+
+Skip the manual install. The library ships as a Claude Code plugin with a single skill that discovers, installs, and runs any CLI or MCP server in the collection.
+
+### Install
+
+If you already have the `cli-printing-press` marketplace, install the library plugin directly:
+
+```
+/plugin install cli-printing-press@printing-press-library
+/reload-plugins
+```
+
+If not, add the marketplace first:
+
+```
+/plugin marketplace add mvanhorn/cli-printing-press
+/plugin install cli-printing-press@printing-press-library
+/reload-plugins
+```
+
+### Usage
+
+```
+/printing-press-library                          # Browse the full catalog
+/printing-press-library sports scores            # Search by topic
+/printing-press-library install espn cli         # Install a CLI
+/printing-press-library install espn mcp         # Install an MCP server
+/printing-press-library espn lakers score        # Run a CLI directly
+/printing-press-library lakers score             # Semantic match — finds ESPN, installs if needed, runs it
+```
+
+The skill reads the registry, matches your query to the right CLI, handles installation via `go install`, and executes commands with the `--agent` flag for structured output. See the [SKILL.md](skills/printing-press-library/SKILL.md) for the full routing logic.
+
 ## Published CLIs
 
 ### Works immediately (no auth required)
