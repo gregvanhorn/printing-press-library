@@ -15,7 +15,7 @@ import (
 	"github.com/mvanhorn/printing-press-library/library/payments/kalshi/internal/config"
 )
 
-var version = "3.13.0"
+var version = "3.14.0"
 
 type rootFlags struct {
 	asJSON       bool
