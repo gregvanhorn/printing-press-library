@@ -152,11 +152,6 @@ func main() {
 		enrichedDesc := buildEnrichedDescription(entry, domainCommands)
 
 		isEnriched := domainCommands != nil
-		if isEnriched {
-			enrichedCount++
-		} else {
-			registryOnlyCount++
-		}
 
 		ctx := SkillContext{
 			SkillName:       skillName,
@@ -203,7 +198,6 @@ func main() {
 				if strings.Contains(string(existing), "Key commands:") {
 					fmt.Printf("  %s -> %s (skipped: existing skill is enriched, new would be registry-only)\n", entry.Name, skillFile)
 					totalGenerated++
-					registryOnlyCount-- // undo the count since we're skipping
 					skippedCount++
 					continue
 				}
@@ -232,6 +226,9 @@ func main() {
 		status := "registry-only"
 		if isEnriched {
 			status = "enriched"
+			enrichedCount++
+		} else {
+			registryOnlyCount++
 		}
 		fmt.Printf("  %s -> %s (%s)\n", entry.Name, skillFile, status)
 	}
@@ -248,9 +245,10 @@ func main() {
 	maybeUpdatePluginVersion(beforeDirs, afterDirs)
 }
 
-// copyUpstreamSkill copies <entryPath>/SKILL.md to skillFile if it exists.
-// Returns (true, nil) on successful copy, (false, nil) if no upstream SKILL.md,
-// (false, err) on filesystem errors.
+// copyUpstreamSkill copies <entryPath>/SKILL.md to skillFile if it exists and
+// is non-empty. Returns (true, nil) on successful copy, (false, nil) when
+// upstream is missing or empty (so the caller can fall through to synthesis),
+// (false, err) on other filesystem errors.
 func copyUpstreamSkill(entryPath, skillDir, skillFile string) (bool, error) {
 	upstreamPath := filepath.Join(entryPath, "SKILL.md")
 	data, err := os.ReadFile(upstreamPath)
@@ -259,6 +257,13 @@ func copyUpstreamSkill(entryPath, skillDir, skillFile string) (bool, error) {
 			return false, nil
 		}
 		return false, fmt.Errorf("read %s: %w", upstreamPath, err)
+	}
+	// Empty or whitespace-only upstream almost always signals a generator bug
+	// (failed write mid-pipeline). Prefer thin synthesis over shipping a blank
+	// SKILL.md. Log loudly so the upstream regression is visible.
+	if len(strings.TrimSpace(string(data))) == 0 {
+		log.Printf("Warning: upstream SKILL.md at %s is empty; falling through to synthesis", upstreamPath)
+		return false, nil
 	}
 	if err := os.MkdirAll(skillDir, 0755); err != nil {
 		return false, fmt.Errorf("mkdir %s: %w", skillDir, err)
