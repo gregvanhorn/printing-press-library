@@ -174,24 +174,40 @@ func fetchAQI(c clientGetter, lat, lon float64) float64 {
 
 // --- Walk ---
 
+func walkChecks(cond *currentConditions) []checkResult {
+	var checks []checkResult
+	if cond.PrecipProb > 60 || isActiveRain(cond.WeatherCode) {
+		checks = append(checks, checkResult{"Rain", "caution", fmt.Sprintf("%.0f%% chance — take an umbrella", cond.PrecipProb)})
+	} else {
+		checks = append(checks, checkResult{"Rain", "pass", fmt.Sprintf("%.0f%% chance (low)", cond.PrecipProb)})
+	}
+	if cond.FeelsLike < 40 {
+		checks = append(checks, checkResult{"Temperature", "caution", fmt.Sprintf("Feels like %.0f°F — wear warm layers", cond.FeelsLike)})
+	} else if cond.FeelsLike > 90 {
+		checks = append(checks, checkResult{"Temperature", "caution", fmt.Sprintf("Feels like %.0f°F — stay hydrated", cond.FeelsLike)})
+	} else {
+		checks = append(checks, checkResult{"Temperature", "pass", fmt.Sprintf("Feels like %.0f°F (comfortable)", cond.FeelsLike)})
+	}
+	if cond.UVIndex > 6 {
+		checks = append(checks, checkResult{"UV", "caution", fmt.Sprintf("UV index %.0f — wear sunscreen", cond.UVIndex)})
+	} else {
+		checks = append(checks, checkResult{"UV", "pass", fmt.Sprintf("UV index %.0f (safe under 6)", cond.UVIndex)})
+	}
+	return checks
+}
+
 func runWalk(cmd *cobra.Command, flags *rootFlags, c clientGetter, lat, lon float64, loc string) error {
 	cond, err := fetchCurrentForActivity(c, lat, lon)
 	if err != nil {
 		return classifyAPIError(err)
 	}
 
+	checks := walkChecks(cond)
 	var advice []string
-	if cond.PrecipProb > 60 || isActiveRain(cond.WeatherCode) {
-		advice = append(advice, "Take an umbrella")
-	}
-	if cond.FeelsLike < 40 {
-		advice = append(advice, "Wear warm layers")
-	}
-	if cond.FeelsLike > 90 {
-		advice = append(advice, "Stay hydrated")
-	}
-	if cond.UVIndex > 6 {
-		advice = append(advice, "Wear sunscreen")
+	for _, ch := range checks {
+		if ch.Status != "pass" {
+			advice = append(advice, ch.Detail)
+		}
 	}
 
 	if flags.asJSON {
@@ -204,19 +220,16 @@ func runWalk(cmd *cobra.Command, flags *rootFlags, c clientGetter, lat, lon floa
 			"precip_prob": cond.PrecipProb,
 			"uv_index":    cond.UVIndex,
 			"advice":      advice,
+			"checks":      checks,
 		}
 		return printOutputWithFlags(cmd.OutOrStdout(), mustMarshal(result), flags)
 	}
 
 	w := cmd.OutOrStdout()
 	fmt.Fprintf(w, "%s — Walk\n", bold(loc))
-	fmt.Fprintf(w, "%.0f°F (feels like %.0f°F), %s\n", cond.Temperature, cond.FeelsLike, describeWeatherCode(cond.WeatherCode))
-	if len(advice) == 0 {
-		fmt.Fprintln(w, "Good conditions for a walk!")
-	} else {
-		for _, a := range advice {
-			fmt.Fprintf(w, "  - %s\n", a)
-		}
+	fmt.Fprintf(w, "%.0f°F (feels like %.0f°F), %s\n\n", cond.Temperature, cond.FeelsLike, describeWeatherCode(cond.WeatherCode))
+	for _, ch := range checks {
+		fmt.Fprintf(w, "  %s %s: %s\n", checkMark(ch.Status), ch.Label, ch.Detail)
 	}
 	return nil
 }
@@ -230,46 +243,9 @@ func runBike(cmd *cobra.Command, flags *rootFlags, c clientGetter, lat, lon floa
 	}
 	cond.USAQI = fetchAQI(c, lat, lon)
 
-	verdict := "GO"
-	var reasons []string
-
-	// Wind
-	if cond.WindSpeed > 30 {
-		verdict = "STOP"
-		reasons = append(reasons, fmt.Sprintf("Wind %.0f mph — dangerous crosswinds", cond.WindSpeed))
-	} else if cond.WindSpeed > 20 {
-		verdict = maxVerdict(verdict, "CAUTION")
-		reasons = append(reasons, fmt.Sprintf("Wind %.0f mph — strong headwinds possible", cond.WindSpeed))
-	}
-
-	// Precipitation
-	if isActiveRain(cond.WeatherCode) {
-		verdict = "STOP"
-		reasons = append(reasons, "Active rain — slippery roads")
-	} else if cond.PrecipProb > 60 {
-		verdict = maxVerdict(verdict, "CAUTION")
-		reasons = append(reasons, fmt.Sprintf("%.0f%% chance of rain", cond.PrecipProb))
-	}
-
-	// Temperature
-	if cond.Temperature < 20 {
-		verdict = "STOP"
-		reasons = append(reasons, fmt.Sprintf("%.0f°F — frostbite risk", cond.Temperature))
-	} else if cond.Temperature < 32 {
-		verdict = maxVerdict(verdict, "CAUTION")
-		reasons = append(reasons, fmt.Sprintf("%.0f°F — possible ice on roads", cond.Temperature))
-	}
-
-	// AQI
-	if cond.USAQI > 150 {
-		verdict = "STOP"
-		reasons = append(reasons, fmt.Sprintf("AQI %.0f — unhealthy for all groups", cond.USAQI))
-	} else if cond.USAQI > 100 {
-		verdict = maxVerdict(verdict, "CAUTION")
-		reasons = append(reasons, fmt.Sprintf("AQI %.0f — unhealthy for sensitive groups", cond.USAQI))
-	}
-
-	return printVerdict(cmd, flags, "bike", loc, verdict, reasons, cond)
+	checks := bikeChecks(cond)
+	verdict, reasons := verdictFromChecks(checks)
+	return printVerdictWithChecks(cmd, flags, "bike", loc, verdict, reasons, cond, checks)
 }
 
 // --- Hike ---
@@ -280,34 +256,9 @@ func runHike(cmd *cobra.Command, flags *rootFlags, c clientGetter, lat, lon floa
 		return classifyAPIError(err)
 	}
 
-	verdict := "GO"
-	var reasons []string
-
-	// Thunderstorm
-	if isThunderstorm(cond.WeatherCode) {
-		verdict = "STOP"
-		reasons = append(reasons, "Thunderstorm/lightning — do not hike")
-	}
-
-	// Hypothermia risk
-	if isActiveRain(cond.WeatherCode) && cond.Temperature < 40 {
-		verdict = maxVerdict(verdict, "CAUTION")
-		reasons = append(reasons, "Rain + cold — hypothermia risk")
-	}
-
-	// UV
-	if cond.UVIndex > 8 {
-		verdict = maxVerdict(verdict, "CAUTION")
-		reasons = append(reasons, fmt.Sprintf("UV index %.0f — high altitude UV exposure", cond.UVIndex))
-	}
-
-	// Wind gusts
-	if cond.WindGusts > 40 {
-		verdict = maxVerdict(verdict, "CAUTION")
-		reasons = append(reasons, fmt.Sprintf("Wind gusts %.0f mph — exposed ridges dangerous", cond.WindGusts))
-	}
-
-	return printVerdict(cmd, flags, "hike", loc, verdict, reasons, cond)
+	checks := hikeChecks(cond)
+	verdict, reasons := verdictFromChecks(checks)
+	return printVerdictWithChecks(cmd, flags, "hike", loc, verdict, reasons, cond, checks)
 }
 
 // --- Commute ---
@@ -433,47 +384,10 @@ func runDrive(cmd *cobra.Command, flags *rootFlags, c clientGetter, lat, lon flo
 		return classifyAPIError(err)
 	}
 
-	verdict := "GO"
-	var reasons []string
-
-	// Visibility
-	if isLowVisibility(cond.WeatherCode) {
-		verdict = maxVerdict(verdict, "CAUTION")
-		reasons = append(reasons, fmt.Sprintf("Low visibility — %s", describeWeatherCode(cond.WeatherCode)))
-	}
-
-	// Snow / freezing rain
-	if cond.WeatherCode == 66 || cond.WeatherCode == 67 {
-		verdict = "STOP"
-		reasons = append(reasons, "Freezing rain — extremely dangerous roads")
-	} else if isSnow(cond.WeatherCode) {
-		verdict = maxVerdict(verdict, "CAUTION")
-		reasons = append(reasons, "Snow — reduced traction")
-	}
-
-	// Wind gusts
-	if cond.WindGusts > 60 {
-		verdict = "STOP"
-		reasons = append(reasons, fmt.Sprintf("Wind gusts %.0f mph — dangerous for all vehicles", cond.WindGusts))
-	} else if cond.WindGusts > 45 {
-		verdict = maxVerdict(verdict, "CAUTION")
-		reasons = append(reasons, fmt.Sprintf("Wind gusts %.0f mph — dangerous for high-profile vehicles", cond.WindGusts))
-	}
-
-	// NWS alerts (best-effort)
-	alerts, alertErr := nwsAlerts(lat, lon)
-	if alertErr == nil {
-		for _, a := range alerts {
-			event, _ := a["event"].(string)
-			severity, _ := a["severity"].(string)
-			if strings.Contains(strings.ToLower(event), "warning") || severity == "Extreme" || severity == "Severe" {
-				verdict = maxVerdict(verdict, "CAUTION")
-				reasons = append(reasons, fmt.Sprintf("NWS: %s", event))
-			}
-		}
-	}
-
-	return printVerdict(cmd, flags, "drive", loc, verdict, reasons, cond)
+	alerts, _ := nwsAlerts(lat, lon)
+	checks := driveChecks(cond, alerts)
+	verdict, reasons := verdictFromChecks(checks)
+	return printVerdictWithChecks(cmd, flags, "drive", loc, verdict, reasons, cond, checks)
 }
 
 // --- Shared verdict helpers ---
@@ -493,7 +407,159 @@ func titleCase(s string) string {
 	return strings.ToUpper(s[:1]) + s[1:]
 }
 
+// checkResult represents a single threshold check with its status.
+type checkResult struct {
+	Label  string `json:"label"`
+	Status string `json:"status"` // pass, caution, stop
+	Detail string `json:"detail"`
+}
+
+// activityChecks returns the threshold breakdown for an activity.
+func bikeChecks(cond *currentConditions) []checkResult {
+	checks := []checkResult{
+		windCheck(cond.WindSpeed, 20, 30),
+		precipCheck(cond.PrecipProb, cond.WeatherCode, 60),
+		tempCheck(cond.Temperature, 20, 32, "ice on roads", "frostbite risk"),
+		aqiCheck(cond.USAQI, 100, 150),
+	}
+	return checks
+}
+
+func hikeChecks(cond *currentConditions) []checkResult {
+	var checks []checkResult
+	if isThunderstorm(cond.WeatherCode) {
+		checks = append(checks, checkResult{"Lightning", "stop", "Thunderstorm active — do not hike"})
+	} else {
+		checks = append(checks, checkResult{"Lightning", "pass", "No thunderstorm activity"})
+	}
+	if isActiveRain(cond.WeatherCode) && cond.Temperature < 40 {
+		checks = append(checks, checkResult{"Hypothermia", "caution", fmt.Sprintf("Rain + %.0f°F — exposure risk", cond.Temperature)})
+	} else {
+		checks = append(checks, checkResult{"Hypothermia", "pass", fmt.Sprintf("%.0f°F, no rain/cold combo", cond.Temperature)})
+	}
+	if cond.UVIndex > 8 {
+		checks = append(checks, checkResult{"UV", "caution", fmt.Sprintf("UV index %.0f — high altitude exposure", cond.UVIndex)})
+	} else {
+		checks = append(checks, checkResult{"UV", "pass", fmt.Sprintf("UV index %.0f (safe under 8)", cond.UVIndex)})
+	}
+	if cond.WindGusts > 40 {
+		checks = append(checks, checkResult{"Wind gusts", "caution", fmt.Sprintf("%.0f mph — exposed ridges dangerous", cond.WindGusts)})
+	} else {
+		checks = append(checks, checkResult{"Wind gusts", "pass", fmt.Sprintf("%.0f mph (safe under 40)", cond.WindGusts)})
+	}
+	return checks
+}
+
+func driveChecks(cond *currentConditions, alerts []map[string]any) []checkResult {
+	var checks []checkResult
+	if isLowVisibility(cond.WeatherCode) {
+		checks = append(checks, checkResult{"Visibility", "caution", describeWeatherCode(cond.WeatherCode)})
+	} else {
+		checks = append(checks, checkResult{"Visibility", "pass", "Clear visibility"})
+	}
+	if cond.WeatherCode == 66 || cond.WeatherCode == 67 {
+		checks = append(checks, checkResult{"Road surface", "stop", "Freezing rain — extremely dangerous"})
+	} else if isSnow(cond.WeatherCode) {
+		checks = append(checks, checkResult{"Road surface", "caution", "Snow — reduced traction"})
+	} else {
+		checks = append(checks, checkResult{"Road surface", "pass", "Dry roads"})
+	}
+	if cond.WindGusts > 60 {
+		checks = append(checks, checkResult{"Wind gusts", "stop", fmt.Sprintf("%.0f mph — dangerous for all vehicles", cond.WindGusts)})
+	} else if cond.WindGusts > 45 {
+		checks = append(checks, checkResult{"Wind gusts", "caution", fmt.Sprintf("%.0f mph — dangerous for high-profile vehicles", cond.WindGusts)})
+	} else {
+		checks = append(checks, checkResult{"Wind gusts", "pass", fmt.Sprintf("%.0f mph (safe under 45)", cond.WindGusts)})
+	}
+	alertCheck := checkResult{"NWS alerts", "pass", "No active warnings"}
+	for _, a := range alerts {
+		event, _ := a["event"].(string)
+		severity, _ := a["severity"].(string)
+		if strings.Contains(strings.ToLower(event), "warning") || severity == "Extreme" || severity == "Severe" {
+			alertCheck = checkResult{"NWS alerts", "caution", event}
+			break
+		}
+	}
+	checks = append(checks, alertCheck)
+	return checks
+}
+
+func windCheck(speed, cautionThresh, stopThresh float64) checkResult {
+	if speed > stopThresh {
+		return checkResult{"Wind", "stop", fmt.Sprintf("%.0f mph — dangerous crosswinds", speed)}
+	}
+	if speed > cautionThresh {
+		return checkResult{"Wind", "caution", fmt.Sprintf("%.0f mph — strong headwinds", speed)}
+	}
+	return checkResult{"Wind", "pass", fmt.Sprintf("%.0f mph (safe under %.0f)", speed, cautionThresh)}
+}
+
+func precipCheck(prob float64, code int, cautionThresh float64) checkResult {
+	if isActiveRain(code) {
+		return checkResult{"Rain", "stop", "Active rain — slippery roads"}
+	}
+	if prob > cautionThresh {
+		return checkResult{"Rain", "caution", fmt.Sprintf("%.0f%% chance of rain", prob)}
+	}
+	return checkResult{"Rain", "pass", fmt.Sprintf("%.0f%% chance (safe under %.0f%%)", prob, cautionThresh)}
+}
+
+func tempCheck(temp, stopThresh, cautionThresh float64, cautionReason, stopReason string) checkResult {
+	if temp < stopThresh {
+		return checkResult{"Temperature", "stop", fmt.Sprintf("%.0f°F — %s", temp, stopReason)}
+	}
+	if temp < cautionThresh {
+		return checkResult{"Temperature", "caution", fmt.Sprintf("%.0f°F — %s", temp, cautionReason)}
+	}
+	return checkResult{"Temperature", "pass", fmt.Sprintf("%.0f°F (above %.0f°F)", temp, cautionThresh)}
+}
+
+func aqiCheck(aqi, cautionThresh, stopThresh float64) checkResult {
+	if aqi > stopThresh {
+		return checkResult{"AQI", "stop", fmt.Sprintf("%.0f — unhealthy for all", aqi)}
+	}
+	if aqi > cautionThresh {
+		return checkResult{"AQI", "caution", fmt.Sprintf("%.0f — unhealthy for sensitive groups", aqi)}
+	}
+	if aqi > 0 {
+		return checkResult{"AQI", "pass", fmt.Sprintf("%.0f (safe under %.0f)", aqi, cautionThresh)}
+	}
+	return checkResult{"AQI", "pass", "Not available"}
+}
+
+func verdictFromChecks(checks []checkResult) (string, []string) {
+	verdict := "GO"
+	var reasons []string
+	for _, ch := range checks {
+		switch ch.Status {
+		case "stop":
+			verdict = "STOP"
+			reasons = append(reasons, ch.Detail)
+		case "caution":
+			verdict = maxVerdict(verdict, "CAUTION")
+			reasons = append(reasons, ch.Detail)
+		}
+	}
+	return verdict, reasons
+}
+
+func checkMark(status string) string {
+	switch status {
+	case "pass":
+		return "✓"
+	case "caution":
+		return "⚠"
+	case "stop":
+		return "✗"
+	}
+	return "?"
+}
+
 func printVerdict(cmd *cobra.Command, flags *rootFlags, activity, loc, verdict string, reasons []string, cond *currentConditions) error {
+	return printVerdictWithChecks(cmd, flags, activity, loc, verdict, reasons, cond, nil)
+}
+
+func printVerdictWithChecks(cmd *cobra.Command, flags *rootFlags, activity, loc, verdict string, reasons []string, cond *currentConditions, checks []checkResult) error {
 	if flags.asJSON {
 		result := map[string]any{
 			"activity":    activity,
@@ -505,21 +571,26 @@ func printVerdict(cmd *cobra.Command, flags *rootFlags, activity, loc, verdict s
 			"wind_speed":  cond.WindSpeed,
 			"wind_gusts":  cond.WindGusts,
 			"reasons":     reasons,
+			"checks":      checks,
 		}
 		return printOutputWithFlags(cmd.OutOrStdout(), mustMarshal(result), flags)
 	}
 
 	w := cmd.OutOrStdout()
 	fmt.Fprintf(w, "%s — %s: %s\n", bold(loc), titleCase(activity), verdict)
-	fmt.Fprintf(w, "%.0f°F (feels like %.0f°F), %s, wind %.0f mph\n",
+	fmt.Fprintf(w, "%.0f°F (feels like %.0f°F), %s, wind %.0f mph\n\n",
 		cond.Temperature, cond.FeelsLike, describeWeatherCode(cond.WeatherCode), cond.WindSpeed)
 
-	if len(reasons) == 0 {
-		fmt.Fprintln(w, "No concerns. Enjoy!")
-	} else {
-		for _, r := range reasons {
-			fmt.Fprintf(w, "  - %s\n", r)
+	if len(checks) > 0 {
+		for _, ch := range checks {
+			fmt.Fprintf(w, "  %s %s: %s\n", checkMark(ch.Status), ch.Label, ch.Detail)
 		}
+	} else if len(reasons) > 0 {
+		for _, r := range reasons {
+			fmt.Fprintf(w, "  ⚠ %s\n", r)
+		}
+	} else {
+		fmt.Fprintln(w, "  All checks passed.")
 	}
 	return nil
 }
