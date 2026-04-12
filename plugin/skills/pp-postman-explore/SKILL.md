@@ -3,6 +3,7 @@ name: pp-postman-explore
 description: "Printing Press CLI for Postman Explore. Search and browse the Postman API Network Trigger phrases: 'install postman-explore', 'use postman-explore', 'run postman-explore', 'Postman Explore commands', 'setup postman-explore'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["postman-explore-pp-cli"]},"install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/developer-tools/postman-explore/cmd/postman-explore-pp-cli@latest","bins":["postman-explore-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # Postman Explore — Printing Press CLI

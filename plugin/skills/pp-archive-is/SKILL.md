@@ -3,6 +3,7 @@ name: pp-archive-is
 description: "Printing Press CLI for Archive.today. Bypass paywalls and look up web archives via archive.today. Hero command: find or create an archive for any URL with lookup-before-submit, Wayback Machine fallback, and agent-hints on stderr when called non-interactively. Trigger phrases: 'install archive-is', 'use archive-is', 'run archive-is', 'Archive.today commands', 'setup archive-is'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["archive-is-pp-cli"]},"install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/media-and-entertainment/archive-is/cmd/archive-is-pp-cli@latest","bins":["archive-is-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # Archive.today — Printing Press CLI

@@ -3,6 +3,7 @@ name: pp-hubspot
 description: "Printing Press CLI for HubSpot. Manage HubSpot CRM contacts, companies, deals, tickets, engagements, pipelines, and associations with offline search and pipeline analytics Trigger phrases: 'install hubspot', 'use hubspot', 'run hubspot', 'HubSpot commands', 'setup hubspot'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["hubspot-pp-cli"],"env":["HUBSPOT_ACCESS_TOKEN"]},"primaryEnv":"HUBSPOT_ACCESS_TOKEN","install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/sales-and-crm/hubspot/cmd/hubspot-pp-cli@latest","bins":["hubspot-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # HubSpot — Printing Press CLI

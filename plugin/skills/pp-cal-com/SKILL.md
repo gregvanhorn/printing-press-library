@@ -3,6 +3,7 @@ name: pp-cal-com
 description: "Printing Press CLI for Cal.com. Manage bookings, event types, schedules, and availability via the Cal.com API Trigger phrases: 'install cal-com', 'use cal-com', 'run cal-com', 'Cal.com commands', 'setup cal-com'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["cal-com-pp-cli"],"env":["CAL_COM_TOKEN"]},"primaryEnv":"CAL_COM_TOKEN","install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/productivity/cal-com/cmd/cal-com-pp-cli@latest","bins":["cal-com-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # Cal.com — Printing Press CLI

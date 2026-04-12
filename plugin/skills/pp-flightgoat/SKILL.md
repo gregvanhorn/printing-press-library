@@ -3,6 +3,7 @@ name: pp-flightgoat
 description: "Printing Press CLI for flightgoat. Free Google Flights search, Kayak nonstop route explorer, and optional FlightAware live tracking in one CLI. No API key required for search. Trigger phrases: 'install flightgoat', 'use flightgoat', 'run flightgoat', 'flightgoat commands', 'setup flightgoat'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["flightgoat-pp-cli"],"env":["FLIGHTGOAT_API_KEY_AUTH"]},"primaryEnv":"FLIGHTGOAT_API_KEY_AUTH","install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/other/flightgoat/cmd/flightgoat-pp-cli@latest","bins":["flightgoat-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # flightgoat — Printing Press CLI

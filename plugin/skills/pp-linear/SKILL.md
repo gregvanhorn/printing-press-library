@@ -3,6 +3,7 @@ name: pp-linear
 description: "Printing Press CLI for Linear. Offline-capable, agent-native CLI for the Linear API with SQLite-backed sync, search, and cross-entity queries. Trigger phrases: 'install linear', 'use linear', 'run linear', 'Linear commands', 'setup linear'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["linear-pp-cli"],"env":["LINEAR_API_KEY"]},"primaryEnv":"LINEAR_API_KEY","install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/project-management/linear/cmd/linear-pp-cli@latest","bins":["linear-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # Linear — Printing Press CLI

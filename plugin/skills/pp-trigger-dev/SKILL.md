@@ -3,6 +3,7 @@ name: pp-trigger-dev
 description: "Printing Press CLI for Trigger.dev. Monitor runs, trigger tasks, manage schedules, and detect failures via the Trigger.dev API Trigger phrases: 'install trigger-dev', 'use trigger-dev', 'run trigger-dev', 'Trigger.dev commands', 'setup trigger-dev'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["trigger-dev-pp-cli"],"env":["TRIGGER_SECRET_KEY"]},"primaryEnv":"TRIGGER_SECRET_KEY","install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/developer-tools/trigger-dev/cmd/trigger-dev-pp-cli@latest","bins":["trigger-dev-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # Trigger.dev — Printing Press CLI

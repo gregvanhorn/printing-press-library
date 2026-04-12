@@ -3,6 +3,7 @@ name: pp-slack
 description: "Printing Press CLI for Slack. Send messages, search conversations, monitor channels, and manage your Slack workspace from the terminal Trigger phrases: 'install slack', 'use slack', 'run slack', 'Slack commands', 'setup slack'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["slack-pp-cli"],"env":["SLACK_BOT_TOKEN"]},"primaryEnv":"SLACK_BOT_TOKEN","install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/productivity/slack/cmd/slack-pp-cli@latest","bins":["slack-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # Slack — Printing Press CLI

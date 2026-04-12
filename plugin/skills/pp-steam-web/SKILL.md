@@ -3,6 +3,7 @@ name: pp-steam-web
 description: "Printing Press CLI for Steam Web. Look up Steam players, games, achievements, friends, and stats from the command line Trigger phrases: 'install steam-web', 'use steam-web', 'run steam-web', 'Steam Web commands', 'setup steam-web'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["steam-web-pp-cli"],"env":["STEAM_WEB_API_KEY"]},"primaryEnv":"STEAM_WEB_API_KEY","install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/media-and-entertainment/steam-web/cmd/steam-web-pp-cli@latest","bins":["steam-web-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # Steam Web — Printing Press CLI

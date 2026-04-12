@@ -3,6 +3,7 @@ name: pp-hackernews
 description: "Printing Press CLI for Hacker News. Browse, search, and analyze Hacker News — front page, Show HN, Ask HN, Who is Hiring, topic pulse, and pipe-friendly output Trigger phrases: 'install hackernews', 'use hackernews', 'run hackernews', 'Hacker News commands', 'setup hackernews'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["hackernews-pp-cli"]},"install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/media-and-entertainment/hackernews/cmd/hackernews-pp-cli@latest","bins":["hackernews-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # Hacker News — Printing Press CLI

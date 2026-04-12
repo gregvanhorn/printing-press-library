@@ -3,6 +3,7 @@ name: pp-movie-goat
 description: "Printing Press CLI for TMDb + OMDb. Multi-source movie ratings (TMDb + OMDb), streaming availability, and cross-taste recommendations Trigger phrases: 'install movie-goat', 'use movie-goat', 'run movie-goat', 'TMDb + OMDb commands', 'setup movie-goat'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["movie-goat-pp-cli"]},"install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/media-and-entertainment/movie-goat/cmd/movie-goat-pp-cli@latest","bins":["movie-goat-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # TMDb + OMDb — Printing Press CLI

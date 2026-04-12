@@ -55,20 +55,21 @@ type DomainCommand struct {
 // Template context
 
 type SkillContext struct {
-	SkillName      string
-	APIName        string
-	Description    string
-	EnrichedDesc   string
-	CLIBinary      string
-	InstallPath    string
-	HasMCP         bool
-	MCPBinary      string
-	AuthType       string
-	EnvVars        []string
-	MCPReady       string
-	ToolCount      int
+	SkillName       string
+	APIName         string
+	Description     string
+	EnrichedDesc    string
+	CLIBinary       string
+	InstallPath     string
+	HasMCP          bool
+	MCPBinary       string
+	AuthType        string
+	EnvVars         []string
+	MCPReady        string
+	ToolCount       int
 	PublicToolCount int
-	DomainCommands []DomainCommand
+	DomainCommands  []DomainCommand
+	OpenClawMeta    string
 }
 
 // Framework commands to filter out of --help output
@@ -173,6 +174,7 @@ func main() {
 			PublicToolCount: publicToolCount,
 			DomainCommands:  domainCommands,
 		}
+		ctx.OpenClawMeta = buildOpenClawMetadata(ctx)
 
 		// Write skill file
 		skillDir := filepath.Join("plugin", "skills", skillName)
@@ -457,6 +459,67 @@ func maybeUpdatePluginVersion(beforeDirs, afterDirs []string) {
 	}
 
 	fmt.Printf("Bumped plugin version: %s -> %s\n", parsed.Version, newVersion)
+}
+
+// buildOpenClawMetadata constructs the single-line JSON for the metadata frontmatter field.
+// This gives OpenClaw dependency gating, auto-install, and API key prompting.
+func buildOpenClawMetadata(ctx SkillContext) string {
+	type installBlock struct {
+		ID      string   `json:"id"`
+		Kind    string   `json:"kind"`
+		Command string   `json:"command"`
+		Bins    []string `json:"bins"`
+		Label   string   `json:"label"`
+	}
+
+	type requires struct {
+		Bins []string `json:"bins"`
+		Env  []string `json:"env,omitempty"`
+	}
+
+	type openclawBlock struct {
+		Requires   requires       `json:"requires"`
+		PrimaryEnv string         `json:"primaryEnv,omitempty"`
+		Install    []installBlock `json:"install"`
+	}
+
+	type metadataWrapper struct {
+		OpenClaw openclawBlock `json:"openclaw"`
+	}
+
+	goInstallCmd := fmt.Sprintf("go install github.com/mvanhorn/printing-press-library/%s/cmd/%s@latest", ctx.InstallPath, ctx.CLIBinary)
+
+	req := requires{
+		Bins: []string{ctx.CLIBinary},
+	}
+	if len(ctx.EnvVars) > 0 && ctx.AuthType == "api_key" {
+		req.Env = ctx.EnvVars
+	}
+
+	oc := openclawBlock{
+		Requires: req,
+		Install: []installBlock{
+			{
+				ID:      "go",
+				Kind:    "shell",
+				Command: goInstallCmd,
+				Bins:    []string{ctx.CLIBinary},
+				Label:   "Install via go install",
+			},
+		},
+	}
+
+	if len(ctx.EnvVars) > 0 && ctx.AuthType == "api_key" {
+		oc.PrimaryEnv = ctx.EnvVars[0]
+	}
+
+	wrapper := metadataWrapper{OpenClaw: oc}
+	data, err := json.Marshal(wrapper)
+	if err != nil {
+		log.Printf("Warning: could not marshal OpenClaw metadata for %s: %v", ctx.SkillName, err)
+		return ""
+	}
+	return string(data)
 }
 
 func slicesEqual(a, b []string) bool {

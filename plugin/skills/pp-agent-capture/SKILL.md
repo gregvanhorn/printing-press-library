@@ -3,6 +3,7 @@ name: pp-agent-capture
 description: "Printing Press CLI for agent-capture. Record, screenshot, and convert macOS windows and screens for AI agent evidence Capabilities include: batch, convert, diff, evidence, find, health, list, ocr, permissions, pipeline, preset, record, remotion, screenshot, stitch, vhs, watch. Trigger phrases: 'install agent-capture', 'use agent-capture', 'run agent-capture', 'agent-capture commands', 'setup agent-capture'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["agent-capture"]},"install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/developer-tools/agent-capture/cmd/agent-capture@latest","bins":["agent-capture"],"label":"Install via go install"}]}}'
 ---
 
 # agent-capture — Printing Press CLI

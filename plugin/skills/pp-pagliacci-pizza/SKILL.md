@@ -3,6 +3,7 @@ name: pp-pagliacci-pizza
 description: "Printing Press CLI for Pagliacci Pizza. Order pizza, browse menus, manage rewards, and track deliveries from Pagliacci Pizza Trigger phrases: 'install pagliacci-pizza', 'use pagliacci-pizza', 'run pagliacci-pizza', 'Pagliacci Pizza commands', 'setup pagliacci-pizza'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["pagliacci-pizza-pp-cli"]},"install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/other/pagliacci-pizza/cmd/pagliacci-pizza-pp-cli@latest","bins":["pagliacci-pizza-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # Pagliacci Pizza — Printing Press CLI

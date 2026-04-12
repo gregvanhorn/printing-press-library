@@ -3,6 +3,9 @@ name: {{.SkillName}}
 description: "{{.EnrichedDesc}}"
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+{{- if .OpenClawMeta}}
+metadata: '{{.OpenClawMeta}}'
+{{- end}}
 ---
 
 # {{.APIName}} — Printing Press CLI

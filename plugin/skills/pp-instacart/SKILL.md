@@ -3,6 +3,7 @@ name: pp-instacart
 description: "Printing Press CLI for Instacart. Natural-language Instacart CLI that talks directly to the web GraphQL API. Add items to your cart, search products, and manage carts across retailers without browser automation. Trigger phrases: 'install instacart', 'use instacart', 'run instacart', 'Instacart commands', 'setup instacart'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["instacart-pp-cli"]},"install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/commerce/instacart/cmd/instacart-pp-cli@latest","bins":["instacart-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # Instacart — Printing Press CLI

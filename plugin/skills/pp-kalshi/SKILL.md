@@ -3,6 +3,7 @@ name: pp-kalshi
 description: "Printing Press CLI for Kalshi. Trade prediction markets, track portfolios, and analyze odds on Kalshi from the command line Capabilities include: account, analytics, api-keys, communications, events, exchange, fcm, historical, incentive-programs, live-data, markets, milestones, multivariate-event-collections, portfolio, search, series, structured-targets, tail. Trigger phrases: 'install kalshi', 'use kalshi', 'run kalshi', 'Kalshi commands', 'setup kalshi'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["kalshi-pp-cli"],"env":["KALSHI_API_KEY"]},"primaryEnv":"KALSHI_API_KEY","install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/payments/kalshi/cmd/kalshi-pp-cli@latest","bins":["kalshi-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # Kalshi — Printing Press CLI

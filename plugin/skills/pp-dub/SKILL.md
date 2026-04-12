@@ -3,6 +3,7 @@ name: pp-dub
 description: "Printing Press CLI for Dub. Create short links, track analytics, manage domains, and run affiliate programs via the Dub API Trigger phrases: 'install dub', 'use dub', 'run dub', 'Dub commands', 'setup dub'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["dub-pp-cli"],"env":["DUB_TOKEN"]},"primaryEnv":"DUB_TOKEN","install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/marketing/dub/cmd/dub-pp-cli@latest","bins":["dub-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # Dub — Printing Press CLI

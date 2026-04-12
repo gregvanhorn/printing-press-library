@@ -3,6 +3,7 @@ name: pp-dominos
 description: "Printing Press CLI for Dominos Pizza. Order pizza, browse menus, track deliveries, and manage rewards from the terminal Trigger phrases: 'install dominos', 'use dominos', 'run dominos', 'Dominos Pizza commands', 'setup dominos'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["dominos-pp-cli"]},"install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/commerce/dominos-pp-cli/cmd/dominos-pp-cli@latest","bins":["dominos-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # Dominos Pizza — Printing Press CLI
