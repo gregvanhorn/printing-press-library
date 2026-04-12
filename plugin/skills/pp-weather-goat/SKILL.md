@@ -3,6 +3,7 @@ name: pp-weather-goat
 description: "Printing Press CLI for Open-Meteo + NWS. Weather forecasts, severe weather alerts, air quality, and GO/CAUTION/STOP activity verdicts for walk, bike, hike, commute, and drive Trigger phrases: 'install weather-goat', 'use weather-goat', 'run weather-goat', 'Open-Meteo + NWS commands', 'setup weather-goat'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["weather-goat-pp-cli"]},"install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/other/weather-goat/cmd/weather-goat-pp-cli@latest","bins":["weather-goat-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # Open-Meteo + NWS — Printing Press CLI
