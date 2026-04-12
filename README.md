@@ -191,20 +191,22 @@ CLIs are organized by category. Each CLI folder is self-contained — it include
 
 | Category | What goes here |
 |----------|---------------|
-| `developer-tools` | SCM, CI/CD, feature flags, hosting |
-| `monitoring` | Error tracking, APM, alerting, product analytics |
-| `cloud` | Compute, DNS, CDN, storage, infrastructure |
-| `project-management` | Tasks, sprints, issues, roadmaps |
-| `productivity` | Docs, wikis, databases, scheduling |
-| `social-and-messaging` | Chat, SMS, voice, social, streaming, media |
-| `sales-and-crm` | Pipelines, contacts, deals |
-| `marketing` | Email campaigns, automation |
-| `payments` | Billing, transactions, banking, fintech |
-| `auth` | Identity, SSO, user management |
-| `commerce` | Storefronts, inventory, orders, shopping |
 | `ai` | LLMs, inference, ML, computer vision |
+| `auth` | Identity, SSO, user management |
+| `cloud` | Compute, DNS, CDN, storage, infrastructure |
+| `commerce` | Storefronts, inventory, orders, shopping |
+| `developer-tools` | SCM, CI/CD, feature flags, hosting |
 | `devices` | Smart home, wearables, hardware |
+| `food-and-dining` | Restaurants, recipes, delivery, reviews |
+| `marketing` | Email campaigns, automation |
 | `media-and-entertainment` | Streaming, sports, video, music, content platforms |
+| `monitoring` | Error tracking, APM, alerting, product analytics |
+| `payments` | Billing, transactions, banking, fintech |
+| `productivity` | Docs, wikis, databases, scheduling |
+| `project-management` | Tasks, sprints, issues, roadmaps |
+| `sales-and-crm` | Pipelines, contacts, deals |
+| `social-and-messaging` | Chat, SMS, voice, social, streaming, media |
+| `travel` | Flights, hotels, maps, transit |
 | `other` | Anything that doesn't fit above |
 
 ## What "Endorsed" Means
