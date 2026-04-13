@@ -1,64 +1,174 @@
 ---
 name: pp-weather-goat
-description: "Printing Press CLI for Open-Meteo + NWS. Weather forecasts, severe weather alerts, air quality, and GO/CAUTION/STOP activity verdicts for walk, bike, hike, commute, and drive Trigger phrases: 'install weather-goat', 'use weather-goat', 'run weather-goat', 'Open-Meteo + NWS commands', 'setup weather-goat'."
+description: "Use this skill whenever the user asks about weather, forecasts, temperature, rain, storms, severe weather alerts, air quality, pollen, UV, or wants an activity recommendation (can I walk / bike / hike / commute / drive given the weather). Weather CLI powered by Open-Meteo (global, no auth, unlimited) + NWS (US severe weather). No API key. Triggers on phrasings like 'what's the weather', 'is it going to rain today', 'any storms coming', 'should I bike to work', 'how's the air quality', 'compare NYC and LA weather this weekend', 'is this unusually hot for April'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
 metadata: '{"openclaw":{"requires":{"bins":["weather-goat-pp-cli"]},"install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/other/weather-goat/cmd/weather-goat-pp-cli@latest","bins":["weather-goat-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
-# Open-Meteo + NWS — Printing Press CLI
+# Weather Goat — Printing Press CLI
 
-Weather forecasts, severe weather alerts, air quality, and GO/CAUTION/STOP activity verdicts for walk, bike, hike, commute, and drive
+Weather forecasts, severe weather alerts, air quality, and activity verdicts. Powered by Open-Meteo (global, unlimited, no auth) and the US National Weather Service (severe alerts, no auth). No API key.
 
-## Argument Parsing
+## When to Use This CLI
 
-Parse `$ARGUMENTS`:
+Reach for this when a user wants a weather lookup, storm or alert check, air-quality read, activity recommendation (bike, hike, walk, commute, drive) based on current conditions, or a "is today normal for this time of year" comparison. Particularly valuable as a morning-briefing source with `weather-goat-pp-cli` (no args → current + today's forecast + active alerts for your configured home location).
 
-1. **Empty, `help`, or `--help`** → show `weather-goat-pp-cli --help` output
-2. **Starts with `install`** → ends with `mcp` → MCP installation; otherwise → CLI installation
-3. **Anything else** → Direct Use (execute as CLI command)
+Don't reach for this when the user needs hyperlocal or commercial-grade meteorology (use a paid provider like Tomorrow.io or ECMWF), or for international severe-weather alerts (NWS is US-only).
 
-## CLI Installation
+## Unique Capabilities
 
-1. Check Go is installed: `go version` (requires Go 1.23+)
-2. Install:
-   ```bash
-   go install github.com/mvanhorn/printing-press-library/library/other/weather-goat/cmd/weather-goat-pp-cli@latest
-   ```
-3. Verify: `weather-goat-pp-cli --version`
-4. Ensure `$GOPATH/bin` (or `$HOME/go/bin`) is on `$PATH`.
+### Activity verdicts — the differentiator
 
-## MCP Server Installation
+- **`go walk|bike|hike|commute|drive [location]`** — GO / CAUTION / STOP verdict for a specific activity, with reasoning.
 
-1. Install the MCP server:
-   ```bash
-   go install github.com/mvanhorn/printing-press-library/library/other/weather-goat/cmd/weather-goat-pp-mcp@latest
-   ```
-2. Register with Claude Code:
-   ```bash
-   claude mcp add weather-goat-pp-mcp -- weather-goat-pp-mcp
-   ```
-3. Verify: `claude mcp list`
+  _Turns "look at the weather" into "what should I do." Each activity has its own thresholds._
 
-## Direct Use
+  - **walk** — preparation advice (umbrella? jacket? sunscreen? layers?)
+  - **bike** — wind, rain, AQI, ice thresholds tuned for cycling
+  - **hike** — lightning, hypothermia risk, altitude UV
+  - **commute** — compares AM departure vs PM return weather (time-aware)
+  - **drive** — visibility, ice, wind gusts, NWS warnings
 
-1. Check if installed: `which weather-goat-pp-cli`
-   If not found, offer to install (see CLI Installation above).
-2. Discover commands: `weather-goat-pp-cli --help`
-3. Match the user query to the best command. Drill into subcommand help if needed: `weather-goat-pp-cli <command> --help`
-4. Execute with the `--agent` flag:
-   ```bash
-   weather-goat-pp-cli <command> [subcommand] [args] --agent
-   ```
-5. The `--agent` flag sets `--json --compact --no-input --no-color --yes` for structured, token-efficient output.
+### Severe weather intelligence
+
+- **`alerts [location]`** — Active NWS warnings: tornado, storm, flood, heat. Structured output with severity and area polygons.
+
+- **`watch [location]`** — Poll NWS every 60 seconds during active severe weather. Prints new/updated alerts as they arrive. For running during a storm.
+
+### Context and comparison
+
+- **`normal [location]`** — Is today normal for this time of year? Compares today's high/low/precip against historical average for the same date.
+
+- **`compare <location1> <location2> [...]`** — Side-by-side forecast for 2+ locations. Useful for travel planning or "which city is the weather better this weekend."
+
+- **`morning-brief`** (or just `weather-goat-pp-cli` with no args, if `config set-location` was run) — Current conditions + today's forecast + active NWS alerts in one call. The daily-kickoff command.
+
+### Air, UV, and pollen
+
+- **`breathe [location]`** — AQI + pollen + UV with an exercise recommendation.
+
+- **`air-quality [location]`** — Detailed AQI with PM2.5, ozone, etc.
+
+- **`weather_codes`** — Reference for Open-Meteo weather code mappings (internal but useful when working with `--json` output).
+
+## Command Reference
+
+Core:
+
+- `weather-goat-pp-cli` — Morning brief (requires `config set-location` first, or pass `[location]`)
+- `weather-goat-pp-cli forecast [location]` — Multi-day forecast
+- `weather-goat-pp-cli alerts [location]` — Active NWS severe weather
+- `weather-goat-pp-cli history [location]` — Historical weather
+
+Activity:
+
+- `weather-goat-pp-cli go <activity> [location]` — `walk`, `bike`, `hike`, `commute`, `drive`
+
+Air / environment:
+
+- `weather-goat-pp-cli breathe [location]` — AQI + pollen + UV brief
+- `weather-goat-pp-cli air-quality [location]` — Detailed AQI
+
+Context:
+
+- `weather-goat-pp-cli normal [location]` — Today vs historical average
+- `weather-goat-pp-cli compare <loc1> <loc2>` — Side-by-side
+- `weather-goat-pp-cli watch [location]` — Live NWS monitoring loop
+
+Config + utility:
+
+- `weather-goat-pp-cli config set-location <place>` — Set home location
+- `weather-goat-pp-cli geocoding <name>` — Resolve place names to coordinates
+- `weather-goat-pp-cli doctor` — Verify connectivity
+
+## Recipes
+
+### "Should I bike to work today?"
+
+```bash
+weather-goat-pp-cli go bike --agent
+```
+
+Returns a structured GO/CAUTION/STOP verdict with reasoning — wind speed, precipitation, AQI, temperature, ice risk — weighted for cycling specifically.
+
+### Morning briefing after setting home location
+
+```bash
+weather-goat-pp-cli config set-location "Seattle, WA"
+weather-goat-pp-cli --agent  # morning brief — no args
+```
+
+Once location is saved, the no-arg invocation returns current conditions + today's forecast + active NWS alerts. Run from a shell startup script or cron at 7am.
+
+### Travel decision — which city is better this weekend?
+
+```bash
+weather-goat-pp-cli compare "Portland, OR" "San Francisco, CA" --days 3 --agent
+```
+
+Side-by-side 3-day forecast for both. One glance picks the trip destination.
+
+### Watch for severe weather during a warning
+
+```bash
+weather-goat-pp-cli watch --agent &  # background poll every 60s
+```
+
+Runs indefinitely; prints JSON events to stdout when alerts change. Pipe into a logging tool or Slack webhook for alerting.
+
+### Is today unusually hot?
+
+```bash
+weather-goat-pp-cli normal --agent
+```
+
+Returns today's high/low/precip alongside the 30-year historical average for the same calendar date. Easy "is this a heat wave" check.
+
+## Auth Setup
+
+**None required.** Open-Meteo is free and unlimited; NWS is free and US-public-data. The `auth` command exists for consistency but is a no-op.
+
+Optional config:
+- `WEATHER_GOAT_CONFIG` — override config file path
+- Home location persisted to `~/.config/weather-goat-pp-cli/config.toml` via `config set-location`
+
+## Agent Mode
+
+Add `--agent` to any command. Expands to `--json --compact --no-input --no-color --yes`. Use `--days N` for forecast range on relevant commands, `--no-cache` to bypass the 15-minute GET cache.
 
 ## Exit Codes
 
 | Code | Meaning |
 |------|---------|
 | 0 | Success |
-| 2 | Usage error (wrong arguments) |
-| 3 | Resource not found |
-| 4 | Authentication required |
-| 5 | API error (upstream issue) |
-| 7 | Rate limited (wait and retry) |
+| 2 | Usage error |
+| 3 | Location not found (geocoding failed) |
+| 5 | API error (Open-Meteo or NWS issue) |
+| 7 | Rate limited (very rare; Open-Meteo is unlimited) |
+
+## Installation
+
+```bash
+go install github.com/mvanhorn/printing-press-library/library/other/weather-goat/cmd/weather-goat-pp-cli@latest
+weather-goat-pp-cli config set-location "Your City, ST"
+weather-goat-pp-cli doctor
+```
+
+### MCP Server
+
+```bash
+go install github.com/mvanhorn/printing-press-library/library/other/weather-goat/cmd/weather-goat-pp-mcp@latest
+claude mcp add weather-goat-pp-mcp -- weather-goat-pp-mcp
+```
+
+## Argument Parsing
+
+Given `$ARGUMENTS`:
+
+1. **Empty, `help`, or `--help`** → run `weather-goat-pp-cli --help`
+2. **`install`** → CLI; **`install mcp`** → MCP
+3. **Activity queries ("should I bike/walk/hike...")** → `go <activity> [location] --agent`
+4. **Severe weather ("any tornado warnings", "storms coming")** → `alerts [location] --agent`
+5. **Comparison ("better weather in X or Y")** → `compare <loc1> <loc2> --agent`
+6. **Anything else** → `forecast [location]` (or morning brief if no location passed and home is configured)

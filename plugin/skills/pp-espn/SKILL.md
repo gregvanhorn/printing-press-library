@@ -1,78 +1,180 @@
 ---
 name: pp-espn
-description: "Printing Press CLI for ESPN. Live scores, standings, news, and game history across 17 sports from ESPN Capabilities include: boxscore, news, rankings, recap, rivals, scoreboard, scores, search, standings, streak, summary, teams, today, watch. Trigger phrases: 'install espn', 'use espn', 'run espn', 'ESPN commands', 'setup espn'."
+description: "Use this skill whenever the user asks about live sports scores, standings, team stats, boxscores, NFL / NBA / MLB / NHL / NCAA / MLS / EPL / WNBA games, upcoming schedules, injuries, odds, or player leaderboards. ESPN sports CLI with live scores across 10 leagues, offline search, and head-to-head comparisons. No API key required. Triggers on natural phrasings like 'what's the score of the Lakers game', 'Patriots schedule this week', 'who's leading the NBA in scoring', 'NFL standings', 'compare Mahomes and Allen stats', 'any injuries for the Yankees'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
+metadata: '{"openclaw":{"requires":{"bins":["espn-pp-cli"]},"install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/media-and-entertainment/espn/cmd/espn-pp-cli@latest","bins":["espn-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # ESPN — Printing Press CLI
 
-Live scores, standings, news, and game history across 17 sports from ESPN
+ESPN from your terminal. Live scores, standings, stats, boxscores, play-by-play, injuries, odds, and search across 10 major leagues (NFL, NBA, MLB, NHL, NCAAF, NCAAM, NCAAW, MLS, EPL, WNBA). No API key needed — the spec was sniffed from live ESPN endpoints that back their own apps and website.
 
-## Argument Parsing
+## When to Use This CLI
 
-Parse `$ARGUMENTS`:
+Reach for this when a user wants a quick sports lookup — current score, standings, upcoming schedule, team-vs-team comparison, or an injury check. Also good for aggregating stats across leagues (trending athletes, power rankings) without clicking through ESPN's site. Works offline once synced.
 
-1. **Empty, `help`, or `--help`** → show `espn-pp-cli --help` output
-2. **Starts with `install`** → ends with `mcp` → MCP installation; otherwise → CLI installation
-3. **Anything else** → Direct Use (execute as CLI command)
+Don't reach for this if the user has a paid feed like Stats Perform or Sportradar that provides cleaner data, or if they need real-time websocket updates (ESPN's endpoints are polling-only).
 
-## CLI Installation
+## Unique Capabilities
 
-1. Check Go is installed: `go version` (requires Go 1.23+)
-2. Install:
-   ```bash
-   go install github.com/mvanhorn/printing-press-library/library/media-and-entertainment/espn/cmd/espn-pp-cli@latest
-   ```
-3. Verify: `espn-pp-cli --version`
-4. Ensure `$GOPATH/bin` (or `$HOME/go/bin`) is on `$PATH`.
+Commands that only work because of local sync + cross-league tooling.
 
-## MCP Server Installation
+### Cross-league discovery
 
-1. Install the MCP server:
-   ```bash
-   go install github.com/mvanhorn/printing-press-library/library/media-and-entertainment/espn/cmd/espn-pp-mcp@latest
-   ```
-2. Register with Claude Code:
-   ```bash
-   claude mcp add espn-pp-mcp -- espn-pp-mcp
-   ```
-3. Verify: `claude mcp list`
+- **`trending`** — Most-followed athletes and teams across all leagues, ranked by current interest.
 
-## Direct Use
+  _One scan of "what everyone is watching" without picking a sport first._
 
-1. Check if installed: `which espn-pp-cli`
-   If not found, offer to install (see CLI Installation above).
-2. Discover commands: `espn-pp-cli --help`
-   Key commands:
-   - `boxscore` — Box score with player stats for a game
-   - `news` — Get latest news articles for a sport and league
-   - `rankings` — Get current AP, Coaches, and CFP poll rankings for college sports
-   - `recap` — Game recap with box score and leaders
-   - `rivals` — Head-to-head record between two teams from synced data
-   - `scoreboard` — Get scoreboard for a sport and league with optional date filtering
-   - `scores` — Live scores and results for a sport and league
-   - `search` — Full-text search across synced events and news
-   - `standings` — Conference/division standings for a sport and league
-   - `streak` — Current win/loss streak for a team from synced data
-   - `summary` — Get detailed game summary including box score, leaders, scoring plays, odds, and win probability
-   - `teams` — Get past and upcoming schedule for a specific team
-   - `today` — Today's scores across all major sports
-   - `watch` — Live score updates for a game (polls every 30s)
-3. Match the user query to the best command. Drill into subcommand help if needed: `espn-pp-cli <command> --help`
-4. Execute with the `--agent` flag:
-   ```bash
-   espn-pp-cli <command> [subcommand] [args] --agent
-   ```
-5. The `--agent` flag sets `--json --compact --no-input --no-color --yes` for structured, token-efficient output.
+- **`watch <sport> <league> --event <game_id>`** — Live score updates for a specific game (polls every 30s). Different from the cross-league discovery; use `scores` or `trending` to find the game, then `watch` to follow it live.
+
+- **`dashboard`** — Your favorite teams' status at a glance (configured in `~/.config/espn-pp-cli/config.toml`).
+
+### Strength and scheduling intelligence
+
+- **`sos <sport> <league>`** — Strength-of-schedule analysis across the league.
+
+- **`h2h <team1> <team2>`** — Head-to-head series history with matchup stats.
+
+- **`compare <athlete1> <athlete2>`** — Side-by-side athlete stat comparison.
+
+- **`rankings <sport> <league>`** — Power rankings and coaches' polls (NCAAF/NCAAM especially).
+
+### Deep game detail
+
+- **`plays <game_id>`** — Play-by-play for a specific game.
+
+- **`boxscore <game_id>`** — Full boxscore with per-player stats.
+
+- **`preview <game_id>`** / **`recap <sport> <league>`** — Pre-game previews and post-game recaps.
+
+### Depth and context
+
+- **`leaders <sport> <league>`** — Statistical leaderboards (points, yards, WAR, etc.).
+
+- **`injuries <sport> <league>`** — Current injury reports across a league.
+
+- **`odds <sport> <league>`** — Betting odds feed.
+
+- **`transactions <sport> <league>`** — Recent trades, signings, waivers.
+
+## Command Reference
+
+Live action:
+
+- `espn-pp-cli scores <sport> <league>` — Current scores
+- `espn-pp-cli watch <sport> <league> --event <game_id>` — Live score polling for one game
+- `espn-pp-cli schedule <sport> <league>` — Upcoming games
+- `espn-pp-cli standings <sport> <league>` — League standings
+- `espn-pp-cli calendar <sport> <league>` — Season calendar
+
+Team/athlete:
+
+- `espn-pp-cli team get <sport> <league> <team_id>` — Team detail
+- `espn-pp-cli team list <sport> <league>` — All teams in a league
+- `espn-pp-cli athlete <sport> <league>` — Athletes
+
+Stats:
+
+- `espn-pp-cli leaders <sport> <league>` — Stat leaders
+- `espn-pp-cli rankings <sport> <league>` — Polls / power rankings
+- `espn-pp-cli sos <sport> <league>` — Strength of schedule
+
+Game:
+
+- `espn-pp-cli boxscore <game_id>` — Full boxscore
+- `espn-pp-cli plays <game_id>` — Play-by-play
+- `espn-pp-cli preview <game_id>` / `recap` — Pre/post
+
+Info:
+
+- `espn-pp-cli news <sport> <league>` — Latest news
+- `espn-pp-cli injuries <sport> <league>` — Injury reports
+- `espn-pp-cli odds <sport> <league>` — Betting odds
+- `espn-pp-cli transactions <sport> <league>` — Trades/signings
+
+Discovery & local:
+
+- `espn-pp-cli search "<query>"` — Full-text search across synced data
+- `espn-pp-cli sync` — Pull full dataset for offline analysis
+- `espn-pp-cli trending` — Cross-league interest scan
+- `espn-pp-cli doctor` — Verify connectivity
+
+Sport values: `football`, `basketball`, `baseball`, `hockey`, `soccer`.
+League values: `nfl`, `nba`, `mlb`, `nhl`, `ncaaf`, `ncaam`, `ncaaw`, `mls`, `eng.1` (EPL), `wnba`.
+
+## Recipes
+
+### Morning sports scan
+
+```bash
+espn-pp-cli trending --agent                    # who's everyone watching
+espn-pp-cli scores football nfl --agent         # specific-league drilldown
+espn-pp-cli standings football nfl --agent      # context for the scores
+```
+
+One trending call to see cross-league interest, one scores call for the league you care about, one standings call for context — covers "what's happening in sports" for a morning briefing.
+
+### Team-vs-team deep research
+
+```bash
+espn-pp-cli h2h chiefs eagles --agent           # head-to-head history
+espn-pp-cli injuries football nfl --agent | jq 'select(.team=="Chiefs" or .team=="Eagles")'
+espn-pp-cli odds football nfl --agent           # current lines
+```
+
+Combine historical matchup data, current injuries, and betting lines to build a complete pre-game view.
+
+### Offline search after sync
+
+```bash
+espn-pp-cli sync --sport football --league nfl
+espn-pp-cli search "Mahomes"                    # finds in local store
+```
+
+Useful for repeated lookups in poor-connectivity environments or when batch-analyzing historical data.
+
+## Auth Setup
+
+**None required.** ESPN's public endpoints don't require an API key. The `auth` command exists for consistency but is a no-op.
+
+Optional config:
+- `ESPN_CONFIG` — override config file path
+- `ESPN_BASE_URL` — override base URL (for proxies or mirrors)
+- `NO_COLOR` — standard no-color env var
+
+## Agent Mode
+
+Add `--agent` to any command. Expands to `--json --compact --no-input --no-color --yes`. Use `--select` for field cherry-picking, `--dry-run` to preview requests, `--no-cache` to bypass GET cache.
 
 ## Exit Codes
 
 | Code | Meaning |
 |------|---------|
 | 0 | Success |
-| 2 | Usage error (wrong arguments) |
-| 3 | Resource not found |
-| 4 | Authentication required |
-| 5 | API error (upstream issue) |
-| 7 | Rate limited (wait and retry) |
+| 2 | Usage error |
+| 3 | Not found (team, game, athlete) |
+| 5 | API error |
+| 7 | Rate limited |
+
+## Installation
+
+```bash
+go install github.com/mvanhorn/printing-press-library/library/media-and-entertainment/espn/cmd/espn-pp-cli@latest
+espn-pp-cli doctor
+```
+
+### MCP Server
+
+```bash
+go install github.com/mvanhorn/printing-press-library/library/media-and-entertainment/espn/cmd/espn-pp-mcp@latest
+claude mcp add espn-pp-mcp -- espn-pp-mcp
+```
+
+## Argument Parsing
+
+Given `$ARGUMENTS`:
+
+1. **Empty, `help`, or `--help`** → run `espn-pp-cli --help`
+2. **`install`** → CLI; **`install mcp`** → MCP
+3. **Anything else** → resolve `<sport> <league>` from user intent (e.g., "Lakers" → `basketball nba`), check `which espn-pp-cli` (offer install if missing), run with `--agent`.

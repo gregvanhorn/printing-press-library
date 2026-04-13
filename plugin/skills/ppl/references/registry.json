@@ -253,6 +253,23 @@
       }
     },
     {
+      "name": "recipe-goat",
+      "category": "other",
+      "api": "Cross-site recipe aggregator (15 trusted sites) + USDA FoodData Central",
+      "description": "Find the best version of any recipe across 15 trusted sites — rank by trust × rating × reviews, build a local SQLite cookbook with pantry match, meal plans, cook log, substitutions, and USDA-backed nutrition backfill",
+      "path": "library/other/recipe-goat",
+      "mcp": {
+        "binary": "recipe-goat-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 3,
+        "auth_type": "api_key",
+        "env_vars": [
+          "USDA_FDC_API_KEY"
+        ],
+        "mcp_ready": "full"
+      }
+    },
+    {
       "name": "slack",
       "category": "productivity",
       "api": "Slack",
