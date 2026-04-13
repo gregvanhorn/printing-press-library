@@ -26,9 +26,9 @@ Commands that only work because of local sync + cross-league tooling.
 
   _One scan of "what everyone is watching" without picking a sport first._
 
-- **`watch`** — Currently-live or upcoming-today games across every league you track.
+- **`watch <sport> <league> --event <game_id>`** — Live score updates for a specific game (polls every 30s). Different from the cross-league discovery; use `scores` or `trending` to find the game, then `watch` to follow it live.
 
-- **`dashboard`** — Your favorite teams' status at a glance (add teams via `watch` or config).
+- **`dashboard`** — Your favorite teams' status at a glance (configured in `~/.config/espn-pp-cli/config.toml`).
 
 ### Strength and scheduling intelligence
 
@@ -63,7 +63,7 @@ Commands that only work because of local sync + cross-league tooling.
 Live action:
 
 - `espn-pp-cli scores <sport> <league>` — Current scores
-- `espn-pp-cli watch` — Live + upcoming-today across leagues
+- `espn-pp-cli watch <sport> <league> --event <game_id>` — Live score polling for one game
 - `espn-pp-cli schedule <sport> <league>` — Upcoming games
 - `espn-pp-cli standings <sport> <league>` — League standings
 - `espn-pp-cli calendar <sport> <league>` — Season calendar
@@ -109,11 +109,11 @@ League values: `nfl`, `nba`, `mlb`, `nhl`, `ncaaf`, `ncaam`, `ncaaw`, `mls`, `en
 
 ```bash
 espn-pp-cli trending --agent                    # who's everyone watching
-espn-pp-cli watch --agent                       # live now + today
 espn-pp-cli scores football nfl --agent         # specific-league drilldown
+espn-pp-cli standings football nfl --agent      # context for the scores
 ```
 
-One trending call, one watch call, one scores call — covers "what's happening in sports" with enough granularity for a morning briefing.
+One trending call to see cross-league interest, one scores call for the league you care about, one standings call for context — covers "what's happening in sports" for a morning briefing.
 
 ### Team-vs-team deep research
 
