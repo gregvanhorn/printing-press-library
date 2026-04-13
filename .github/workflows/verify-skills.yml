@@ -20,24 +20,25 @@ jobs:
       - name: Checkout library
         uses: actions/checkout@v4
 
-      - name: Checkout cli-printing-press (for verify_skill.py)
-        uses: actions/checkout@v4
-        with:
-          repository: mvanhorn/cli-printing-press
-          path: cli-printing-press
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
+      - name: Fetch verifier from cli-printing-press
+        run: |
+          curl -fsSL \
+            https://raw.githubusercontent.com/mvanhorn/cli-printing-press/main/scripts/verify-skill/verify_skill.py \
+            -o /tmp/verify_skill.py
+          chmod +x /tmp/verify_skill.py
+
       - name: Run verifier against every CLI with a SKILL.md
         id: verify
         run: |
           set +e
-          VERIFIER="cli-printing-press/scripts/verify-skill/verify_skill.py"
+          VERIFIER="/tmp/verify_skill.py"
           if [ ! -f "$VERIFIER" ]; then
-            echo "::error::Verifier not found at $VERIFIER"
+            echo "::error::Verifier not downloaded at $VERIFIER"
             exit 2
           fi
           FAIL=0
