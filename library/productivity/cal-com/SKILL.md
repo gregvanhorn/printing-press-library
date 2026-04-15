@@ -84,7 +84,7 @@ Utility:
 
 - `cal-com-pp-cli sync` — Pull API data into local SQLite
 - `cal-com-pp-cli export` / `import` — JSONL/JSON dump + restore
-- `cal-com-pp-cli tail --resource <name>` — Stream live changes as NDJSON via polling
+- `cal-com-pp-cli tail <resource>` — Stream live changes as NDJSON via polling
 - `cal-com-pp-cli search "<query>"` — Full-text across synced bookings, event types, attendees
 - `cal-com-pp-cli auth set-token <CAL_COM_TOKEN>`
 - `cal-com-pp-cli doctor` — Verify config, auth, and API reachability
@@ -123,7 +123,7 @@ Stats shows which event types get booked most; no-show flags problematic attende
 
 ```bash
 # Poll every 30 seconds, emit NDJSON to stdout, filter for cancellations with jq:
-cal-com-pp-cli tail --resource bookings --interval 30s --agent | jq 'select(.status == "cancelled")'
+cal-com-pp-cli tail bookings --interval 30s --agent | jq 'select(.status == "cancelled")'
 ```
 
 `tail` polls the API on a configurable interval and emits one JSON object per change on stdout (status messages go to stderr). Useful for cron-free monitoring dashboards or piping into downstream automation. Default interval is 10s; pass `--follow=false` for a single poll.

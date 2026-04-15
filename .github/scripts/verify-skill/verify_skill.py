@@ -344,8 +344,33 @@ def check_flag_commands(cli_dir: Path, skill: Path, cli_binary: str, report: Rep
             flag = raw_flag.lstrip("-")
             if flag in COMMON_FLAGS:
                 continue
-            cmd_files, _, _ = find_command_source(cli_dir, cmd_path)
-            if cmd_files and flag_declared_in(cmd_files, flag):
+            # Walk cmd_path from longest to shortest prefix looking for a
+            # command that declares --flag. This mirrors cobra's runtime
+            # behavior and compensates for the recipe parser's greedy
+            # path promotion: when a positional arg (e.g. `bookings` in
+            # `tail bookings --interval`) happens to match a valid
+            # sibling command name, extract_recipes treats it as part of
+            # the command path. If the flag isn't on the greedy path but
+            # IS on a shorter prefix whose Use: accepts the extra tokens
+            # as positional args, accept the recipe.
+            matched = False
+            for k in range(len(cmd_path), 0, -1):
+                prefix = cmd_path[:k]
+                files, use_str, _args = find_command_source(cli_dir, prefix)
+                if not files or not flag_declared_in(files, flag):
+                    continue
+                if k == len(cmd_path):
+                    matched = True
+                    break
+                # Shorter prefix: require that the Use: signature can
+                # absorb the extra cmd_path tokens as positional args.
+                _, req, opt, variadic = parse_use(use_str or "")
+                extra = len(cmd_path) - k
+                max_positional = req + opt + (99 if variadic else 0)
+                if extra <= max_positional:
+                    matched = True
+                    break
+            if matched:
                 continue
             if persistent_flag_declared(cli_dir, flag):
                 continue
