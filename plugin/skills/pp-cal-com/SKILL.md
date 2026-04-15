@@ -1,9 +1,9 @@
 ---
 name: pp-cal-com
-description: "Use this skill whenever the user asks about their Cal.com schedule, bookings, upcoming meetings, event types, availability, calendar conflicts, booking analytics, or wants to create / reschedule / cancel a Cal.com booking. Cal.com CLI covering 285 API operations with offline search, booking analytics, conflict detection, and 7 insight commands for scheduling intelligence. Requires a Cal.com API key. Triggers on phrasings like 'what's on my Cal.com today', 'any conflicts in my calendar next week', 'how many bookings did I have this month', 'show my no-shows', 'which event types convert best'."
+description: "Use this skill whenever the user asks about their Cal.com schedule, bookings, upcoming meetings, event types, availability, calendar conflicts, booking analytics, or wants to create / reschedule / cancel a Cal.com booking. Cal.com CLI covering 285 API operations with offline search, booking analytics, conflict detection, and 7 insight commands for scheduling intelligence. Requires a Cal.com API key (CAL_COM_TOKEN). Triggers on phrasings like 'what's on my Cal.com today', 'any conflicts in my calendar next week', 'how many bookings did I have this month', 'show my no-shows', 'which event types convert best'."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
-metadata: '{"openclaw":{"requires":{"bins":["cal-com-pp-cli"],"env":["CAL_COM_API_KEY"]},"primaryEnv":"CAL_COM_API_KEY","install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/productivity/cal-com/cmd/cal-com-pp-cli@latest","bins":["cal-com-pp-cli"],"label":"Install via go install"}]}}'
+metadata: '{"openclaw":{"requires":{"bins":["cal-com-pp-cli"],"env":["CAL_COM_TOKEN"]},"primaryEnv":"CAL_COM_TOKEN","install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/productivity/cal-com/cmd/cal-com-pp-cli@latest","bins":["cal-com-pp-cli"],"label":"Install via go install"}]}}'
 ---
 
 # Cal.com — Printing Press CLI
@@ -46,22 +46,28 @@ The 7 insight commands that require the local SQLite data layer.
 
 Core resources (each supports list/get/create/update/delete):
 
-- `cal-com-pp-cli bookings` — Meetings
-- `cal-com-pp-cli event-types` — Bookable event types
+- `cal-com-pp-cli bookings` — Meetings (get, cancel, confirm, decline, reassign, reschedule, mark-absent, and nested `attendees`, `guests`, `references`, `calendar-links`, `conferencing-sessions`, `recordings`, `transcripts`)
+- `cal-com-pp-cli event-types` — Bookable event types (with nested `webhooks` and `private-links`)
 - `cal-com-pp-cli schedules` — Availability schedules
-- `cal-com-pp-cli slots` — Available time slots for an event type
-- `cal-com-pp-cli calendars` — Connected calendars (Google, Outlook, etc.)
+- `cal-com-pp-cli slots` — Available time slots for an event type (accepts `--event-type-slug` + `--username` or `--event-type-id`, plus `--start`/`--end`)
+- `cal-com-pp-cli calendars` — Connected calendars (Google, Outlook, etc.), plus ICS feeds, free/busy, busy-times
+- `cal-com-pp-cli conferencing` — Zoom/Meet/etc. integrations (connect, disconnect, default)
 - `cal-com-pp-cli me` — Profile
 - `cal-com-pp-cli teams` — Teams
 - `cal-com-pp-cli webhooks` — Webhook subscriptions
-- `cal-com-pp-cli attendees` / `attributes` — Attendee and custom attribute management
 - `cal-com-pp-cli api-keys` — API key management
+- `cal-com-pp-cli oauth-clients` — OAuth clients (with nested `users` and `webhooks`)
+- `cal-com-pp-cli organizations` — Org-level resources (teams, members, roles, `attributes`)
+- `cal-com-pp-cli routing-forms` — Routing forms
+- `cal-com-pp-cli destination-calendars` / `selected-calendars` — Destination/selected calendar config
+- `cal-com-pp-cli stripe` / `verified-resources` — Stripe connection, verified emails/phones
 
-Booking operations:
+Per-booking operations (all live under `bookings`):
 
-- `cal-com-pp-cli booking-add <bookingUid>` — Add attendee to booking
-- `cal-com-pp-cli booking-get-booking <bookingUid>` — Detail
-- `cal-com-pp-cli booking-update-booking <bookingUid>` — Modify
+- `cal-com-pp-cli bookings get-bookinguid <bookingUid>` — Detail for one booking
+- `cal-com-pp-cli bookings attendees booking-add <bookingUid>` — Add attendee
+- `cal-com-pp-cli bookings location booking-update-booking <bookingUid>` — Update location
+- `cal-com-pp-cli bookings cancel-bookings-booking <bookingUid>` / `confirm-bookings-booking` / `decline-bookings-booking` / `reschedule-bookings-booking`
 
 Unique insight commands:
 
@@ -72,13 +78,16 @@ Unique insight commands:
 - `cal-com-pp-cli noshow` — No-show report
 - `cal-com-pp-cli workload` — Density analysis
 - `cal-com-pp-cli stale` — Unused event types
+- `cal-com-pp-cli analytics` — Custom queries over the locally synced data
 
 Utility:
 
-- `cal-com-pp-cli sync` / `export` / `import` / `archive` — Local store
-- `cal-com-pp-cli search "<query>"` — Full-text across bookings/types/attendees
-- `cal-com-pp-cli auth set-token <CAL_COM_API_KEY>`
-- `cal-com-pp-cli doctor` — Verify
+- `cal-com-pp-cli sync` — Pull API data into local SQLite
+- `cal-com-pp-cli export` / `import` — JSONL/JSON dump + restore
+- `cal-com-pp-cli tail <resource>` — Stream live changes as NDJSON via polling
+- `cal-com-pp-cli search "<query>"` — Full-text across synced bookings, event types, attendees
+- `cal-com-pp-cli auth set-token <CAL_COM_TOKEN>`
+- `cal-com-pp-cli doctor` — Verify config, auth, and API reachability
 
 ## Recipes
 
@@ -110,6 +119,26 @@ cal-com-pp-cli stale --days 60 --agent
 
 Stats shows which event types get booked most; no-show flags problematic attendees or event types; `stale` identifies event types to delete or promote.
 
+### Stream live booking changes
+
+```bash
+# Poll every 30 seconds, emit NDJSON to stdout, filter for cancellations with jq:
+cal-com-pp-cli tail bookings --interval 30s --agent | jq 'select(.status == "cancelled")'
+```
+
+`tail` polls the API on a configurable interval and emits one JSON object per change on stdout (status messages go to stderr). Useful for cron-free monitoring dashboards or piping into downstream automation. Default interval is 10s; pass `--follow=false` for a single poll.
+
+### Offline search and analytics after a sync
+
+```bash
+cal-com-pp-cli sync                                 # one-time pull into SQLite
+cal-com-pp-cli search "design review" --agent       # full-text search over synced data
+cal-com-pp-cli analytics --type bookings --group-by status --limit 10 --agent
+cal-com-pp-cli stats --period 30d --data-source local --agent   # skip the API entirely
+```
+
+`search` operates on the local SQLite store (run `sync` first). `analytics` aggregates any synced resource with `--type` + `--group-by`. For read commands, the root flag `--data-source local` forces offline-only, `--data-source live` forces API-only (bypassing the sync cache); default `auto` is live with local fallback.
+
 ### Find a gap and book
 
 ```bash
@@ -136,17 +165,29 @@ Ask for open slots by event-type slug + user + date window, then POST a booking 
 Cal.com uses API keys. Get one at [cal.com/settings/developer/api-keys](https://app.cal.com/settings/developer/api-keys).
 
 ```bash
-export CAL_COM_API_KEY="cal_..."
-cal-com-pp-cli auth set-token "$CAL_COM_API_KEY"
+export CAL_COM_TOKEN="cal_..."
+cal-com-pp-cli auth set-token "$CAL_COM_TOKEN"
 cal-com-pp-cli doctor
 ```
 
 Optional:
 - `CAL_COM_BASE_URL` — override API base (for self-hosted Cal.com v2 instances)
+- `CAL_COM_CONFIG` — override config file path (default: `~/.config/cal-com-pp-cli/config.toml`)
 
 ## Agent Mode
 
-Add `--agent` to any command. Expands to `--json --compact --no-input --no-color --yes`. Useful flags: `--select`, `--dry-run`, `--period <duration>` for analytics windows, `--data-source auto|live|local` to force live API vs local store.
+Add `--agent` to any command. Expands to `--json --compact --no-input --no-color --yes`.
+
+Useful root flags (all persistent):
+
+- `--select id,status,start` — cherry-pick fields from the JSON response
+- `--dry-run` — print the HTTP request without sending
+- `--no-cache` — bypass the 5-minute GET cache
+- `--rate-limit 2` — cap requests per second (useful under 429 pressure)
+- `--data-source auto|live|local` — default `auto`; force `live` to skip the sync cache, `local` to run fully offline against synced data
+- `--period 30d` / `--period 12w` — analysis window for `stats` and `workload`
+
+Paginated commands also emit NDJSON progress events on stderr by default, so `--agent | jq` pipelines only see the final JSON on stdout.
 
 ## Exit Codes
 
@@ -166,7 +207,7 @@ Add `--agent` to any command. Expands to `--json --compact --no-input --no-color
 
 ```bash
 go install github.com/mvanhorn/printing-press-library/library/productivity/cal-com/cmd/cal-com-pp-cli@latest
-cal-com-pp-cli auth set-token YOUR_CAL_COM_API_KEY
+cal-com-pp-cli auth set-token YOUR_CAL_COM_TOKEN
 cal-com-pp-cli doctor
 ```
 
@@ -174,7 +215,7 @@ cal-com-pp-cli doctor
 
 ```bash
 go install github.com/mvanhorn/printing-press-library/library/productivity/cal-com/cmd/cal-com-pp-mcp@latest
-claude mcp add -e CAL_COM_API_KEY=<key> cal-com-pp-mcp -- cal-com-pp-mcp
+claude mcp add -e CAL_COM_TOKEN=<token> cal-com-pp-mcp -- cal-com-pp-mcp
 ```
 
 ## Argument Parsing
