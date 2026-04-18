@@ -222,3 +222,51 @@ Parse `$ARGUMENTS`:
    recipe-goat-pp-cli <command> [subcommand] [args] --agent
    ```
 4. If ambiguous, drill into subcommand help: `recipe-goat-pp-cli <command> --help`.
+
+<!-- pr-218-features -->
+## Agent Workflow Features
+
+This CLI exposes three shared agent-workflow capabilities patched in from cli-printing-press PR #218.
+
+### Named profiles
+
+Persist a set of flags under a name and reuse them across invocations.
+
+```bash
+# Save the current non-default flags as a named profile
+recipe-goat-pp-cli profile save <name>
+
+# Use a profile — overlays its values onto any flag you don't set explicitly
+recipe-goat-pp-cli --profile <name> <command>
+
+# List / inspect / remove
+recipe-goat-pp-cli profile list
+recipe-goat-pp-cli profile show <name>
+recipe-goat-pp-cli profile delete <name> --yes
+```
+
+Flag precedence: explicit flag > env var > profile > default.
+
+### --deliver
+
+Route command output to a sink other than stdout. Useful when an agent needs to hand a result to a file, a webhook, or another process without plumbing.
+
+```bash
+recipe-goat-pp-cli <command> --deliver file:/path/to/out.json
+recipe-goat-pp-cli <command> --deliver webhook:https://hooks.example/in
+```
+
+File sinks write atomically (tmp + rename). Webhook sinks POST `application/json` (or `application/x-ndjson` when `--compact` is set). Unknown schemes produce a structured refusal listing the supported set.
+
+### feedback
+
+Record in-band feedback about this CLI from the agent side of the loop. Local-only by default; safe to call without configuration.
+
+```bash
+recipe-goat-pp-cli feedback "what surprised you or tripped you up"
+recipe-goat-pp-cli feedback list         # show local entries
+recipe-goat-pp-cli feedback clear --yes  # wipe
+```
+
+Entries append to `~/.recipe-goat-pp-cli/feedback.jsonl` as JSON lines. When `RECIPE_GOAT_FEEDBACK_ENDPOINT` is set and either `--send` is passed or `RECIPE_GOAT_FEEDBACK_AUTO_SEND=true`, the entry is also POSTed upstream (non-blocking — local write always succeeds).
+
