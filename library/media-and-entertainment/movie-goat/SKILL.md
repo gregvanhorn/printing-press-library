@@ -298,3 +298,51 @@ claude mcp add movie-goat movie-goat-pp-mcp -e TMDB_API_KEY=<your-key> -e OMDB_A
 3. If `TMDB_API_KEY` is missing, guide the user through auth setup before trying to use the CLI.
 4. Choose the command that matches the user's intent most directly.
 5. Run with `--agent` unless the user explicitly wants human-formatted output.
+
+<!-- pr-218-features -->
+## Agent Workflow Features
+
+This CLI exposes three shared agent-workflow capabilities patched in from cli-printing-press PR #218.
+
+### Named profiles
+
+Persist a set of flags under a name and reuse them across invocations.
+
+```bash
+# Save the current non-default flags as a named profile
+movie-goat-pp-cli profile save <name>
+
+# Use a profile — overlays its values onto any flag you don't set explicitly
+movie-goat-pp-cli --profile <name> <command>
+
+# List / inspect / remove
+movie-goat-pp-cli profile list
+movie-goat-pp-cli profile show <name>
+movie-goat-pp-cli profile delete <name> --yes
+```
+
+Flag precedence: explicit flag > env var > profile > default.
+
+### --deliver
+
+Route command output to a sink other than stdout. Useful when an agent needs to hand a result to a file, a webhook, or another process without plumbing.
+
+```bash
+movie-goat-pp-cli <command> --deliver file:/path/to/out.json
+movie-goat-pp-cli <command> --deliver webhook:https://hooks.example/in
+```
+
+File sinks write atomically (tmp + rename). Webhook sinks POST `application/json` (or `application/x-ndjson` when `--compact` is set). Unknown schemes produce a structured refusal listing the supported set.
+
+### feedback
+
+Record in-band feedback about this CLI from the agent side of the loop. Local-only by default; safe to call without configuration.
+
+```bash
+movie-goat-pp-cli feedback "what surprised you or tripped you up"
+movie-goat-pp-cli feedback list         # show local entries
+movie-goat-pp-cli feedback clear --yes  # wipe
+```
+
+Entries append to `~/.movie-goat-pp-cli/feedback.jsonl` as JSON lines. When `MOVIE_GOAT_FEEDBACK_ENDPOINT` is set and either `--send` is passed or `MOVIE_GOAT_FEEDBACK_AUTO_SEND=true`, the entry is also POSTed upstream (non-blocking — local write always succeeds).
+
