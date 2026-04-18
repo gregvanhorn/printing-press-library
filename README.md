@@ -6,10 +6,11 @@ This repository currently includes 21 CLIs, 19 MCP servers, one mega-skill (`/pp
 
 ## Start Here
 
-If you are using the plugin, install the repository by name:
+This repo is its own Claude Code plugin marketplace. Add the marketplace, then install the plugin:
 
 ```text
-/install mvanhorn/printing-press-library
+/plugin marketplace add mvanhorn/printing-press-library
+/plugin install printing-press-library@printing-press-library
 ```
 
 After install, the main router skill is:
@@ -26,7 +27,8 @@ That naming split is intentional:
 If you also want to generate new tools from API specs, install the source project too:
 
 ```text
-/install mvanhorn/cli-printing-press
+/plugin marketplace add mvanhorn/cli-printing-press
+/plugin install cli-printing-press@cli-printing-press
 ```
 
 ## Quick Examples
