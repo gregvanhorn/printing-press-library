@@ -427,3 +427,12 @@ Environment variables:
 - Reduce request volume
 - Use the built-in cache instead of `--no-cache`
 - Use `--rate-limit` for gentler scripted runs
+
+<!-- pr-218-features -->
+## Agent workflow features
+
+This CLI was patched to add these agent-workflow capabilities (see [`printing-press patch`](https://github.com/mvanhorn/cli-printing-press/pull/221)):
+
+- **Named profiles** — save a set of flags under a name and reuse them: `movie-goat-pp-cli profile save <name> --<flag> <value>`, then `movie-goat-pp-cli --profile <name> <command>`. Flag precedence: explicit flag > env var > profile > default.
+- **`--deliver`** — route command output to a sink other than stdout. Values: `file:<path>` writes atomically via tmp+rename; `webhook:<url>` POSTs as JSON (or NDJSON with `--compact`).
+- **`feedback`** — record in-band feedback about the CLI. Entries append as JSON lines to `~/.movie-goat-pp-cli/feedback.jsonl`. When `MOVIE_GOAT_FEEDBACK_ENDPOINT` is set and either `--send` is passed or `MOVIE_GOAT_FEEDBACK_AUTO_SEND=true`, the entry is also POSTed upstream.

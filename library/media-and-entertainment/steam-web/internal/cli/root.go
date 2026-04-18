@@ -10,9 +10,13 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/spf13/cobra"
+	"bytes"
+	"io"
+	"os"
+
 	"github.com/mvanhorn/printing-press-library/library/media-and-entertainment/steam-web/internal/client"
 	"github.com/mvanhorn/printing-press-library/library/media-and-entertainment/steam-web/internal/config"
+	"github.com/spf13/cobra"
 )
 
 var version = "1.1.0"
@@ -33,6 +37,9 @@ type rootFlags struct {
 	timeout      time.Duration
 	rateLimit    float64
 	dataSource   string
+	deliverSpec  string
+	deliverBuf   *bytes.Buffer
+	deliverSink  DeliverSink
 }
 
 // Execute runs the CLI in non-interactive mode: never prompts, all values via flags or stdin.
@@ -66,7 +73,20 @@ func Execute() error {
 	rootCmd.PersistentFlags().StringVar(&flags.dataSource, "data-source", "auto", "Data source for read commands: auto (live with local fallback), live (API only), local (synced data only)")
 	rootCmd.PersistentFlags().Float64Var(&flags.rateLimit, "rate-limit", 0, "Max requests per second (0 to disable)")
 
+	rootCmd.PersistentFlags().StringVar(&flags.deliverSpec, "deliver", "", "Route output to a sink: stdout (default), file:<path>, webhook:<url>")
+
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
+		if flags.deliverSpec != "" {
+			sink, err := ParseDeliverSink(flags.deliverSpec)
+			if err != nil {
+				return err
+			}
+			flags.deliverSink = sink
+			if sink.Scheme != "stdout" && sink.Scheme != "" {
+				flags.deliverBuf = &bytes.Buffer{}
+				cmd.SetOut(io.MultiWriter(os.Stdout, flags.deliverBuf))
+			}
+		}
 		if flags.agent {
 			if !cmd.Flags().Changed("json") {
 				flags.asJSON = true
@@ -169,6 +189,8 @@ func Execute() error {
 	rootCmd.AddCommand(newWorkflowCmd(&flags))
 	rootCmd.AddCommand(newVersionCliCmd())
 
+	rootCmd.AddCommand(newFeedbackCmd(&flags))
+
 	err := rootCmd.Execute()
 	if err != nil && strings.Contains(err.Error(), "unknown flag") {
 		msg := err.Error()
@@ -178,6 +200,12 @@ func Execute() error {
 			if suggestion := suggestFlag(flagStr, rootCmd); suggestion != "" {
 				return fmt.Errorf("%w\nhint: did you mean --%s?", err, suggestion)
 			}
+		}
+	}
+	if err == nil && flags.deliverBuf != nil {
+		if derr := Deliver(flags.deliverSink, flags.deliverBuf.Bytes(), flags.compact); derr != nil {
+			fmt.Fprintf(os.Stderr, "warning: deliver to %s:%s failed: %v\n", flags.deliverSink.Scheme, flags.deliverSink.Target, derr)
+			return derr
 		}
 	}
 	return err
