@@ -261,3 +261,51 @@ claude mcp add yahoo-finance yahoo-finance-pp-mcp
 3. Choose the command that matches the user's intent most directly.
 4. Run with `--agent` unless the user explicitly wants human-formatted output.
 5. If Yahoo is rate-limiting this machine, guide the user to `auth login-chrome`.
+
+<!-- pr-218-features -->
+## Agent Workflow Features
+
+This CLI exposes three shared agent-workflow capabilities patched in from cli-printing-press PR #218.
+
+### Named profiles
+
+Persist a set of flags under a name and reuse them across invocations.
+
+```bash
+# Save the current non-default flags as a named profile
+yahoo-finance-pp-cli profile save <name>
+
+# Use a profile — overlays its values onto any flag you don't set explicitly
+yahoo-finance-pp-cli --profile <name> <command>
+
+# List / inspect / remove
+yahoo-finance-pp-cli profile list
+yahoo-finance-pp-cli profile show <name>
+yahoo-finance-pp-cli profile delete <name> --yes
+```
+
+Flag precedence: explicit flag > env var > profile > default.
+
+### --deliver
+
+Route command output to a sink other than stdout. Useful when an agent needs to hand a result to a file, a webhook, or another process without plumbing.
+
+```bash
+yahoo-finance-pp-cli <command> --deliver file:/path/to/out.json
+yahoo-finance-pp-cli <command> --deliver webhook:https://hooks.example/in
+```
+
+File sinks write atomically (tmp + rename). Webhook sinks POST `application/json` (or `application/x-ndjson` when `--compact` is set). Unknown schemes produce a structured refusal listing the supported set.
+
+### feedback
+
+Record in-band feedback about this CLI from the agent side of the loop. Local-only by default; safe to call without configuration.
+
+```bash
+yahoo-finance-pp-cli feedback "what surprised you or tripped you up"
+yahoo-finance-pp-cli feedback list         # show local entries
+yahoo-finance-pp-cli feedback clear --yes  # wipe
+```
+
+Entries append to `~/.yahoo-finance-pp-cli/feedback.jsonl` as JSON lines. When `YAHOO_FINANCE_FEEDBACK_ENDPOINT` is set and either `--send` is passed or `YAHOO_FINANCE_FEEDBACK_AUTO_SEND=true`, the entry is also POSTed upstream (non-blocking — local write always succeeds).
+
