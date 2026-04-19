@@ -36,9 +36,17 @@ Falls through to today's live-search behavior when any condition fails. Pass `--
 
 Every successful `add` (history-resolved or live-resolved) writes back to `purchased_items` so the signal gets warmer without a full re-sync.
 
-### Purchase history sync + inspection
+### Purchase history import + inspection
 
-`history sync` downloads your Instacart order history into the local SQLite DB, paginating across orders and the Buy-It-Again aggregate. `history list` / `history search` / `history stats` let you inspect, search, and audit what was pulled.
+**Use `history import`, not `history sync`.** Instacart does not expose a clean order-history GraphQL op, so `sync` cannot work — it surfaces a clear error pointing at the working path. The working path is:
+
+1. Run the browser-side dumper (see `docs/dumper.js` + `docs/extract-one.js`) against a logged-in Chrome tab
+2. Download the resulting `instacart-orders.jsonl`
+3. `instacart history import <path>` — upserts orders + items into the local DB
+
+See the full playbook at [`docs/patterns/authenticated-session-scraping.md`](https://github.com/mvanhorn/printing-press-library/blob/main/docs/patterns/authenticated-session-scraping.md) (repo root).
+
+`history list` / `history search` / `history stats` inspect whatever has been loaded.
 
 ### Natural-language `add`
 
@@ -75,15 +83,14 @@ Discovery:
 
 Purchase history:
 
-- `instacart history sync` - download your order history into SQLite
-- `instacart history sync --max-orders 100` - override the default 50-order first-run cap
-- `instacart history sync --since 2026-01-01` - only fetch orders after a date
-- `instacart history sync --store <retailer>` - sync one retailer only
+- `instacart history import <path>` - load a JSONL order dump into the local DB (the working path)
+- `instacart history import - --json` - read from stdin, JSON output for agent pipelines
+- `instacart history import <path> --dry-run` - preview counts without writing
 - `instacart history list` - top purchased items by count + recency
 - `instacart history list --store <retailer> --limit 20` - filter + paginate
 - `instacart history search <query>` - FTS search your purchase history
 - `instacart history search <query> --store <retailer>` - scoped FTS search
-- `instacart history stats` - counts + per-retailer sync state
+- `instacart history stats` - counts + per-retailer state
 
 Maintenance:
 
@@ -100,10 +107,11 @@ Maintenance:
 instacart auth login                # extract cookies from Chrome
 instacart doctor                    # verify auth + live ping
 instacart capture                   # seed built-in op hashes
-# Follow docs/history-ops-capture.md to populate the two history hashes,
-# then:
-instacart history sync              # first-run: last 50 orders / 12 months
-instacart history stats             # confirm what came down
+# History backfill: browser-side dump, then import. See
+# docs/patterns/authenticated-session-scraping.md for the full walkthrough.
+# After you have instacart-orders.jsonl:
+instacart history import ~/Downloads/instacart-orders.jsonl
+instacart history stats             # confirm what landed
 ```
 
 ### Add something you buy all the time

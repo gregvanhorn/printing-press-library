@@ -74,27 +74,18 @@ var DefaultOps = map[string]OpSeed{
 		Query: `query CartData($id: ID!) { userCart: cart(id: $id) { id itemCount cartType retailerId updatedAt cartItemCollection { cartItems { id quantity quantityType basketProduct { id __typename } __typename } __typename } __typename } }`,
 	},
 
-	// BuyItAgainPage: aggregated purchase history + frequently-bought items
-	// for the authenticated user. Backs the `history sync` command which
-	// populates purchased_items, orders, and order_items tables.
+	// DEPRECATED: BuyItAgainPage and CustomerOrderHistory were speculative in
+	// the original PR #78 plan. Instacart does NOT expose these operations.
+	// The order history is server-rendered HTML, and per-order detail assembles
+	// from multiple non-aggregating ops in Apollo's client cache. See
+	// docs/solutions/best-practices/instacart-orders-no-clean-graphql-op.md
+	// for the finding + docs/patterns/authenticated-session-scraping.md for
+	// the working data-load path (Chrome MCP dump -> `instacart history import`).
 	//
-	// Hash is empty until captured from a live session - see
-	// docs/history-ops-capture.md for the two-minute DevTools walkthrough.
-	// Running `history sync` before the hash is filled surfaces a clear
-	// error that points users at the capture doc.
-	"BuyItAgainPage": {
-		Hash:  "",
-		Query: `query BuyItAgainPage($first: Int, $after: String, $retailerSlug: String) { buyItAgain(first: $first, after: $after, retailerSlug: $retailerSlug) { edges { node { itemId productId name brand size lastPurchasedAt purchaseCount lastPriceCents retailerSlug inStock __typename } __typename } pageInfo { hasNextPage endCursor __typename } __typename } }`,
-	},
-
-	// CustomerOrderHistory: paginated orders list for the authenticated user.
-	// Used alongside BuyItAgainPage to populate the orders + order_items
-	// tables so `history list --orders` can show order-level detail.
-	// Hash empty until captured - see docs/history-ops-capture.md.
-	"CustomerOrderHistory": {
-		Hash:  "",
-		Query: `query CustomerOrderHistory($first: Int, $after: String) { orders(first: $first, after: $after) { edges { node { id placedAt status retailerSlug totalCents itemCount items { itemId productId name quantity quantityType priceCents __typename } __typename } __typename } pageInfo { hasNextPage endCursor __typename } __typename } }`,
-	},
+	// These entries are kept with empty hashes so `instacart capture` skips
+	// them cleanly. They will be removed in a future cleanup PR.
+	"BuyItAgainPage":       {Hash: "", Query: ""},
+	"CustomerOrderHistory": {Hash: "", Query: ""},
 }
 
 type OpSeed struct {

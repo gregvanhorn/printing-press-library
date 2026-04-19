@@ -26,12 +26,15 @@ func newHistoryCmd() *cobra.Command {
 can weight what you have actually bought before over live-catalog
 first-match results. Data lives at ~/.config/instacart/instacart.db.
 
-'history sync' populates the tables from Instacart using two GraphQL
-operations (BuyItAgainPage + CustomerOrderHistory). On first run the
-hashes ship empty; see docs/history-ops-capture.md for the two-minute
-DevTools walkthrough to populate them.
+'history import <path>' reads a JSONL dump produced by the companion
+browser-side scripts (see library/commerce/instacart/docs/dumper.js).
+This is the working path -- 'history sync' exists but cannot be made
+to work because Instacart has no clean GraphQL op for order history.
 
-Once populated, 'add' checks the local history first and, when
+See docs/patterns/authenticated-session-scraping.md for the full
+walkthrough.
+
+Once data is loaded, 'add' checks the local history first and, when
 confidence is high, skips the live search entirely.`,
 	}
 	cmd.AddCommand(
@@ -100,7 +103,7 @@ and the code fetches orders placed after the most recent known order.`,
 			if err != nil {
 				// Translate ErrHashMissing into a helpful pointer.
 				if errors.Is(err, gql.ErrHashMissing) {
-					msg := fmt.Sprintf("%v\nRun 'instacart capture' and follow docs/history-ops-capture.md to populate the two history hashes.", err)
+					msg := fmt.Sprintf("%v\n\n`history sync` is not viable for Instacart -- the BuyItAgainPage / CustomerOrderHistory ops referenced here do not actually exist in their API.\nUse `instacart history import <path>` instead. See docs/patterns/authenticated-session-scraping.md for the browser-side dump flow.", err)
 					_ = app.Store.UpsertHistorySyncMeta(store.HistorySyncMeta{
 						RetailerSlug:   "*",
 						LastSyncAt:     time.Now(),

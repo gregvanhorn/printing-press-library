@@ -1,89 +1,24 @@
-# Capturing the Instacart history GraphQL hashes
+# Capturing Instacart history hashes — SUPERSEDED
 
-The `history sync` command needs two Instacart GraphQL operation hashes:
+**This document is superseded.**
 
-- `BuyItAgainPage` — the aggregated "frequently bought" + purchase history feed
-- `CustomerOrderHistory` — the per-order list with items
+The original PR #78 assumed Instacart exposed dedicated GraphQL ops named `BuyItAgainPage` and `CustomerOrderHistory`. It does not. The `history sync` command that relied on those ops cannot be made to work because the underlying operations are fictional — see [`docs/solutions/best-practices/instacart-orders-no-clean-graphql-op.md`](../../../docs/solutions/best-practices/instacart-orders-no-clean-graphql-op.md).
 
-They ship **empty** in this CLI today because the hashes are specific to your
-Instacart web bundle and rotate whenever Instacart ships a new frontend. Once
-you fill them in, `history sync` works and stays working until the next bundle
-rotation.
+## Use this instead
 
-## Two-minute walkthrough
+For the working path to backfill your Instacart purchase history, see:
 
-1. **Log in to Instacart** in Chrome, then open the **Orders** page at
-   <https://www.instacart.com/store/account/orders>. Keep the page open.
-2. **Open DevTools** (`Cmd+Option+I` on macOS / `F12` on Windows/Linux) and
-   switch to the **Network** tab. Filter by `graphql` in the filter box.
-3. **Reload the page.** A burst of GraphQL requests fires. Click one at a
-   time and look at the **Request Payload** tab — you want two requests:
+- **Playbook:** [`docs/patterns/authenticated-session-scraping.md`](../../../docs/patterns/authenticated-session-scraping.md) — the canonical reference for this class of problem across any printed CLI.
+- **Dumper:** `docs/dumper.js` + `docs/extract-one.js` — the browser-side JS to walk orders and export JSONL.
+- **Importer:** `instacart history import <path>` — the CLI-side command that reads the JSONL and populates the history tables.
 
-   - One with `operationName: "BuyItAgainPage"` (or similar — Instacart
-     occasionally renames; `BuyItAgain`, `BuyItAgainPageQuery`, and
-     `BuyItAgainProducts` are all candidates)
-   - One with `operationName: "CustomerOrderHistory"` (or `OrdersHistory`,
-     `UserOrders`, `OrderCollectionQuery`)
+## Quick-start (10 minutes end-to-end)
 
-   The exact names sometimes drift; pick whichever clearly returns your
-   order list.
+1. Open `https://www.instacart.com/store/account/orders` in Chrome, logged in.
+2. Run `dumper.js` to collect order IDs (via DevTools console or agent-driven Chrome MCP).
+3. For each order ID, navigate to `/store/orders/<id>` and run `extract-one.js`.
+4. Run the exporter snippet at the bottom of `extract-one.js` to download `instacart-orders.jsonl`.
+5. `instacart history import ~/Downloads/instacart-orders.jsonl`.
+6. `instacart add <retailer> "<something you've bought>" --dry-run --json` → look for `"resolved_via": "history"`.
 
-4. **Copy the `sha256Hash` value** from each request. It lives under
-   `extensions.persistedQuery.sha256Hash` in the request payload. Each is
-   a 64-character hex string.
-
-5. **Drop the hashes into the Go source** at
-   `internal/instacart/ops.go`. Replace the empty `Hash: ""` fields on the
-   `BuyItAgainPage` and `CustomerOrderHistory` entries.
-
-6. **Rebuild** the CLI:
-
-   ```bash
-   go install github.com/mvanhorn/printing-press-library/library/commerce/instacart/cmd/instacart-pp-cli@latest
-   ```
-
-7. **Re-seed the local hash cache**:
-
-   ```bash
-   instacart capture
-   instacart history sync
-   ```
-
-## Alternative: remote registry
-
-If you don't want to edit Go source, drop the hashes into the community
-registry at `library/commerce/instacart/hashes.json` in this repo and open
-a PR. Every user running `instacart capture --remote` will pick up the
-new hashes at their next refresh. Template:
-
-```json
-{
-  "version": 1,
-  "updated_at": "2026-04-18T00:00:00Z",
-  "operations": {
-    "BuyItAgainPage": "<paste your 64-char hex>",
-    "CustomerOrderHistory": "<paste your 64-char hex>"
-  }
-}
-```
-
-## Operation name mismatches
-
-If DevTools shows an `operationName` that differs from the two defaults above
-(e.g. Instacart renamed the underlying query), rename the keys in
-`internal/instacart/ops.go` to match. The rest of the history code
-references them by those exact names, so keep them in sync.
-
-## Verifying
-
-After capturing and rebuilding:
-
-```bash
-instacart doctor     # shows history: enabled=true|false based on hash presence
-instacart history sync
-instacart history list --limit 10
-```
-
-If `doctor` still reports `history: hashes not yet captured`, the Go file
-edit or the remote-registry merge didn't take effect — re-check the two
-entries in `internal/instacart/ops.go` or re-run `instacart capture --remote`.
+The full walkthrough with tooling rationale is in the playbook.
