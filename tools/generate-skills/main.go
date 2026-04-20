@@ -174,7 +174,7 @@ func main() {
 		ctx.OpenClawMeta = buildOpenClawMetadata(ctx)
 
 		// Write skill file
-		skillDir := filepath.Join("plugin", "skills", skillName)
+		skillDir := filepath.Join("skills", skillName)
 		skillFile := filepath.Join(skillDir, "SKILL.md")
 
 		// Upstream wins: if the printed CLI ships its own SKILL.md, copy it
@@ -470,7 +470,7 @@ func buildEnrichedDescription(entry RegistryEntry, domainCommands []DomainComman
 
 // existingSkillDirs returns the sorted set of pp-* directory names under skills/.
 func existingSkillDirs() []string {
-	entries, err := os.ReadDir(filepath.Join("plugin", "skills"))
+	entries, err := os.ReadDir("skills")
 	if err != nil {
 		return nil
 	}
@@ -506,7 +506,7 @@ func maybeUpdatePluginVersion(beforeDirs, afterDirs []string) {
 		return
 	}
 
-	pluginPath := filepath.Join("plugin", ".claude-plugin", "plugin.json")
+	pluginPath := filepath.Join(".claude-plugin", "plugin.json")
 	data, err := os.ReadFile(pluginPath)
 	if err != nil {
 		log.Printf("Warning: could not read %s for version bump: %v", pluginPath, err)

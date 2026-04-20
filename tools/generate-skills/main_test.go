@@ -22,7 +22,7 @@ func TestCopyUpstreamSkill_Present(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	skillDir := filepath.Join(tmp, "plugin", "skills", "pp-yahoo-finance")
+	skillDir := filepath.Join(tmp, "skills", "pp-yahoo-finance")
 	skillFile := filepath.Join(skillDir, "SKILL.md")
 
 	copied, err := copyUpstreamSkill(entryPath, skillDir, skillFile)
@@ -50,7 +50,7 @@ func TestCopyUpstreamSkill_Absent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	skillDir := filepath.Join(tmp, "plugin", "skills", "pp-no-upstream")
+	skillDir := filepath.Join(tmp, "skills", "pp-no-upstream")
 	skillFile := filepath.Join(skillDir, "SKILL.md")
 
 	copied, err := copyUpstreamSkill(entryPath, skillDir, skillFile)
@@ -80,7 +80,7 @@ func TestCopyUpstreamSkill_OverwritesExisting(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	skillDir := filepath.Join(tmp, "plugin", "skills", "pp-yahoo-finance")
+	skillDir := filepath.Join(tmp, "skills", "pp-yahoo-finance")
 	if err := os.MkdirAll(skillDir, 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -163,7 +163,7 @@ func TestCopyUpstreamSkill_EmptyFallsThrough(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	skillDir := filepath.Join(tmp, "plugin", "skills", "pp-blank")
+	skillDir := filepath.Join(tmp, "skills", "pp-blank")
 	skillFile := filepath.Join(skillDir, "SKILL.md")
 
 	copied, err := copyUpstreamSkill(entryPath, skillDir, skillFile)
@@ -201,8 +201,8 @@ func buildTool(t *testing.T) string {
 // setupFixture writes a minimal working tree that main() expects:
 //   - registry.json at root
 //   - tools/generate-skills/skill-template.md (copied from the real template)
-//   - plugin/.claude-plugin/plugin.json (so version bump can run without a warning)
-//   - plugin/skills/ (output dir)
+//   - .claude-plugin/plugin.json (so version bump can run without a warning)
+//   - skills/ (output dir)
 func setupFixture(t *testing.T, root string, entries []RegistryEntry) {
 	t.Helper()
 
@@ -236,7 +236,7 @@ func setupFixture(t *testing.T, root string, entries []RegistryEntry) {
 	}
 
 	// Minimal plugin.json so the version-bump path doesn't warn.
-	pluginDir := filepath.Join(root, "plugin", ".claude-plugin")
+	pluginDir := filepath.Join(root, ".claude-plugin")
 	if err := os.MkdirAll(pluginDir, 0755); err != nil {
 		t.Fatal(err)
 	}
@@ -244,7 +244,7 @@ func setupFixture(t *testing.T, root string, entries []RegistryEntry) {
 		t.Fatal(err)
 	}
 
-	if err := os.MkdirAll(filepath.Join(root, "plugin", "skills"), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Join(root, "skills"), 0755); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -287,7 +287,7 @@ func TestIntegration_UpstreamPreferredOverSynthesis(t *testing.T) {
 	outStr := string(out)
 
 	// Upstream entry should be copied byte-for-byte.
-	upstreamSkill, err := os.ReadFile(filepath.Join(root, "plugin", "skills", "pp-with-upstream", "SKILL.md"))
+	upstreamSkill, err := os.ReadFile(filepath.Join(root, "skills", "pp-with-upstream", "SKILL.md"))
 	if err != nil {
 		t.Fatalf("reading upstream-copied skill: %v", err)
 	}
@@ -299,7 +299,7 @@ func TestIntegration_UpstreamPreferredOverSynthesis(t *testing.T) {
 	}
 
 	// Non-upstream entry should be synthesized from the template.
-	synthSkill, err := os.ReadFile(filepath.Join(root, "plugin", "skills", "pp-no-upstream", "SKILL.md"))
+	synthSkill, err := os.ReadFile(filepath.Join(root, "skills", "pp-no-upstream", "SKILL.md"))
 	if err != nil {
 		t.Fatalf("reading synthesized skill: %v", err)
 	}
@@ -337,7 +337,7 @@ func TestIntegration_UpstreamOverwritesStaleSynthesis(t *testing.T) {
 	setupFixture(t, root, entries)
 
 	// Pre-seed a stale synthesized skill.
-	staleDir := filepath.Join(root, "plugin", "skills", "pp-api")
+	staleDir := filepath.Join(root, "skills", "pp-api")
 	if err := os.MkdirAll(staleDir, 0755); err != nil {
 		t.Fatal(err)
 	}

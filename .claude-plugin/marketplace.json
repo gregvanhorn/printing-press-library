@@ -21,12 +21,7 @@
         "api",
         "printing-press"
       ],
-      "source": {
-        "source": "git-subdir",
-        "url": "https://github.com/mvanhorn/printing-press-library.git",
-        "path": "plugin",
-        "ref": "main"
-      }
+      "source": "./"
     }
   ]
 }
