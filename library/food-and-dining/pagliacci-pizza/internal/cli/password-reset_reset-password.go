@@ -18,10 +18,10 @@ func newPasswordResetResetPasswordCmd(flags *rootFlags) *cobra.Command {
 	var stdinBody bool
 
 	cmd := &cobra.Command{
-		Use:   "reset-password",
-		Aliases: []string{"create"},
-		Short: "Reset password",
-		Example: "  pagliacci-pizza-pp-cli password-reset reset-password --newPassword example-value",
+		Use:     "password-reset",
+		Aliases: []string{"reset-password"},
+		Short:   "Reset password",
+		Example: "  pagliacci-pizza-pp-cli password-reset --newPassword example-value",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {

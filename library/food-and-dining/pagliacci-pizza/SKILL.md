@@ -53,7 +53,7 @@ Parse `$ARGUMENTS`:
 4. Ensure `$GOPATH/bin` (or `$HOME/go/bin`) is on `$PATH`.
 5. Auth setup (cookie-session based):
    ```bash
-   pagliacci-pizza-pp-cli login login --email you@example.com --password "..."
+   pagliacci-pizza-pp-cli login --email you@example.com --password "..."
    # or export the captured session cookie directly:
    export PAGLIACCI_PIZZA_PAGLIACCI_AUTH="<cookie-value>"
    ```

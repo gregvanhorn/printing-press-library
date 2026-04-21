@@ -17,10 +17,10 @@ func newPasswordForgotForgotPasswordCmd(flags *rootFlags) *cobra.Command {
 	var stdinBody bool
 
 	cmd := &cobra.Command{
-		Use:   "forgot-password",
-		Aliases: []string{"create"},
-		Short: "Request password reset email",
-		Example: "  pagliacci-pizza-pp-cli password-forgot forgot-password --email user@example.com",
+		Use:     "password-forgot",
+		Aliases: []string{"forgot-password"},
+		Short:   "Request password reset email",
+		Example: "  pagliacci-pizza-pp-cli password-forgot --email user@example.com",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
