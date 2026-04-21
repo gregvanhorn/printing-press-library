@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/mvanhorn/printing-press-library/library/productivity/expensify/internal/config"
+	"github.com/mvanhorn/printing-press-library/library/productivity/expensify/internal/expensifysearch"
 )
 
 type Client struct {
@@ -223,6 +224,49 @@ func (c *Client) Patch(path string, body any) (json.RawMessage, int, error) {
 
 func (c *Client) PatchWithHeaders(path string, body any, headers map[string]string) (json.RawMessage, int, error) {
 	return c.do("PATCH", path, nil, body, headers)
+}
+
+// Search issues an Expensify /Search call with a typed filter tree and parses
+// the response envelope. On a non-200 jsonCode, returns a *expensifysearch.SearchError
+// so command handlers can classify auth vs API errors without parsing strings.
+//
+// The on-the-wire shape is:
+//
+//	POST /Search
+//	    jsonQuery=<marshaled Query>
+//	    hash=<q.Hash as string>   (omitted when zero)
+//
+// The existing form-body flow in buildNewExpensifyRequest flattens these fields
+// alongside authToken/platform/referer — no new routing is introduced.
+func (c *Client) Search(q expensifysearch.Query) (*expensifysearch.Response, error) {
+	jq, err := json.Marshal(q)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling Search query: %w", err)
+	}
+	body := map[string]any{
+		"jsonQuery": string(jq),
+	}
+	if q.Hash != 0 {
+		body["hash"] = strconv.Itoa(q.Hash)
+	}
+
+	raw, _, err := c.Post("/Search", body)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp expensifysearch.Response
+	if err := json.Unmarshal(raw, &resp); err != nil {
+		return nil, fmt.Errorf("parsing /Search response: %w", err)
+	}
+	if resp.JSONCode != 0 && resp.JSONCode != 200 {
+		return &resp, &expensifysearch.SearchError{
+			JSONCode: resp.JSONCode,
+			Message:  resp.Message,
+			Query:    q,
+		}
+	}
+	return &resp, nil
 }
 
 // do executes an HTTP request. headerOverrides, when non-nil, override global
