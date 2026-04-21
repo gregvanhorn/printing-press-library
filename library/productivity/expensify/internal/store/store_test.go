@@ -146,3 +146,168 @@ func TestListPeople(t *testing.T) {
 		t.Fatalf("order = [%q, %q], want [Alice, Zed]", people[0].DisplayName, people[1].DisplayName)
 	}
 }
+
+// upsertDamageReport is a small helper that cuts down test boilerplate by
+// building a Report with the common fields set and calling UpsertReport.
+func upsertDamageReport(t *testing.T, s *Store, id string, stateNum int64, total int64, created, policy string) {
+	t.Helper()
+	r := Report{
+		ReportID:    id,
+		PolicyID:    policy,
+		Title:       "report " + id,
+		Status:      "",
+		Total:       total,
+		Currency:    "USD",
+		Created:     created,
+		LastUpdated: created,
+		StateNum:    stateNum,
+	}
+	if err := s.UpsertReport(r); err != nil {
+		t.Fatalf("UpsertReport(%s): %v", id, err)
+	}
+}
+
+// TestDamage_BucketsByStateNum verifies each stateNum maps to the documented
+// bucket: 0→Expensed, 1→Pending, 3→Approved, 4→Paid.
+func TestDamage_BucketsByStateNum(t *testing.T) {
+	s := openTestStore(t)
+	month := "2026-04"
+	created := "2026-04-15"
+	upsertDamageReport(t, s, "r0", 0, 1000, created, "")
+	upsertDamageReport(t, s, "r1", 1, 2000, created, "")
+	upsertDamageReport(t, s, "r3", 3, 3000, created, "")
+	upsertDamageReport(t, s, "r4", 4, 4000, created, "")
+
+	bd, err := s.Damage(month, "")
+	if err != nil {
+		t.Fatalf("Damage: %v", err)
+	}
+	if bd.Expensed != 1000 || bd.ExpensedCount != 1 {
+		t.Errorf("Expensed = ($%d,%d), want ($1000,1)", bd.Expensed, bd.ExpensedCount)
+	}
+	if bd.PendingApproval != 2000 || bd.PendingCount != 1 {
+		t.Errorf("Pending = ($%d,%d), want ($2000,1)", bd.PendingApproval, bd.PendingCount)
+	}
+	if bd.Approved != 3000 || bd.ApprovedCount != 1 {
+		t.Errorf("Approved = ($%d,%d), want ($3000,1)", bd.Approved, bd.ApprovedCount)
+	}
+	if bd.Paid != 4000 || bd.PaidCount != 1 {
+		t.Errorf("Paid = ($%d,%d), want ($4000,1)", bd.Paid, bd.PaidCount)
+	}
+}
+
+// TestDamage_NoReportsForMonth verifies that an empty store and a store with
+// reports outside the target month both return all-zero buckets without error.
+func TestDamage_NoReportsForMonth(t *testing.T) {
+	s := openTestStore(t)
+
+	// Empty store.
+	bd, err := s.Damage("2026-04", "")
+	if err != nil {
+		t.Fatalf("Damage(empty): %v", err)
+	}
+	if bd.Expensed != 0 || bd.ExpensedCount != 0 ||
+		bd.PendingApproval != 0 || bd.PendingCount != 0 ||
+		bd.Approved != 0 || bd.ApprovedCount != 0 ||
+		bd.Paid != 0 || bd.PaidCount != 0 ||
+		bd.MissingReceipts != 0 {
+		t.Fatalf("empty store: buckets = %+v, want all zero", bd)
+	}
+
+	// Report outside the target month.
+	upsertDamageReport(t, s, "r-feb", 0, 5000, "2026-02-10", "")
+	bd, err = s.Damage("2026-04", "")
+	if err != nil {
+		t.Fatalf("Damage(other month): %v", err)
+	}
+	if bd.Expensed != 0 || bd.ExpensedCount != 0 {
+		t.Fatalf("other-month report leaked: %+v", bd)
+	}
+}
+
+// TestDamage_RawJsonFallback verifies that a row with state_num=NULL but a
+// raw_json containing stateNum=3 buckets to Approved via the fallback parse.
+func TestDamage_RawJsonFallback(t *testing.T) {
+	s := openTestStore(t)
+	raw := `{"stateNum":3,"total":-5000,"currency":"USD","created":"2026-04-15"}`
+	// Direct INSERT to force state_num=NULL while still carrying raw_json.
+	_, err := s.DB.Exec(`INSERT INTO reports
+		(report_id, policy_id, title, status, total, currency, created, last_updated, expense_count, state_num, raw_json, synced_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)`,
+		"r-null", "", "legacy row", "", int64(3000), "USD", "2026-04-15", "2026-04-15", 0, raw, "2026-04-15T00:00:00Z")
+	if err != nil {
+		t.Fatalf("direct insert: %v", err)
+	}
+
+	bd, err := s.Damage("2026-04", "")
+	if err != nil {
+		t.Fatalf("Damage: %v", err)
+	}
+	if bd.Approved != 3000 || bd.ApprovedCount != 1 {
+		t.Fatalf("Approved = ($%d,%d), want ($3000,1); full: %+v", bd.Approved, bd.ApprovedCount, bd)
+	}
+}
+
+// TestDamage_State5_BucketsToPaid verifies that BILLING (state 5) is close
+// enough to reimbursed for user-facing totals.
+func TestDamage_State5_BucketsToPaid(t *testing.T) {
+	s := openTestStore(t)
+	upsertDamageReport(t, s, "r5", 5, 7500, "2026-04-10", "")
+	bd, err := s.Damage("2026-04", "")
+	if err != nil {
+		t.Fatalf("Damage: %v", err)
+	}
+	if bd.Paid != 7500 || bd.PaidCount != 1 {
+		t.Fatalf("Paid = ($%d,%d), want ($7500,1); full: %+v", bd.Paid, bd.PaidCount, bd)
+	}
+}
+
+// TestDamage_State6_BucketsToPaid verifies stateNum=6 maps to Paid.
+func TestDamage_State6_BucketsToPaid(t *testing.T) {
+	s := openTestStore(t)
+	upsertDamageReport(t, s, "r6", 6, 9900, "2026-04-10", "")
+	bd, err := s.Damage("2026-04", "")
+	if err != nil {
+		t.Fatalf("Damage: %v", err)
+	}
+	if bd.Paid != 9900 || bd.PaidCount != 1 {
+		t.Fatalf("Paid = ($%d,%d), want ($9900,1); full: %+v", bd.Paid, bd.PaidCount, bd)
+	}
+}
+
+// TestDamage_InvalidRawJson verifies that a NULL state_num + junk raw_json
+// falls through safely into the Expensed bucket with no error.
+func TestDamage_InvalidRawJson(t *testing.T) {
+	s := openTestStore(t)
+	_, err := s.DB.Exec(`INSERT INTO reports
+		(report_id, policy_id, title, status, total, currency, created, last_updated, expense_count, state_num, raw_json, synced_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)`,
+		"r-bad", "", "bad json", "", int64(1200), "USD", "2026-04-03", "2026-04-03", 0, "{not-valid-json", "2026-04-03T00:00:00Z")
+	if err != nil {
+		t.Fatalf("direct insert: %v", err)
+	}
+
+	bd, err := s.Damage("2026-04", "")
+	if err != nil {
+		t.Fatalf("Damage: %v", err)
+	}
+	if bd.Expensed != 1200 || bd.ExpensedCount != 1 {
+		t.Fatalf("Expensed = ($%d,%d), want ($1200,1); full: %+v", bd.Expensed, bd.ExpensedCount, bd)
+	}
+}
+
+// TestDamage_PolicyIDFilter verifies that a policy filter narrows the result
+// to reports under that policy only.
+func TestDamage_PolicyIDFilter(t *testing.T) {
+	s := openTestStore(t)
+	upsertDamageReport(t, s, "r-a", 0, 1111, "2026-04-12", "POLICY_A")
+	upsertDamageReport(t, s, "r-b", 0, 2222, "2026-04-12", "POLICY_B")
+
+	bd, err := s.Damage("2026-04", "POLICY_A")
+	if err != nil {
+		t.Fatalf("Damage: %v", err)
+	}
+	if bd.Expensed != 1111 || bd.ExpensedCount != 1 {
+		t.Fatalf("Expensed (A only) = ($%d,%d), want ($1111,1); full: %+v", bd.Expensed, bd.ExpensedCount, bd)
+	}
+}

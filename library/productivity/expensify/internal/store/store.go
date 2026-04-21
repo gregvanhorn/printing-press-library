@@ -760,56 +760,67 @@ type StatusBreakdown struct {
 	MissingReceipts int
 }
 
-// Damage returns an at-a-glance breakdown by report status for a month.
+// Damage returns an at-a-glance breakdown by report state for a month.
+//
+// Reports are bucketed using the Expensify `stateNum` lifecycle field
+// (0=OPEN, 1=SUBMITTED, 2=CLOSED, 3=APPROVED, 4=REIMBURSED, 5=BILLING, 6=PAID).
+// When `reports.state_num` is NULL (rows synced before Unit 5), the `raw_json`
+// field is parsed to pull `stateNum` out as a fallback. Rows with no usable
+// state_num fall through to the Expensed bucket as the safest default.
 func (s *Store) Damage(month, policyID string) (StatusBreakdown, error) {
 	out := StatusBreakdown{}
-	// Get expenses for the month
 	args := []any{}
 	where := []string{}
 	if month != "" {
-		where = append(where, "substr(e.date,1,7) = ?")
+		where = append(where, "substr(created,1,7) = ?")
 		args = append(args, month)
 	}
 	if policyID != "" {
-		where = append(where, "e.policy_id = ?")
+		where = append(where, "policy_id = ?")
 		args = append(args, policyID)
 	}
-	q := `SELECT coalesce(r.status,''), count(*), coalesce(sum(e.amount),0)
-		FROM expenses e
-		LEFT JOIN reports r ON r.report_id = e.report_id`
+	q := `SELECT state_num, coalesce(raw_json,''), coalesce(total,0) FROM reports`
 	if len(where) > 0 {
 		q += " WHERE " + strings.Join(where, " AND ")
 	}
-	q += " GROUP BY coalesce(r.status,'')"
 	rows, err := s.DB.Query(q, args...)
 	if err != nil {
 		return out, err
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var st string
-		var count int
+		var stateNum sql.NullInt64
+		var rawJSON string
 		var total int64
-		if err := rows.Scan(&st, &count, &total); err != nil {
+		if err := rows.Scan(&stateNum, &rawJSON, &total); err != nil {
 			return out, err
 		}
-		s := strings.ToUpper(st)
-		switch {
-		case s == "" || s == "OPEN":
-			out.Expensed += total
-			out.ExpensedCount += count
-		case strings.HasPrefix(s, "SUBMIT") || s == "PROCESSING":
+		var st int64 = -1
+		if stateNum.Valid {
+			st = stateNum.Int64
+		} else if rawJSON != "" {
+			st = parseStateNumFromRawJSON(rawJSON)
+		}
+		switch st {
+		case 1:
 			out.PendingApproval += total
-			out.PendingCount += count
-		case strings.HasPrefix(s, "APPROVED"):
+			out.PendingCount++
+		case 2, 3:
 			out.Approved += total
-			out.ApprovedCount += count
-		case strings.HasPrefix(s, "REIMBURSED") || strings.HasPrefix(s, "PAID"):
+			out.ApprovedCount++
+		case 4, 5, 6:
 			out.Paid += total
-			out.PaidCount += count
+			out.PaidCount++
+		default:
+			// stateNum 0, unknown, or unparseable → Expensed (safe default)
+			out.Expensed += total
+			out.ExpensedCount++
 		}
 	}
-	// Missing receipts
+	if err := rows.Err(); err != nil {
+		return out, err
+	}
+	// Missing receipts — unchanged: expenses with no receipt in the month.
 	mq := `SELECT count(*) FROM expenses e WHERE (e.receipt IS NULL OR e.receipt = '')`
 	mArgs := []any{}
 	if month != "" {
@@ -824,6 +835,42 @@ func (s *Store) Damage(month, policyID string) (StatusBreakdown, error) {
 		return out, err
 	}
 	return out, nil
+}
+
+// parseStateNumFromRawJSON pulls the Onyx-style `stateNum` field out of a
+// report's archived raw_json. Returns -1 when the field is absent or the
+// JSON is invalid — callers treat that as "unknown" and bucket to Expensed.
+func parseStateNumFromRawJSON(rawJSON string) int64 {
+	if rawJSON == "" {
+		return -1
+	}
+	var m map[string]any
+	if err := json.Unmarshal([]byte(rawJSON), &m); err != nil {
+		return -1
+	}
+	for _, k := range []string{"stateNum", "statusNum"} {
+		v, ok := m[k]
+		if !ok {
+			continue
+		}
+		switch n := v.(type) {
+		case float64:
+			return int64(n)
+		case int64:
+			return n
+		case int:
+			return int64(n)
+		case string:
+			if n == "" {
+				continue
+			}
+			var i int64
+			if _, err := fmt.Sscanf(n, "%d", &i); err == nil {
+				return i
+			}
+		}
+	}
+	return -1
 }
 
 // RecordAction appends a row to action_log for later undo.

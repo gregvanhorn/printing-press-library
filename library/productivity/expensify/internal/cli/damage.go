@@ -32,6 +32,12 @@ func newDamageCmd(flags *rootFlags) *cobra.Command {
 			if err != nil {
 				return apiErr(err)
 			}
+			// Advisory: if the store has nothing for this month, tell the user
+			// how to populate it. Goes to stderr so JSON / stdout shape is
+			// untouched; exit code stays 0.
+			if damageAllZero(bd) {
+				fmt.Fprintf(cmd.ErrOrStderr(), "No reports synced for %s. Run expensify-pp-cli sync.\n", month)
+			}
 			if flags.asJSON {
 				return flags.printJSON(cmd, map[string]any{
 					"month":            month,
@@ -84,4 +90,14 @@ func resolveDamageMonth(flag string) string {
 
 func money(cents int64) string {
 	return fmt.Sprintf("$%.2f", float64(cents)/100)
+}
+
+// damageAllZero reports whether every report bucket and MissingReceipts is
+// zero — the signal we use to hint that the caller needs to run sync.
+func damageAllZero(bd store.StatusBreakdown) bool {
+	return bd.Expensed == 0 && bd.ExpensedCount == 0 &&
+		bd.PendingApproval == 0 && bd.PendingCount == 0 &&
+		bd.Approved == 0 && bd.ApprovedCount == 0 &&
+		bd.Paid == 0 && bd.PaidCount == 0 &&
+		bd.MissingReceipts == 0
 }
