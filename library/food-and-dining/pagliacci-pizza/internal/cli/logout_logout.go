@@ -19,7 +19,7 @@ func newLogoutLogoutCmd(flags *rootFlags) *cobra.Command {
 		Use:   "logout",
 		Aliases: []string{"create"},
 		Short: "Log out of account",
-		Example: "  pagliacci-pizza-pp-cli logout logout",
+		Example: "  pagliacci-pizza-pp-cli logout",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {

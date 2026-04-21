@@ -178,47 +178,65 @@ func newTabWriter(w io.Writer) *tabwriter.Writer {
 	return tabwriter.NewWriter(w, 2, 4, 2, ' ', 0)
 }
 
-// filterFields keeps only the specified comma-separated fields from JSON objects/arrays.
+// filterFields keeps only the specified fields (comma-separated) from JSON objects/arrays.
+// Supports dotted paths like "events.shortName" to descend into nested structures.
+// Arrays are traversed element-wise: "events.shortName" keeps shortName on each event.
 func filterFields(data json.RawMessage, fields string) json.RawMessage {
-	wanted := map[string]bool{}
+	var paths [][]string
 	for _, f := range strings.Split(fields, ",") {
 		f = strings.TrimSpace(f)
-		if f != "" {
-			wanted[f] = true
+		if f == "" {
+			continue
 		}
+		parts := strings.Split(f, ".")
+		paths = append(paths, parts)
 	}
-	if len(wanted) == 0 {
+	if len(paths) == 0 {
 		return data
 	}
+	return filterFieldsRec(data, paths)
+}
 
-	// Try array of objects
-	var items []map[string]json.RawMessage
-	if json.Unmarshal(data, &items) == nil {
-		filtered := make([]map[string]json.RawMessage, len(items))
-		for i, item := range items {
-			m := map[string]json.RawMessage{}
-			for k, v := range item {
-				if wanted[k] {
-					m[k] = v
-				}
-			}
-			filtered[i] = m
+// filterFieldsRec applies path filters to a JSON value. Each path is a list of
+// segments; arrays descend element-wise.
+func filterFieldsRec(data json.RawMessage, paths [][]string) json.RawMessage {
+	var arr []json.RawMessage
+	if err := json.Unmarshal(data, &arr); err == nil {
+		out := make([]json.RawMessage, len(arr))
+		for i, el := range arr {
+			out[i] = filterFieldsRec(el, paths)
 		}
-		out, _ := json.Marshal(filtered)
-		return out
+		result, _ := json.Marshal(out)
+		return result
 	}
 
-	// Try single object
 	var obj map[string]json.RawMessage
-	if json.Unmarshal(data, &obj) == nil {
-		m := map[string]json.RawMessage{}
-		for k, v := range obj {
-			if wanted[k] {
-				m[k] = v
+	if err := json.Unmarshal(data, &obj); err == nil {
+		keepWhole := map[string]bool{}
+		subPaths := map[string][][]string{}
+		for _, p := range paths {
+			if len(p) == 0 {
+				continue
+			}
+			head := p[0]
+			if len(p) == 1 {
+				keepWhole[head] = true
+			} else {
+				subPaths[head] = append(subPaths[head], p[1:])
 			}
 		}
-		out, _ := json.Marshal(m)
-		return out
+		filtered := map[string]json.RawMessage{}
+		for k, v := range obj {
+			if keepWhole[k] {
+				filtered[k] = v
+				continue
+			}
+			if subs, ok := subPaths[k]; ok {
+				filtered[k] = filterFieldsRec(v, subs)
+			}
+		}
+		result, _ := json.Marshal(filtered)
+		return result
 	}
 
 	return data

@@ -269,68 +269,89 @@ func paginatedGet(c interface {
 	return json.RawMessage(result), nil
 }
 
-// filterFields keeps only the specified comma-separated fields from JSON objects/arrays.
+// filterFields keeps only the specified fields (comma-separated) from JSON objects/arrays.
+// Supports dotted paths like "events.shortName" to descend into nested structures.
+// Arrays are traversed element-wise: "events.shortName" keeps shortName on each event.
 func filterFields(data json.RawMessage, fields string) json.RawMessage {
-	wanted := map[string]bool{}
+	var paths [][]string
 	for _, f := range strings.Split(fields, ",") {
 		f = strings.TrimSpace(f)
-		if f != "" {
-			// Normalize to lowercase for case-insensitive matching
-			wanted[strings.ToLower(f)] = true
+		if f == "" {
+			continue
 		}
+		parts := strings.Split(f, ".")
+		for i := range parts {
+			parts[i] = strings.ToLower(parts[i])
+		}
+		paths = append(paths, parts)
 	}
-	if len(wanted) == 0 {
+	if len(paths) == 0 {
 		return data
 	}
+	return filterFieldsRec(data, paths)
+}
 
-	// Try array of objects
-	var items []map[string]json.RawMessage
-	if json.Unmarshal(data, &items) == nil {
-		filtered := make([]map[string]json.RawMessage, len(items))
-		for i, item := range items {
-			m := map[string]json.RawMessage{}
-			for k, v := range item {
-				if fieldMatchesSelect(k, wanted) {
-					m[k] = v
-				}
-			}
-			filtered[i] = m
+// filterFieldsRec applies path filters to a JSON value. Each path is a list of
+// lowercase segments; arrays descend element-wise.
+func filterFieldsRec(data json.RawMessage, paths [][]string) json.RawMessage {
+	var arr []json.RawMessage
+	if err := json.Unmarshal(data, &arr); err == nil {
+		out := make([]json.RawMessage, len(arr))
+		for i, el := range arr {
+			out[i] = filterFieldsRec(el, paths)
 		}
-		out, _ := json.Marshal(filtered)
-		return out
+		result, _ := json.Marshal(out)
+		return result
 	}
 
-	// Try single object
 	var obj map[string]json.RawMessage
-	if json.Unmarshal(data, &obj) == nil {
-		m := map[string]json.RawMessage{}
-		for k, v := range obj {
-			if fieldMatchesSelect(k, wanted) {
-				m[k] = v
+	if err := json.Unmarshal(data, &obj); err == nil {
+		keepWhole := map[string]bool{}
+		subPaths := map[string][][]string{}
+		for _, p := range paths {
+			if len(p) == 0 {
+				continue
+			}
+			head := p[0]
+			if len(p) == 1 {
+				keepWhole[head] = true
+			} else {
+				subPaths[head] = append(subPaths[head], p[1:])
 			}
 		}
-		out, _ := json.Marshal(m)
-		return out
+		filtered := map[string]json.RawMessage{}
+		for k, v := range obj {
+			matched := matchSelectSegment(k, keepWhole, subPaths)
+			if matched == "" {
+				continue
+			}
+			if keepWhole[matched] {
+				filtered[k] = v
+				continue
+			}
+			if subs := subPaths[matched]; subs != nil {
+				filtered[k] = filterFieldsRec(v, subs)
+			}
+		}
+		result, _ := json.Marshal(filtered)
+		return result
 	}
 
 	return data
 }
 
-// fieldMatchesSelect checks if a field name matches any of the wanted select fields.
-// Matches case-insensitively and converts camelCase/PascalCase to kebab-case for comparison.
-// "OrderDate" matches "orderdate", "order-date", or "OrderDate".
-func fieldMatchesSelect(fieldName string, wanted map[string]bool) bool {
+// matchSelectSegment returns the matching lowercase segment, or "" if no match.
+// Supports direct case-insensitive match and camelCase→kebab-case conversion.
+func matchSelectSegment(fieldName string, keepWhole map[string]bool, subPaths map[string][][]string) string {
 	lower := strings.ToLower(fieldName)
-	// Direct case-insensitive match: "ID" matches "id"
-	if wanted[lower] {
-		return true
+	if keepWhole[lower] || subPaths[lower] != nil {
+		return lower
 	}
-	// Convert original casing to kebab-case: "OrderDate" → "order-date"
 	kebab := camelToKebab(fieldName)
-	if kebab != lower && wanted[kebab] {
-		return true
+	if kebab != lower && (keepWhole[kebab] || subPaths[kebab] != nil) {
+		return kebab
 	}
-	return false
+	return ""
 }
 
 // camelToKebab converts "orderDate" or "orderdate" to "order-date" by splitting on
@@ -1004,8 +1025,14 @@ type DataProvenance struct {
 	ResourceType string     `json:"resource_type,omitempty"` // which resource type was queried
 }
 
-// printProvenance writes a one-line provenance message to stderr.
+// printProvenance writes a one-line provenance message to stderr for TTY users.
+// Suppressed when stdout is piped or redirected — the JSON response envelope
+// already carries meta.source, so the stderr line is redundant and becomes
+// noise in agent flows that merge stderr into stdout.
 func printProvenance(cmd *cobra.Command, count int, prov DataProvenance) {
+	if !isTerminal(cmd.OutOrStdout()) {
+		return
+	}
 	if prov.Source == "live" {
 		fmt.Fprintf(cmd.ErrOrStderr(), "%d results (live)\n", count)
 		return

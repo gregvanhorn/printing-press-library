@@ -21,7 +21,7 @@ func newLoginLoginCmd(flags *rootFlags) *cobra.Command {
 		Use:   "login",
 		Aliases: []string{"create"},
 		Short: "Log in to account",
-		Example: "  pagliacci-pizza-pp-cli login login --email user@example.com",
+		Example: "  pagliacci-pizza-pp-cli login --email user@example.com",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {

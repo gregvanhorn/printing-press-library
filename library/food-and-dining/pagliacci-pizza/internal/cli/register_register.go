@@ -24,7 +24,7 @@ func newRegisterRegisterCmd(flags *rootFlags) *cobra.Command {
 		Use:   "register",
 		Aliases: []string{"create"},
 		Short: "Create a new account",
-		Example: "  pagliacci-pizza-pp-cli register register --email user@example.com",
+		Example: "  pagliacci-pizza-pp-cli register --email user@example.com",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {
