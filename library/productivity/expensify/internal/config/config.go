@@ -28,6 +28,7 @@ type Config struct {
 	ExpensifyPartnerUserSecret string    `toml:"partner_user_secret"`
 	ExpensifyAccountID         int64     `toml:"expensify_account_id"`
 	ExpensifyEmail             string    `toml:"expensify_email"`
+	LastLoginAt                time.Time `toml:"last_login_at"`
 }
 
 func Load(configPath string) (*Config, error) {
@@ -103,14 +104,36 @@ func (c *Config) HasPartnerAuth() bool {
 }
 
 // SaveSessionToken persists a captured session authToken (and optionally the
-// user's email for display) to the config file.
+// user's email for display) to the config file. LastLoginAt is stamped with
+// the current UTC time so `auth status` and `doctor` can compute token age.
 func (c *Config) SaveSessionToken(token, email string) error {
 	c.ExpensifyAuthToken = token
 	if email != "" {
+		c.ExpensifyEmail = email
 		c.AuthSource = "login:" + email
 	} else {
 		c.AuthSource = "login"
 	}
+	c.LastLoginAt = time.Now().UTC()
+	return c.save()
+}
+
+// SaveSession persists a freshly minted headless session: token + email +
+// (optional) accountID, and stamps LastLoginAt. Used by `auth login --headless`
+// so one write lands every field from an AuthenticateResult atomically.
+// Pass accountID=0 to leave the existing value untouched.
+func (c *Config) SaveSession(token, email string, accountID int64) error {
+	c.ExpensifyAuthToken = token
+	if email != "" {
+		c.ExpensifyEmail = email
+		c.AuthSource = "login:" + email
+	} else {
+		c.AuthSource = "login"
+	}
+	if accountID != 0 {
+		c.ExpensifyAccountID = accountID
+	}
+	c.LastLoginAt = time.Now().UTC()
 	return c.save()
 }
 

@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mvanhorn/printing-press-library/library/productivity/expensify/internal/client"
 	"github.com/mvanhorn/printing-press-library/library/productivity/expensify/internal/config"
 	"github.com/mvanhorn/printing-press-library/library/productivity/expensify/internal/credentials"
 
@@ -96,20 +97,33 @@ func newAuthStatusCmd(flags *rootFlags) *cobra.Command {
 func newAuthLoginCmd(flags *rootFlags) *cobra.Command {
 	var sessionName string
 	var fallbackToken string
+	var headless bool
 	cmd := &cobra.Command{
 		Use:   "login",
 		Short: "Log in via a headed browser and capture the Expensify session authToken",
 		Long: `Launches a headed Chromium browser via 'agent-browser' to https://new.expensify.com/,
 waits for you to finish logging in, then reads the authToken cookie and persists it.
 
-If agent-browser is not installed, falls back to asking for the token on stdin.`,
-		Example: "  expensify-pp-cli auth login",
+If agent-browser is not installed, falls back to asking for the token on stdin.
+
+With --headless, posts stored email+password (see 'auth store-credentials') to
+Expensify's /Authenticate endpoint and mints a session token without a browser.
+Accounts with 2FA fall back with a clear message.`,
+		Example: "  expensify-pp-cli auth login\n  expensify-pp-cli auth login --headless",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, err := config.Load(flags.configPath)
 			if err != nil {
 				return configErr(err)
 			}
 			w := cmd.OutOrStdout()
+
+			// --headless short-circuits the headed-browser path and mints a
+			// token directly from stored credentials. Everything below this
+			// branch preserves the existing headed flow unchanged.
+			if headless {
+				c := client.New(cfg, flags.timeout, 0)
+				return doHeadlessLogin(cmd, cfg, flags, c.Authenticate)
+			}
 
 			// Explicit --token overrides and short-circuits the browser flow.
 			if fallbackToken != "" {
@@ -156,7 +170,82 @@ If agent-browser is not installed, falls back to asking for the token on stdin.`
 	}
 	cmd.Flags().StringVar(&sessionName, "session", "expensify-pp-login", "Named agent-browser session to use")
 	cmd.Flags().StringVar(&fallbackToken, "token", "", "Provide the authToken directly instead of opening a browser")
+	cmd.Flags().BoolVar(&headless, "headless", false, "Mint a session token via /Authenticate using stored email+password (no browser)")
 	return cmd
+}
+
+// authenticator is the signature of Client.Authenticate. Injecting it into
+// doHeadlessLogin makes the CLI-layer integration thin and testable without
+// spinning up an httptest server for every case.
+type authenticator func(email, password string) (*client.AuthenticateResult, error)
+
+// doHeadlessLogin implements `auth login --headless`:
+//
+//  1. Require cfg.ExpensifyEmail (populated by `auth store-credentials`).
+//  2. Fetch the password from the OS keychain.
+//  3. Call the injected authenticator.
+//  4. Translate typed errors into actionable exit codes.
+//  5. Persist token + email + accountID + LastLoginAt on success.
+//
+// The authenticator is passed in so unit tests can swap in a spy; in production
+// it's wired to the live Client.Authenticate.
+func doHeadlessLogin(cmd *cobra.Command, cfg *config.Config, flags *rootFlags, auth authenticator) error {
+	w := cmd.OutOrStdout()
+
+	email := cfg.ExpensifyEmail
+	if email == "" {
+		return usageErr(fmt.Errorf("no email configured. Run `expensify-pp-cli auth store-credentials` first"))
+	}
+
+	password, err := credentials.Get(email)
+	if err != nil {
+		if errors.Is(err, credentials.ErrNotFound) {
+			return usageErr(fmt.Errorf("no credentials stored for %s. Run `auth store-credentials` to save them", email))
+		}
+		return configErr(fmt.Errorf("reading keychain: %w", err))
+	}
+
+	result, err := auth(email, password)
+	if err != nil {
+		switch {
+		case errors.Is(err, client.ErrTwoFactorRequired):
+			fmt.Fprintln(w, "This account requires 2FA. Use `expensify-pp-cli auth login` (without --headless) to complete the 2FA prompt in a browser.")
+			return usageErr(err)
+		case errors.Is(err, client.ErrInvalidCredentials):
+			return authErr(fmt.Errorf("email or password rejected by Expensify. Re-run `auth store-credentials` with fresh credentials, or log in via browser to reset"))
+		default:
+			return apiErr(err)
+		}
+	}
+
+	// SaveSession writes token + email + accountID + LastLoginAt in one shot.
+	if err := cfg.SaveSession(result.AuthToken, pickEmail(result.Email, email), result.AccountID); err != nil {
+		return configErr(err)
+	}
+
+	if flags.asJSON {
+		payload := map[string]any{
+			"email":      pickEmail(result.Email, email),
+			"account_id": result.AccountID,
+			"source":     "headless",
+		}
+		if !result.ExpiresAt.IsZero() {
+			payload["expires_at"] = result.ExpiresAt.Format(time.RFC3339)
+		}
+		return json.NewEncoder(w).Encode(payload)
+	}
+
+	fmt.Fprintln(w, "Session token minted via headless login. Valid for ~2-3h. Run `expensify-pp-cli doctor` to verify.")
+	return nil
+}
+
+// pickEmail prefers the email echoed back by Expensify (canonical casing) but
+// falls back to the email we sent when the response omits it.
+func pickEmail(responseEmail, requestEmail string) string {
+	if responseEmail != "" {
+		return responseEmail
+	}
+	return requestEmail
 }
 
 // captureTokenViaAgentBrowser runs `agent-browser cookies get --json` and
