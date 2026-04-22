@@ -1,0 +1,8 @@
+name: meta-ads-pp-mcp
+description: meta-ads API
+startCommand:
+    command: go run ./cmd/meta-ads-pp-mcp
+env:
+    META_ACCESS_TOKEN:
+        description: meta-ads API credential
+        required: true

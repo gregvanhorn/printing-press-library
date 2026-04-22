@@ -1,0 +1,66 @@
+{
+  "dir": "/Users/pejman/printing-press/library/meta-ads",
+  "spec_path": "/Users/pejman/printing-press/manuscripts/meta-ads/20260421-203144/research/meta-ads-spec.yaml",
+  "verdict": "PASS",
+  "path_check": {
+    "tested": 10,
+    "valid": 10,
+    "valid_pct": 100
+  },
+  "auth_check": {
+    "spec_scheme": "bearer token format (expects \"Bearer \" prefix)",
+    "generated_format": "Bearer ",
+    "match": true,
+    "detail": "spec and generated client both use \"Bearer\""
+  },
+  "dead_flags": {
+    "total": 15,
+    "dead": 0
+  },
+  "dead_functions": {
+    "total": 47,
+    "dead": 0
+  },
+  "pipeline_check": {
+    "sync_calls_domain": true,
+    "search_calls_domain": true,
+    "domain_tables": 2,
+    "detail": "sync uses domain-specific Upsert methods; search uses domain-specific Search methods; 2 domain tables found"
+  },
+  "example_check": {
+    "tested": 10,
+    "with_examples": 8,
+    "valid_examples": 8,
+    "missing": [
+      "novel recommend",
+      "promoted campaigns"
+    ],
+    "detail": "8/10 commands have examples"
+  },
+  "wiring_check": {
+    "command_tree": {
+      "defined": 81,
+      "registered": 81
+    },
+    "config_consistency": {
+      "consistent": true
+    },
+    "workflow_completeness": {
+      "skipped": true,
+      "total_steps": 0,
+      "mapped_steps": 0,
+      "detail": "no workflow_verify.yaml found"
+    }
+  },
+  "novel_features_check": {
+    "planned": 10,
+    "found": 10
+  },
+  "test_presence": {
+    "checked": 2
+  },
+  "naming_check": {
+    "checked": 61
+  },
+  "issues": null
+}

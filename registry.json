@@ -215,6 +215,23 @@
       }
     },
     {
+      "name": "meta-ads",
+      "category": "marketing",
+      "api": "Meta Marketing API",
+      "description": "Meta Marketing API surface plus a local SQLite brain and a budget autopilot that reasons about ROAS, frequency, and utilization. Ported from the magoosh-founder production CLI: purchase-attribution dedup (omni_purchase vs purchase), frequency capacity signal (saturation at 3.5 / warning at 2.5), ROAS decisioning engine (INCREASE/DECREASE/HOLD/FLAG) with validation KPIs and follow-up audit log.",
+      "path": "library/marketing/meta-ads",
+      "mcp": {
+        "binary": "meta-ads-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 45,
+        "auth_type": "bearer_token",
+        "env_vars": [
+          "META_ACCESS_TOKEN"
+        ],
+        "mcp_ready": "full"
+      }
+    },
+    {
       "name": "movie-goat",
       "category": "media-and-entertainment",
       "api": "TMDb + OMDb",

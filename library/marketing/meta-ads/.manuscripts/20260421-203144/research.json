@@ -1,0 +1,189 @@
+{
+  "api_name": "meta-ads",
+  "novelty_score": 9,
+  "alternatives": [
+    {
+      "name": "pipeboard-co/meta-ads-mcp",
+      "url": "https://github.com/pipeboard-co/meta-ads-mcp",
+      "language": "Python",
+      "install_method": "",
+      "stars": 0,
+      "last_updated": "",
+      "command_count": 29,
+      "has_json_output": false,
+      "has_auth_support": false
+    },
+    {
+      "name": "brijr/meta-mcp",
+      "url": "https://github.com/brijr/meta-mcp",
+      "language": "TypeScript",
+      "install_method": "",
+      "stars": 0,
+      "last_updated": "",
+      "command_count": 25,
+      "has_json_output": false,
+      "has_auth_support": false
+    },
+    {
+      "name": "hashcott/meta-ads-mcp-server",
+      "url": "https://github.com/hashcott/meta-ads-mcp-server",
+      "language": "TypeScript",
+      "install_method": "",
+      "stars": 0,
+      "last_updated": "",
+      "command_count": 24,
+      "has_json_output": false,
+      "has_auth_support": false
+    },
+    {
+      "name": "gomarble-ai/facebook-ads-mcp-server",
+      "url": "https://github.com/gomarble-ai/facebook-ads-mcp-server",
+      "language": "Python",
+      "install_method": "",
+      "stars": 0,
+      "last_updated": "",
+      "command_count": 21,
+      "has_json_output": false,
+      "has_auth_support": false
+    },
+    {
+      "name": "attainmentlabs/meta-ads-cli",
+      "url": "https://github.com/attainmentlabs/meta-ads-cli",
+      "language": "Python",
+      "install_method": "",
+      "stars": 0,
+      "last_updated": "",
+      "command_count": 6,
+      "has_json_output": false,
+      "has_auth_support": false
+    }
+  ],
+  "gaps": [],
+  "patterns": [],
+  "recommendation": "proceed",
+  "researched_at": "2026-04-21T20:35:00Z",
+  "novel_features": [
+    {
+      "name": "Budget autopilot (ROAS + frequency + utilization)",
+      "command": "recommend",
+      "description": "Per-campaign INCREASE/DECREASE/HOLD/FLAG recommendations based on ROAS vs target, frequency saturation, and budget utilization. Three strategies (conservative/moderate/aggressive) with per-campaign caps and learning-period awareness.",
+      "rationale": "Requires joining live insights with local budget limits, frequency thresholds, and past decisions. No MCP encodes this decisioning logic."
+    },
+    {
+      "name": "Batch apply with validation KPIs",
+      "command": "apply",
+      "description": "Applies a batch of budget changes from a 'recommend' preview file with a required CONFIRM token, logs each change with validation KPIs and a follow-up date so you can audit outcomes later.",
+      "rationale": "Requires appending structured audit entries with validation_kpis and follow_up_date. No other tool tracks decision outcomes."
+    },
+    {
+      "name": "Attribution double-count verification",
+      "command": "verify roas",
+      "description": "Detects when Meta returns both omni_purchase and purchase in the same response, causing dashboards to double-count revenue. Reports the legacy-combined vs deduplicated ROAS delta per campaign.",
+      "rationale": "Requires priority-ordered selection across action types. Domain knowledge encoded from the magoosh-founder production CLI."
+    },
+    {
+      "name": "Frequency capacity signal",
+      "command": "capacity",
+      "description": "Per-campaign has-headroom/confidence derived from frequency, budget utilization, and delivery status. Defaults: saturation at freq\u003e3.5, warning at freq\u003e=2.5.",
+      "rationale": "Meta has no 'lost impression share budget' field like Google. The capacity signal is derived — no MCP ships the heuristic."
+    },
+    {
+      "name": "Decision log search + follow-ups due",
+      "command": "history",
+      "description": "FTS5-indexed audit log. 'history search' finds decisions by reasoning text; 'history due' lists applied decisions whose follow-up window has passed and have no analysis yet.",
+      "rationale": "SQLite + FTS5 over append-only decision entries — not possible without a local store."
+    },
+    {
+      "name": "Decision post-mortem",
+      "command": "decision-review",
+      "description": "Attach an outcome analysis to a past decision log entry (success/partial/failure/inconclusive) with observation and hypothesis for the next pass. Alias for 'history review'.",
+      "rationale": "Entry-type-aware append-only writes that link back to original_log_id. Enables the recommendations engine to learn from past decisions."
+    },
+    {
+      "name": "Offline SQL query",
+      "command": "query",
+      "description": "Read-only SQL REPL over the local SQLite store. SELECT/PRAGMA/EXPLAIN/WITH only. Use json_extract() to pull fields from the blob-stored resources.",
+      "rationale": "No MCP can ship this — they proxy the Graph API. A local mirror + SQL unlocks analysis MCPs can't do."
+    },
+    {
+      "name": "Delta sync via activities cursor",
+      "command": "sync",
+      "description": "Incremental local-store sync using the generator's resumable cursor system. Full resync via --full; targeted resync via --resources.",
+      "rationale": "Meta has no updated_since filter; the generator's per-resource cursor tracking fills the gap."
+    },
+    {
+      "name": "Creative fatigue detection (stub)",
+      "command": "fatigue",
+      "description": "Planned: find ads where CPM and frequency rise while CTR falls across a rolling window. Ships as a structural stub in this iteration — see command Long help for the SQL one-liner that reproduces today.",
+      "rationale": "Requires multi-day insights stored across a rolling window. The generator's /sync captures the most recent date-preset window only; the time-series slice isn't yet wired."
+    },
+    {
+      "name": "Budget pacing monitor (stub)",
+      "command": "pace",
+      "description": "Planned: hourly spend-rate vs daily_budget with ETA-to-cap per campaign. Ships as a structural stub in this iteration.",
+      "rationale": "Requires hourly insights with minute-level time_increment. Current /sync uses day-level granularity."
+    }
+  ],
+  "novel_features_built": [
+    {
+      "name": "Budget autopilot (ROAS + frequency + utilization)",
+      "command": "recommend",
+      "description": "Per-campaign INCREASE/DECREASE/HOLD/FLAG recommendations based on ROAS vs target, frequency saturation, and budget utilization. Three strategies (conservative/moderate/aggressive) with per-campaign caps and learning-period awareness.",
+      "rationale": "Requires joining live insights with local budget limits, frequency thresholds, and past decisions. No MCP encodes this decisioning logic."
+    },
+    {
+      "name": "Batch apply with validation KPIs",
+      "command": "apply",
+      "description": "Applies a batch of budget changes from a 'recommend' preview file with a required CONFIRM token, logs each change with validation KPIs and a follow-up date so you can audit outcomes later.",
+      "rationale": "Requires appending structured audit entries with validation_kpis and follow_up_date. No other tool tracks decision outcomes."
+    },
+    {
+      "name": "Attribution double-count verification",
+      "command": "verify roas",
+      "description": "Detects when Meta returns both omni_purchase and purchase in the same response, causing dashboards to double-count revenue. Reports the legacy-combined vs deduplicated ROAS delta per campaign.",
+      "rationale": "Requires priority-ordered selection across action types. Domain knowledge encoded from the magoosh-founder production CLI."
+    },
+    {
+      "name": "Frequency capacity signal",
+      "command": "capacity",
+      "description": "Per-campaign has-headroom/confidence derived from frequency, budget utilization, and delivery status. Defaults: saturation at freq\u003e3.5, warning at freq\u003e=2.5.",
+      "rationale": "Meta has no 'lost impression share budget' field like Google. The capacity signal is derived — no MCP ships the heuristic."
+    },
+    {
+      "name": "Decision log search + follow-ups due",
+      "command": "history",
+      "description": "FTS5-indexed audit log. 'history search' finds decisions by reasoning text; 'history due' lists applied decisions whose follow-up window has passed and have no analysis yet.",
+      "rationale": "SQLite + FTS5 over append-only decision entries — not possible without a local store."
+    },
+    {
+      "name": "Decision post-mortem",
+      "command": "decision-review",
+      "description": "Attach an outcome analysis to a past decision log entry (success/partial/failure/inconclusive) with observation and hypothesis for the next pass. Alias for 'history review'.",
+      "rationale": "Entry-type-aware append-only writes that link back to original_log_id. Enables the recommendations engine to learn from past decisions."
+    },
+    {
+      "name": "Offline SQL query",
+      "command": "query",
+      "description": "Read-only SQL REPL over the local SQLite store. SELECT/PRAGMA/EXPLAIN/WITH only. Use json_extract() to pull fields from the blob-stored resources.",
+      "rationale": "No MCP can ship this — they proxy the Graph API. A local mirror + SQL unlocks analysis MCPs can't do."
+    },
+    {
+      "name": "Delta sync via activities cursor",
+      "command": "sync",
+      "description": "Incremental local-store sync using the generator's resumable cursor system. Full resync via --full; targeted resync via --resources.",
+      "rationale": "Meta has no updated_since filter; the generator's per-resource cursor tracking fills the gap."
+    },
+    {
+      "name": "Creative fatigue detection (stub)",
+      "command": "fatigue",
+      "description": "Planned: find ads where CPM and frequency rise while CTR falls across a rolling window. Ships as a structural stub in this iteration — see command Long help for the SQL one-liner that reproduces today.",
+      "rationale": "Requires multi-day insights stored across a rolling window. The generator's /sync captures the most recent date-preset window only; the time-series slice isn't yet wired."
+    },
+    {
+      "name": "Budget pacing monitor (stub)",
+      "command": "pace",
+      "description": "Planned: hourly spend-rate vs daily_budget with ETA-to-cap per campaign. Ships as a structural stub in this iteration.",
+      "rationale": "Requires hourly insights with minute-level time_increment. Current /sync uses day-level granularity."
+    }
+  ]
+}

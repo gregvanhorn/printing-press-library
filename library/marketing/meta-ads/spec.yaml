@@ -1,0 +1,1423 @@
+name: meta-ads
+description: "Meta Marketing API CLI with local SQLite and budget autopilot"
+version: "0.1.0"
+base_url: "https://graph.facebook.com/v23.0"
+
+auth:
+  type: bearer_token
+  header: "Authorization"
+  format: "Bearer {token}"
+  env_vars:
+    - META_ACCESS_TOKEN
+
+config:
+  format: toml
+  path: "~/.config/meta-ads-pp-cli/config.toml"
+
+resources:
+  accounts:
+    description: "Ad accounts: listing, details, pages, activity log"
+    endpoints:
+      list:
+        method: GET
+        path: "/me/adaccounts"
+        description: "List accessible ad accounts"
+        params:
+          - name: fields
+            type: string
+            default: "id,name,account_id,account_status,currency,timezone_name,business_name,funding_source_details"
+            description: "Comma-separated fields to return"
+          - name: limit
+            type: int
+            default: 100
+            description: "Max accounts to return"
+        response:
+          type: array
+          item: AdAccount
+        response_path: data
+
+      get:
+        method: GET
+        path: "/{account_id}"
+        description: "Get ad account details"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID (with or without act_ prefix)"
+          - name: fields
+            type: string
+            default: "id,name,account_id,account_status,currency,timezone_name,business_name,amount_spent,balance,disable_reason,funding_source_details"
+            description: "Comma-separated fields"
+        response:
+          type: object
+          item: AdAccount
+
+      pages:
+        method: GET
+        path: "/{account_id}/promote_pages"
+        description: "List Facebook pages associated with this ad account"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+        response:
+          type: array
+          item: Page
+        response_path: data
+
+      activities:
+        method: GET
+        path: "/{account_id}/activities"
+        description: "List account-level change events (change log)"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+          - name: since
+            type: string
+            description: "Start date (ISO8601). Max 29 days back."
+          - name: until
+            type: string
+            description: "End date (ISO8601)"
+          - name: limit
+            type: int
+            default: 100
+            description: "Max events"
+        response:
+          type: array
+          item: Activity
+        response_path: data
+
+      users:
+        method: GET
+        path: "/{account_id}/assigned_users"
+        description: "List assigned users on the ad account"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+        response:
+          type: array
+          item: User
+        response_path: data
+
+  campaigns:
+    description: "Campaigns: list, CRUD, insights, budget schedules, diagnostics"
+    endpoints:
+      list:
+        method: GET
+        path: "/{account_id}/campaigns"
+        description: "List campaigns under an ad account"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+          - name: fields
+            type: string
+            default: "id,name,status,effective_status,daily_budget,lifetime_budget,objective,bid_strategy,start_time,stop_time"
+            description: "Comma-separated fields"
+          - name: status
+            type: string
+            default: "all"
+            enum: [enabled, paused, all]
+            description: "Filter by effective_status: enabled, paused, or all"
+          - name: limit
+            type: int
+            default: 100
+            description: "Max campaigns per page"
+        response:
+          type: array
+          item: Campaign
+        response_path: data
+        pagination:
+          type: cursor
+          cursor_field: "paging.cursors.after"
+          has_more_field: "paging.next"
+
+      get:
+        method: GET
+        path: "/{campaign_id}"
+        description: "Get a single campaign"
+        params:
+          - name: campaign_id
+            type: string
+            required: true
+            positional: true
+            description: "Campaign ID"
+          - name: fields
+            type: string
+            default: "id,name,status,effective_status,daily_budget,lifetime_budget,objective,bid_strategy,start_time,stop_time,special_ad_categories"
+            description: "Comma-separated fields"
+        response:
+          type: object
+          item: Campaign
+
+      create:
+        method: POST
+        path: "/{account_id}/campaigns"
+        description: "Create a new campaign (PAUSED by default)"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+        body:
+          - name: name
+            type: string
+            required: true
+            description: "Campaign name"
+          - name: objective
+            type: string
+            required: true
+            enum: [OUTCOME_AWARENESS, OUTCOME_TRAFFIC, OUTCOME_ENGAGEMENT, OUTCOME_LEADS, OUTCOME_SALES, OUTCOME_APP_PROMOTION]
+            description: "Campaign objective (outcome-based)"
+          - name: status
+            type: string
+            default: "PAUSED"
+            enum: [ACTIVE, PAUSED]
+            description: "Initial status (defaults to PAUSED for safety)"
+          - name: daily_budget
+            type: int
+            description: "Daily budget in cents (e.g. 5000 = $50)"
+          - name: lifetime_budget
+            type: int
+            description: "Lifetime budget in cents"
+          - name: bid_strategy
+            type: string
+            enum: [LOWEST_COST_WITHOUT_CAP, LOWEST_COST_WITH_BID_CAP, COST_CAP, LOWEST_COST_WITH_MIN_ROAS]
+            description: "Bid strategy"
+          - name: special_ad_categories
+            type: string
+            default: "[]"
+            description: 'JSON array of special categories, e.g. ["HOUSING"]'
+        response:
+          type: object
+          item: Campaign
+
+      update:
+        method: POST
+        path: "/{campaign_id}"
+        description: "Update a campaign's name/budget/status"
+        params:
+          - name: campaign_id
+            type: string
+            required: true
+            positional: true
+            description: "Campaign ID"
+        body:
+          - name: name
+            type: string
+            description: "New name"
+          - name: daily_budget
+            type: int
+            description: "New daily budget in cents"
+          - name: status
+            type: string
+            enum: [ACTIVE, PAUSED]
+            description: "New status"
+          - name: bid_strategy
+            type: string
+            description: "New bid strategy"
+        response:
+          type: object
+          item: Campaign
+
+      delete:
+        method: DELETE
+        path: "/{campaign_id}"
+        description: "Delete a campaign permanently"
+        params:
+          - name: campaign_id
+            type: string
+            required: true
+            positional: true
+            description: "Campaign ID"
+
+      insights:
+        method: GET
+        path: "/{campaign_id}/insights"
+        description: "Campaign-level insights with attribution dedup"
+        params:
+          - name: campaign_id
+            type: string
+            required: true
+            positional: true
+            description: "Campaign ID"
+          - name: fields
+            type: string
+            default: "campaign_id,campaign_name,spend,conversions,purchase_roas,actions,action_values,clicks,impressions,reach,frequency,cpm,cpc,ctr,cpp"
+            description: "Insights fields"
+          - name: date_preset
+            type: string
+            default: "last_14d"
+            description: "Date preset: last_7d, last_14d, last_30d, etc."
+          - name: time_range
+            type: string
+            description: 'Custom time range as JSON: {"since":"2026-04-01","until":"2026-04-14"}'
+          - name: breakdowns
+            type: string
+            description: "Comma-separated breakdowns (age, gender, country, placement, etc.)"
+          - name: action_attribution_windows
+            type: string
+            default: "7d_click,1d_view"
+            description: "Attribution windows"
+          - name: level
+            type: string
+            default: "campaign"
+            enum: [campaign, adset, ad]
+            description: "Aggregation level"
+        response:
+          type: array
+          item: Insight
+        response_path: data
+
+      budget_schedules:
+        method: GET
+        path: "/{campaign_id}/budget_schedules"
+        description: "List scheduled budget increases for a campaign"
+        params:
+          - name: campaign_id
+            type: string
+            required: true
+            positional: true
+            description: "Campaign ID"
+        response:
+          type: array
+          item: BudgetSchedule
+        response_path: data
+
+      create_budget_schedule:
+        method: POST
+        path: "/{campaign_id}/budget_schedules"
+        description: "Schedule a budget increase window"
+        params:
+          - name: campaign_id
+            type: string
+            required: true
+            positional: true
+            description: "Campaign ID"
+        body:
+          - name: budget_value
+            type: int
+            required: true
+            description: "Budget value (cents for absolute, basis points for multiplier)"
+          - name: budget_value_type
+            type: string
+            default: "ABSOLUTE_AMOUNT"
+            enum: [ABSOLUTE_AMOUNT, MULTIPLIER]
+            description: "Value type"
+          - name: time_start
+            type: int
+            required: true
+            description: "Start time as Unix timestamp"
+          - name: time_end
+            type: int
+            required: true
+            description: "End time as Unix timestamp"
+          - name: recurrence_type
+            type: string
+            default: "ONE_TIME"
+            enum: [ONE_TIME, WEEKLY, MONTHLY]
+            description: "Recurrence"
+        response:
+          type: object
+          item: BudgetSchedule
+
+  adsets:
+    description: "Ad sets: targeting, budget, optimization — CRUD and insights"
+    endpoints:
+      list_by_account:
+        method: GET
+        path: "/{account_id}/adsets"
+        description: "List ad sets in an ad account"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+          - name: fields
+            type: string
+            default: "id,name,campaign_id,status,effective_status,daily_budget,lifetime_budget,optimization_goal,billing_event,bid_strategy,targeting,start_time,end_time"
+            description: "Fields"
+          - name: limit
+            type: int
+            default: 100
+            description: "Max ad sets"
+        response:
+          type: array
+          item: AdSet
+        response_path: data
+
+      list_by_campaign:
+        method: GET
+        path: "/{campaign_id}/adsets"
+        description: "List ad sets inside a specific campaign"
+        params:
+          - name: campaign_id
+            type: string
+            required: true
+            positional: true
+            description: "Campaign ID"
+          - name: fields
+            type: string
+            default: "id,name,campaign_id,status,effective_status,daily_budget,optimization_goal,billing_event,bid_strategy"
+            description: "Fields"
+        response:
+          type: array
+          item: AdSet
+        response_path: data
+
+      get:
+        method: GET
+        path: "/{adset_id}"
+        description: "Get a single ad set"
+        params:
+          - name: adset_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad set ID"
+          - name: fields
+            type: string
+            default: "id,name,campaign_id,status,effective_status,daily_budget,lifetime_budget,optimization_goal,billing_event,bid_strategy,targeting,frequency_control_specs,start_time,end_time"
+            description: "Fields"
+        response:
+          type: object
+          item: AdSet
+
+      create:
+        method: POST
+        path: "/{account_id}/adsets"
+        description: "Create a new ad set (PAUSED by default)"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+        body:
+          - name: name
+            type: string
+            required: true
+            description: "Ad set name"
+          - name: campaign_id
+            type: string
+            required: true
+            description: "Parent campaign ID"
+          - name: daily_budget
+            type: int
+            description: "Daily budget in cents"
+          - name: lifetime_budget
+            type: int
+            description: "Lifetime budget in cents"
+          - name: billing_event
+            type: string
+            default: "IMPRESSIONS"
+            enum: [IMPRESSIONS, LINK_CLICKS, THRUPLAY, PURCHASE]
+            description: "Billing event"
+          - name: optimization_goal
+            type: string
+            required: true
+            description: "Optimization goal (e.g. OFFSITE_CONVERSIONS, LINK_CLICKS, REACH)"
+          - name: bid_amount
+            type: int
+            description: "Bid amount in cents (required for COST_CAP and bid-cap strategies)"
+          - name: targeting
+            type: string
+            required: true
+            description: "Targeting spec as JSON object"
+          - name: status
+            type: string
+            default: "PAUSED"
+            enum: [ACTIVE, PAUSED]
+            description: "Initial status"
+          - name: start_time
+            type: string
+            description: "Start time (ISO8601)"
+          - name: end_time
+            type: string
+            description: "End time (ISO8601)"
+        response:
+          type: object
+          item: AdSet
+
+      update:
+        method: POST
+        path: "/{adset_id}"
+        description: "Update an ad set"
+        params:
+          - name: adset_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad set ID"
+        body:
+          - name: name
+            type: string
+            description: "New name"
+          - name: daily_budget
+            type: int
+            description: "New daily budget in cents"
+          - name: status
+            type: string
+            enum: [ACTIVE, PAUSED]
+            description: "New status"
+          - name: targeting
+            type: string
+            description: "New targeting as JSON"
+          - name: frequency_control_specs
+            type: string
+            description: "Frequency cap spec as JSON"
+          - name: bid_strategy
+            type: string
+            description: "New bid strategy"
+        response:
+          type: object
+          item: AdSet
+
+      delete:
+        method: DELETE
+        path: "/{adset_id}"
+        description: "Delete an ad set"
+        params:
+          - name: adset_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad set ID"
+
+      insights:
+        method: GET
+        path: "/{adset_id}/insights"
+        description: "Ad set insights with attribution dedup"
+        params:
+          - name: adset_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad set ID"
+          - name: fields
+            type: string
+            default: "adset_id,adset_name,spend,conversions,purchase_roas,actions,action_values,clicks,impressions,reach,frequency,cpm,cpc,ctr"
+            description: "Fields"
+          - name: date_preset
+            type: string
+            default: "last_14d"
+            description: "Date preset"
+          - name: breakdowns
+            type: string
+            description: "Breakdowns"
+          - name: action_attribution_windows
+            type: string
+            default: "7d_click,1d_view"
+            description: "Attribution windows"
+        response:
+          type: array
+          item: Insight
+        response_path: data
+
+  ads:
+    description: "Ads: the creative-bearing entity. CRUD, insights, previews."
+    endpoints:
+      list_by_account:
+        method: GET
+        path: "/{account_id}/ads"
+        description: "List ads under an ad account"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+          - name: fields
+            type: string
+            default: "id,name,adset_id,campaign_id,status,effective_status,creative,bid_amount"
+            description: "Fields"
+          - name: limit
+            type: int
+            default: 100
+            description: "Max ads"
+        response:
+          type: array
+          item: Ad
+        response_path: data
+
+      list_by_adset:
+        method: GET
+        path: "/{adset_id}/ads"
+        description: "List ads inside a specific ad set"
+        params:
+          - name: adset_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad set ID"
+          - name: fields
+            type: string
+            default: "id,name,adset_id,status,effective_status,creative"
+            description: "Fields"
+        response:
+          type: array
+          item: Ad
+        response_path: data
+
+      get:
+        method: GET
+        path: "/{ad_id}"
+        description: "Get a single ad"
+        params:
+          - name: ad_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad ID"
+          - name: fields
+            type: string
+            default: "id,name,adset_id,campaign_id,status,effective_status,creative,bid_amount,tracking_specs"
+            description: "Fields"
+        response:
+          type: object
+          item: Ad
+
+      create:
+        method: POST
+        path: "/{account_id}/ads"
+        description: "Create a new ad (PAUSED by default)"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+        body:
+          - name: name
+            type: string
+            required: true
+            description: "Ad name"
+          - name: adset_id
+            type: string
+            required: true
+            description: "Parent ad set ID"
+          - name: creative_id
+            type: string
+            required: true
+            description: "Ad creative ID"
+          - name: status
+            type: string
+            default: "PAUSED"
+            enum: [ACTIVE, PAUSED]
+            description: "Initial status"
+        response:
+          type: object
+          item: Ad
+
+      update:
+        method: POST
+        path: "/{ad_id}"
+        description: "Update an ad"
+        params:
+          - name: ad_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad ID"
+        body:
+          - name: name
+            type: string
+            description: "New name"
+          - name: status
+            type: string
+            enum: [ACTIVE, PAUSED]
+            description: "New status"
+          - name: bid_amount
+            type: int
+            description: "New bid amount in cents"
+        response:
+          type: object
+          item: Ad
+
+      insights:
+        method: GET
+        path: "/{ad_id}/insights"
+        description: "Ad-level insights with attribution dedup"
+        params:
+          - name: ad_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad ID"
+          - name: fields
+            type: string
+            default: "ad_id,ad_name,spend,conversions,purchase_roas,actions,action_values,clicks,impressions,reach,frequency,cpm,cpc,ctr"
+            description: "Fields"
+          - name: date_preset
+            type: string
+            default: "last_14d"
+            description: "Date preset"
+        response:
+          type: array
+          item: Insight
+        response_path: data
+
+      previews:
+        method: GET
+        path: "/{ad_id}/previews"
+        description: "Render an ad across Meta placements"
+        params:
+          - name: ad_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad ID"
+          - name: ad_format
+            type: string
+            default: "DESKTOP_FEED_STANDARD"
+            description: "Placement format (MOBILE_FEED_STANDARD, INSTAGRAM_STANDARD, INSTAGRAM_STORY, etc.)"
+        response:
+          type: array
+          item: AdPreview
+        response_path: data
+
+  creatives:
+    description: "Ad creatives: the headlines, images, CTAs, videos"
+    endpoints:
+      list_by_account:
+        method: GET
+        path: "/{account_id}/adcreatives"
+        description: "List all creatives for an ad account"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+          - name: fields
+            type: string
+            default: "id,name,object_story_spec,effective_object_story_id,image_hash,thumbnail_url,body,title,call_to_action_type,link_url"
+            description: "Fields"
+          - name: limit
+            type: int
+            default: 100
+            description: "Max creatives"
+        response:
+          type: array
+          item: Creative
+        response_path: data
+
+      list_by_ad:
+        method: GET
+        path: "/{ad_id}/adcreatives"
+        description: "List creatives attached to an ad"
+        params:
+          - name: ad_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad ID"
+        response:
+          type: array
+          item: Creative
+        response_path: data
+
+      get:
+        method: GET
+        path: "/{creative_id}"
+        description: "Get a single creative"
+        params:
+          - name: creative_id
+            type: string
+            required: true
+            positional: true
+            description: "Creative ID"
+          - name: fields
+            type: string
+            default: "id,name,object_story_spec,effective_object_story_id,image_hash,thumbnail_url,body,title,call_to_action_type,link_url,asset_feed_spec"
+            description: "Fields"
+        response:
+          type: object
+          item: Creative
+
+      create:
+        method: POST
+        path: "/{account_id}/adcreatives"
+        description: "Create a new creative"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+        body:
+          - name: name
+            type: string
+            required: true
+            description: "Creative name"
+          - name: page_id
+            type: string
+            required: true
+            description: "Facebook page ID"
+          - name: image_hash
+            type: string
+            description: "Uploaded image hash (from upload command)"
+          - name: image_url
+            type: string
+            description: "External image URL (alternative to image_hash)"
+          - name: link_url
+            type: string
+            required: true
+            description: "Destination URL"
+          - name: message
+            type: string
+            description: "Primary text"
+          - name: headline
+            type: string
+            description: "Headline (can be a single string or JSON array for dynamic)"
+          - name: description
+            type: string
+            description: "Description (can be single or JSON array)"
+          - name: call_to_action_type
+            type: string
+            enum: [LEARN_MORE, SHOP_NOW, SIGN_UP, DOWNLOAD, BOOK_TRAVEL, CONTACT_US, APPLY_NOW]
+            description: "CTA type"
+        response:
+          type: object
+          item: Creative
+
+      update:
+        method: POST
+        path: "/{creative_id}"
+        description: "Update a creative's text fields"
+        params:
+          - name: creative_id
+            type: string
+            required: true
+            positional: true
+            description: "Creative ID"
+        body:
+          - name: message
+            type: string
+            description: "New primary text"
+          - name: headline
+            type: string
+            description: "New headline"
+          - name: description
+            type: string
+            description: "New description"
+        response:
+          type: object
+          item: Creative
+
+      upload_image:
+        method: POST
+        path: "/{account_id}/adimages"
+        description: "Upload an image and get an image_hash"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+        body:
+          - name: filename
+            type: string
+            required: true
+            description: "Local path to image file"
+          - name: name
+            type: string
+            description: "Image name"
+        response:
+          type: object
+          item: AdImage
+
+      list_images:
+        method: GET
+        path: "/{account_id}/adimages"
+        description: "List uploaded images in an ad account"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+          - name: fields
+            type: string
+            default: "hash,name,url,width,height,created_time"
+            description: "Fields"
+        response:
+          type: array
+          item: AdImage
+        response_path: data
+
+  audiences:
+    description: "Custom and lookalike audiences"
+    endpoints:
+      list:
+        method: GET
+        path: "/{account_id}/customaudiences"
+        description: "List custom audiences"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+          - name: fields
+            type: string
+            default: "id,name,subtype,description,approximate_count_lower_bound,approximate_count_upper_bound,data_source,delivery_status,operation_status"
+            description: "Fields"
+          - name: limit
+            type: int
+            default: 100
+            description: "Max audiences"
+        response:
+          type: array
+          item: Audience
+        response_path: data
+
+      get:
+        method: GET
+        path: "/{audience_id}"
+        description: "Get audience details and health status"
+        params:
+          - name: audience_id
+            type: string
+            required: true
+            positional: true
+            description: "Audience ID"
+          - name: fields
+            type: string
+            default: "id,name,subtype,description,approximate_count_lower_bound,approximate_count_upper_bound,data_source,delivery_status,operation_status,retention_days,rule"
+            description: "Fields"
+        response:
+          type: object
+          item: Audience
+
+      create:
+        method: POST
+        path: "/{account_id}/customaudiences"
+        description: "Create a custom audience"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+        body:
+          - name: name
+            type: string
+            required: true
+            description: "Audience name"
+          - name: subtype
+            type: string
+            required: true
+            enum: [CUSTOM, WEBSITE, APP, OFFLINE_CONVERSION, CLAIM, PARTNER, MANAGED, VIDEO, LOOKALIKE, ENGAGEMENT]
+            description: "Audience subtype"
+          - name: description
+            type: string
+            description: "Description"
+          - name: rule
+            type: string
+            description: "Audience rule as JSON"
+          - name: retention_days
+            type: int
+            default: 180
+            description: "Retention days (max 180)"
+        response:
+          type: object
+          item: Audience
+
+      create_lookalike:
+        method: POST
+        path: "/{account_id}/customaudiences"
+        description: "Create a lookalike audience from a source"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+        body:
+          - name: name
+            type: string
+            required: true
+            description: "Lookalike name"
+          - name: origin_audience_id
+            type: string
+            required: true
+            description: "Source audience ID"
+          - name: country
+            type: string
+            required: true
+            description: "Target country (ISO code)"
+          - name: ratio
+            type: float
+            default: 0.01
+            description: "Lookalike ratio (0.01 to 0.20)"
+        response:
+          type: object
+          item: Audience
+
+  targeting:
+    description: "Interest, behavior, geo, and demographic targeting search"
+    endpoints:
+      interests:
+        method: GET
+        path: "/search"
+        description: "Search Meta's interest targeting catalog"
+        params:
+          - name: type
+            type: string
+            default: "adinterest"
+            description: "Search type (fixed for this command)"
+          - name: q
+            type: string
+            required: true
+            description: "Search query"
+          - name: limit
+            type: int
+            default: 25
+            description: "Max results"
+        response:
+          type: array
+          item: Interest
+        response_path: data
+
+      suggestions:
+        method: GET
+        path: "/search"
+        description: "Get interest suggestions based on seed interests"
+        params:
+          - name: type
+            type: string
+            default: "adinterestsuggestion"
+            description: "Search type"
+          - name: interest_list
+            type: string
+            required: true
+            description: "JSON array of seed interests, e.g. [\"cooking\",\"travel\"]"
+          - name: limit
+            type: int
+            default: 25
+            description: "Max results"
+        response:
+          type: array
+          item: Interest
+        response_path: data
+
+      validate:
+        method: GET
+        path: "/search"
+        description: "Validate interests by name or ID"
+        params:
+          - name: type
+            type: string
+            default: "adinterestvalid"
+            description: "Search type"
+          - name: interest_list
+            type: string
+            description: "JSON array of names to validate"
+          - name: interest_fbid_list
+            type: string
+            description: "JSON array of FB IDs to validate"
+        response:
+          type: array
+          item: Interest
+        response_path: data
+
+      behaviors:
+        method: GET
+        path: "/search"
+        description: "List behavior targeting options"
+        params:
+          - name: type
+            type: string
+            default: "adTargetingCategory"
+            description: "Search type"
+          - name: class
+            type: string
+            default: "behaviors"
+            description: "Category class"
+          - name: limit
+            type: int
+            default: 100
+            description: "Max results"
+        response:
+          type: array
+          item: TargetingOption
+        response_path: data
+
+      demographics:
+        method: GET
+        path: "/search"
+        description: "List demographic targeting options"
+        params:
+          - name: type
+            type: string
+            default: "adTargetingCategory"
+            description: "Search type"
+          - name: class
+            type: string
+            default: "demographics"
+            description: "Category class (demographics, life_events, income, education, work, family_statuses, etc.)"
+          - name: limit
+            type: int
+            default: 100
+            description: "Max results"
+        response:
+          type: array
+          item: TargetingOption
+        response_path: data
+
+      geo:
+        method: GET
+        path: "/search"
+        description: "Search Meta's geographic targeting database"
+        params:
+          - name: type
+            type: string
+            default: "adgeolocation"
+            description: "Search type"
+          - name: q
+            type: string
+            required: true
+            description: "Search query"
+          - name: location_types
+            type: string
+            default: "country,region,city,zip"
+            description: "Comma-separated location types"
+          - name: limit
+            type: int
+            default: 25
+            description: "Max results"
+        response:
+          type: array
+          item: GeoLocation
+        response_path: data
+
+  insights:
+    description: "Unified insights endpoint at the account level"
+    endpoints:
+      account:
+        method: GET
+        path: "/{account_id}/insights"
+        description: "Account-level performance insights"
+        params:
+          - name: account_id
+            type: string
+            required: true
+            positional: true
+            description: "Ad account ID"
+          - name: fields
+            type: string
+            default: "account_id,spend,conversions,purchase_roas,actions,action_values,clicks,impressions,reach,frequency,cpm,cpc,ctr"
+            description: "Fields"
+          - name: date_preset
+            type: string
+            default: "last_14d"
+            description: "Date preset"
+          - name: time_range
+            type: string
+            description: 'Custom time range as JSON: {"since":"YYYY-MM-DD","until":"YYYY-MM-DD"}'
+          - name: level
+            type: string
+            default: "account"
+            enum: [account, campaign, adset, ad]
+            description: "Aggregation level"
+          - name: breakdowns
+            type: string
+            description: "Breakdowns (age, gender, country, placement, etc.)"
+          - name: action_attribution_windows
+            type: string
+            default: "7d_click,1d_view"
+            description: "Attribution windows"
+          - name: limit
+            type: int
+            default: 100
+            description: "Max rows"
+        response:
+          type: array
+          item: Insight
+        response_path: data
+
+types:
+  AdAccount:
+    fields:
+      - name: id
+        type: string
+      - name: account_id
+        type: string
+      - name: name
+        type: string
+      - name: account_status
+        type: int
+      - name: currency
+        type: string
+      - name: timezone_name
+        type: string
+      - name: business_name
+        type: string
+      - name: amount_spent
+        type: string
+      - name: balance
+        type: string
+
+  Campaign:
+    fields:
+      - name: id
+        type: string
+      - name: name
+        type: string
+      - name: status
+        type: string
+      - name: effective_status
+        type: string
+      - name: daily_budget
+        type: string
+      - name: lifetime_budget
+        type: string
+      - name: objective
+        type: string
+      - name: bid_strategy
+        type: string
+      - name: start_time
+        type: string
+      - name: stop_time
+        type: string
+
+  AdSet:
+    fields:
+      - name: id
+        type: string
+      - name: name
+        type: string
+      - name: campaign_id
+        type: string
+      - name: status
+        type: string
+      - name: effective_status
+        type: string
+      - name: daily_budget
+        type: string
+      - name: lifetime_budget
+        type: string
+      - name: optimization_goal
+        type: string
+      - name: billing_event
+        type: string
+      - name: bid_strategy
+        type: string
+
+  Ad:
+    fields:
+      - name: id
+        type: string
+      - name: name
+        type: string
+      - name: adset_id
+        type: string
+      - name: campaign_id
+        type: string
+      - name: status
+        type: string
+      - name: effective_status
+        type: string
+      - name: creative
+        type: string
+
+  Creative:
+    fields:
+      - name: id
+        type: string
+      - name: name
+        type: string
+      - name: image_hash
+        type: string
+      - name: thumbnail_url
+        type: string
+      - name: body
+        type: string
+      - name: title
+        type: string
+      - name: call_to_action_type
+        type: string
+      - name: link_url
+        type: string
+
+  AdImage:
+    fields:
+      - name: hash
+        type: string
+      - name: name
+        type: string
+      - name: url
+        type: string
+      - name: width
+        type: int
+      - name: height
+        type: int
+
+  AdPreview:
+    fields:
+      - name: body
+        type: string
+
+  Insight:
+    fields:
+      - name: campaign_id
+        type: string
+      - name: campaign_name
+        type: string
+      - name: adset_id
+        type: string
+      - name: adset_name
+        type: string
+      - name: ad_id
+        type: string
+      - name: ad_name
+        type: string
+      - name: spend
+        type: string
+      - name: impressions
+        type: string
+      - name: clicks
+        type: string
+      - name: reach
+        type: string
+      - name: frequency
+        type: string
+      - name: cpm
+        type: string
+      - name: cpc
+        type: string
+      - name: ctr
+        type: string
+      - name: purchase_roas
+        type: string
+      - name: date_start
+        type: string
+      - name: date_stop
+        type: string
+
+  Audience:
+    fields:
+      - name: id
+        type: string
+      - name: name
+        type: string
+      - name: subtype
+        type: string
+      - name: description
+        type: string
+      - name: approximate_count_lower_bound
+        type: int
+      - name: approximate_count_upper_bound
+        type: int
+      - name: delivery_status
+        type: string
+      - name: retention_days
+        type: int
+
+  Interest:
+    fields:
+      - name: id
+        type: string
+      - name: name
+        type: string
+      - name: audience_size_lower_bound
+        type: int
+      - name: audience_size_upper_bound
+        type: int
+      - name: path
+        type: string
+      - name: topic
+        type: string
+
+  TargetingOption:
+    fields:
+      - name: id
+        type: string
+      - name: name
+        type: string
+      - name: type
+        type: string
+      - name: description
+        type: string
+
+  GeoLocation:
+    fields:
+      - name: key
+        type: string
+      - name: name
+        type: string
+      - name: type
+        type: string
+      - name: country_code
+        type: string
+      - name: country_name
+        type: string
+      - name: region
+        type: string
+
+  Activity:
+    fields:
+      - name: event_time
+        type: string
+      - name: event_type
+        type: string
+      - name: actor_id
+        type: string
+      - name: actor_name
+        type: string
+      - name: object_id
+        type: string
+      - name: object_type
+        type: string
+      - name: application_id
+        type: string
+      - name: extra_data
+        type: string
+
+  BudgetSchedule:
+    fields:
+      - name: id
+        type: string
+      - name: budget_value
+        type: int
+      - name: budget_value_type
+        type: string
+      - name: time_start
+        type: int
+      - name: time_end
+        type: int
+      - name: recurrence_type
+        type: string
+
+  Page:
+    fields:
+      - name: id
+        type: string
+      - name: name
+        type: string
+      - name: access_status
+        type: string
+
+  User:
+    fields:
+      - name: id
+        type: string
+      - name: name
+        type: string
+      - name: role
+        type: string
