@@ -272,6 +272,25 @@
       }
     },
     {
+      "name": "producthunt",
+      "category": "marketing",
+      "api": "Product Hunt",
+      "description": "Token-free Product Hunt CLI \u2014 browse today's featured launches, sync locally, and compose views the website itself doesn't expose.",
+      "path": "library/marketing/producthunt",
+      "mcp": {
+        "binary": "producthunt-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 1,
+        "public_tool_count": 1,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full",
+        "manifest_checksum": "sha256:e5d352f3f91743a3837b006628a21b1674b0d9afba0af9464c8ccacabe21faea",
+        "spec_format": "internal",
+        "manifest_url": "library/marketing/producthunt/tools-manifest.json"
+      }
+    },
+    {
       "name": "recipe-goat",
       "category": "food-and-dining",
       "api": "Cross-site recipe aggregator (15 trusted sites) + USDA FoodData Central",
