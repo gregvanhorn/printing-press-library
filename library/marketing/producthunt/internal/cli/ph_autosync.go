@@ -22,11 +22,11 @@ const StaleAfter = 24 * time.Hour
 // scenes without asking for it.
 type AutoSyncMeta struct {
 	Ran           bool   `json:"ran"`
-	Reason        string `json:"reason,omitempty"`         // "fresh", "stale", "never_synced", "disabled"
+	Reason        string `json:"reason,omitempty"` // "fresh", "stale", "never_synced", "disabled"
 	PostsUpserted int    `json:"posts_upserted,omitempty"`
 	ElapsedMs     int64  `json:"elapsed_ms,omitempty"`
 	Error         string `json:"error,omitempty"`
-	LastSyncAt    string `json:"last_sync_at,omitempty"`   // RFC3339
+	LastSyncAt    string `json:"last_sync_at,omitempty"` // RFC3339
 	Caller        string `json:"caller,omitempty"`
 }
 
@@ -212,9 +212,9 @@ func autoWarm(flags *rootFlags, dbPath string) {
 //
 // Usage at a command's end, before printOutputWithFlags:
 //
-//   out, _ := json.Marshal(result)
-//   out = attachAutoSyncMeta(out, flags.autoSyncMeta)
-//   return printOutputWithFlags(w, out, flags)
+//	out, _ := json.Marshal(result)
+//	out = attachAutoSyncMeta(out, flags.autoSyncMeta)
+//	return printOutputWithFlags(w, out, flags)
 func attachAutoSyncMeta(body []byte, meta *AutoSyncMeta) []byte {
 	if meta == nil {
 		return body

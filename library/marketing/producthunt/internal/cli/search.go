@@ -33,17 +33,17 @@ filters via the column:value shorthand. See SQLite FTS5 docs for the full
 query grammar.
 
 Pass --enrich to opportunistically hit the GraphQL API when local results
-are thin. Requires OAuth (run 'auth register' first). Silently skipped
-when no OAuth is configured; the local result set is always returned
-even if enrichment fails.`,
+are thin. Requires Product Hunt GraphQL auth (run 'auth setup' first).
+Silently skipped when no token is configured; the local result set is always
+returned even if enrichment fails.`,
 		Example: `  # Simple keyword
   producthunt-pp-cli search agent
 
   # Phrase + column filter
   producthunt-pp-cli search '"ai agent" author:hoover'
 
-  # Thin local results? Top up from GraphQL (requires OAuth)
-  producthunt-pp-cli search posthog --enrich
+	  # Thin local results? Top up from GraphQL (requires auth setup)
+	  producthunt-pp-cli search posthog --enrich
 
   # Agent-friendly narrow payload
   producthunt-pp-cli search "cli tool" --agent --select 'slug,title,tagline'`,
@@ -62,6 +62,7 @@ even if enrichment fails.`,
 
 			cfg, _ := config.Load(flags.configPath)
 			wantEnrich := enrich || (cfg != nil && cfg.AutoEnrich)
+			var enrichMeta *SearchEnrichMeta
 
 			posts, err := db.SearchPostsFTS(query, limit)
 			if err != nil {
@@ -70,7 +71,7 @@ even if enrichment fails.`,
 
 			if wantEnrich && len(posts) < enrichThreshold {
 				// Opportunistic: best-effort upsert; fail-soft if it errors.
-				_ = attemptEnrich(cmd.Context(), flags, db, cfg, query)
+				enrichMeta, _ = attemptEnrich(cmd.Context(), flags, db, cfg, query)
 				// Re-query so any upserted posts flow through the same FTS
 				// path as locally-cached ones.
 				posts, err = db.SearchPostsFTS(query, limit)
@@ -78,41 +79,71 @@ even if enrichment fails.`,
 					return apiErr(err)
 				}
 			}
-			return printOutputWithFlags(cmd.OutOrStdout(), postsToJSON(posts), flags)
+			out := postsToJSON(posts)
+			if flags.asJSON || flags.agent {
+				meta := map[string]any{}
+				if enrichMeta != nil {
+					meta["enrichment"] = enrichMeta
+				} else if len(posts) < enrichThreshold && (cfg == nil || !cfg.HasGraphQLToken()) {
+					meta["auth_hint"] = graphQLAuthHint("Local Atom history is thin for this search. GraphQL auth can enrich recent Product Hunt posts beyond snapshots you have accumulated.")
+				}
+				if len(meta) > 0 {
+					out = withMeta(out, meta)
+				}
+			}
+			return printOutputWithFlags(cmd.OutOrStdout(), out, flags)
 		},
 	}
 
 	cmd.Flags().IntVar(&limit, "limit", 50, "Max results to return")
 	cmd.Flags().StringVar(&dbPath, "db", "", "Path to local SQLite store")
-	cmd.Flags().BoolVar(&enrich, "enrich", false, "Opportunistically fetch GraphQL results when local store has <threshold results (requires OAuth)")
+	cmd.Flags().BoolVar(&enrich, "enrich", false, "Opportunistically fetch GraphQL results when local store has <threshold results (requires Product Hunt GraphQL auth)")
 	cmd.Flags().IntVar(&enrichThreshold, "enrich-threshold", 3, "Trigger --enrich only when local results drop below this count")
 	return cmd
 }
 
 // attemptEnrich issues one narrow GraphQL posts query for the last 30 days
 // and upserts the matching results into the store. Fail-soft: returns nil
-// when no OAuth, budget is too low, or GraphQL errors — the caller always
+// when no GraphQL token, budget is too low, or GraphQL errors — the caller always
 // gets a useful result set from the local store either way.
 //
 // The enrichment is deliberately narrow:
 //   - single page, ≤ BackfillPageSize posts
 //   - 30-day window
 //   - client-side topic filter (PH's posts field doesn't support fulltext)
-func attemptEnrich(ctx context.Context, flags *rootFlags, db *store.Store, cfg *config.Config, topic string) error {
+type SearchEnrichMeta struct {
+	Attempted       bool                 `json:"attempted"`
+	SkippedReason   string               `json:"skipped_reason,omitempty"`
+	Upserted        int                  `json:"upserted,omitempty"`
+	Error           string               `json:"error,omitempty"`
+	AuthHint        *authImprovementHint `json:"auth_hint,omitempty"`
+	BudgetKnown     bool                 `json:"budget_known,omitempty"`
+	BudgetRemaining float64              `json:"budget_remaining_pct,omitempty"`
+}
+
+func attemptEnrich(ctx context.Context, flags *rootFlags, db *store.Store, cfg *config.Config, topic string) (*SearchEnrichMeta, error) {
 	_ = flags
-	if cfg == nil || !cfg.HasOAuth() {
-		return nil
+	meta := &SearchEnrichMeta{}
+	if cfg == nil || !cfg.HasGraphQLToken() {
+		meta.SkippedReason = "missing_graphql_token"
+		hint := graphQLAuthHint("GraphQL auth unlocks search enrichment when local Atom snapshots are thin.")
+		meta.AuthHint = &hint
+		return meta, nil
 	}
 
 	client := phgraphql.NewClient(cfg.AccessToken, userAgent())
 	// If we've already seen a budget state and we're below the hard stop,
 	// skip rather than risk a 429 mid-enrichment.
 	if b := client.Budget(); b.Known() && b.PercentRemaining() < float64(BackfillBudgetHardStopPct)/100.0 {
-		return nil
+		meta.SkippedReason = "budget_below_hard_stop"
+		meta.BudgetKnown = true
+		meta.BudgetRemaining = b.PercentRemaining()
+		return meta, nil
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
+	meta.Attempted = true
 
 	postedAfter := time.Now().UTC().AddDate(0, 0, -30).Format(time.RFC3339)
 	postedBefore := time.Now().UTC().Format(time.RFC3339)
@@ -123,23 +154,31 @@ func attemptEnrich(ctx context.Context, flags *rootFlags, db *store.Store, cfg *
 		"postedBefore": postedBefore,
 	})
 	if err != nil {
-		return nil
+		meta.Error = err.Error()
+		return meta, nil
+	}
+	if b := client.Budget(); b.Known() {
+		meta.BudgetKnown = true
+		meta.BudgetRemaining = b.PercentRemaining()
 	}
 	if resp.HasErrors() {
-		return nil
+		meta.Error = resp.ErrorMessage()
+		return meta, nil
 	}
 
 	var envelope struct {
 		Posts phgraphql.PostsPage `json:"posts"`
 	}
 	if err := json.Unmarshal(resp.Data, &envelope); err != nil {
-		return nil
+		meta.Error = err.Error()
+		return meta, nil
 	}
 
 	tokens := topicTokens(topic)
 	tx, err := db.DB().Begin()
 	if err != nil {
-		return nil
+		meta.Error = err.Error()
+		return meta, nil
 	}
 	rollback := true
 	defer func() {
@@ -152,12 +191,17 @@ func attemptEnrich(ctx context.Context, flags *rootFlags, db *store.Store, cfg *
 			continue
 		}
 		if err := store.UpsertPost(tx, postNodeToStore(edge.Node)); err != nil {
-			return nil
+			meta.Error = err.Error()
+			return meta, nil
 		}
+		meta.Upserted++
 	}
-	_ = tx.Commit()
+	if err := tx.Commit(); err != nil {
+		meta.Error = err.Error()
+		return meta, nil
+	}
 	rollback = false
-	return nil
+	return meta, nil
 }
 
 // topicTokens splits a topic into lower-case content tokens used for the

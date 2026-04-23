@@ -20,13 +20,13 @@ import (
 // Pagination and budget defaults for backfill. Pulled out as constants so
 // tests and docs can refer to them without hard-coding.
 const (
-	BackfillPageSize        = 20   // PH GraphQL posts edges per page — small & polite
-	BackfillBudgetHardStopPct = 10  // abort when budget remaining drops below this %
+	BackfillPageSize           = 20 // PH GraphQL posts edges per page — small & polite
+	BackfillBudgetHardStopPct  = 10 // abort when budget remaining drops below this %
 	BackfillBudgetSoftBrakePct = 25 // slow pagination to 300ms when below this %
-	BackfillBudgetEasePct     = 50  // no sleep above this %
-	BackfillSleepSoftMs       = 300
-	BackfillSleepEaseMs       = 100
-	BackfillUserAgentBase     = "producthunt-pp-cli"
+	BackfillBudgetEasePct      = 50 // no sleep above this %
+	BackfillSleepSoftMs        = 300
+	BackfillSleepEaseMs        = 100
+	BackfillUserAgentBase      = "producthunt-pp-cli"
 
 	// Complexity cost estimate per page. PH doesn't publish an exact figure,
 	// so we use a conservative approximation: 20 posts × 4 points = ~80.
@@ -39,8 +39,9 @@ const (
 // interrupted runs.
 //
 // Shape:
-//   producthunt-pp-cli backfill [--days N | --from DATE --to DATE] [--dry-run]
-//   producthunt-pp-cli backfill resume [--window-id ID]
+//
+//	producthunt-pp-cli backfill [--days N | --from DATE --to DATE] [--dry-run]
+//	producthunt-pp-cli backfill resume [--window-id ID]
 func newBackfillCmd(flags *rootFlags) *cobra.Command {
 	var (
 		days     int
@@ -60,8 +61,8 @@ Use --dry-run to preview estimated cost before burning API budget; use
 dates. Run 'backfill resume' to continue an interrupted run from the
 last saved cursor.
 
-Requires OAuth credentials: run 'auth register' first. Atom-runtime
-commands (sync, list, search) do NOT use this path and need no auth.`,
+	Requires Product Hunt GraphQL auth: run 'auth setup' first. Atom-runtime
+	commands (sync, list, search) do NOT use this path and need no auth.`,
 		Example: `  # Preview the 30-day backfill cost
   producthunt-pp-cli backfill --days 30 --dry-run
 
@@ -160,10 +161,8 @@ func runBackfill(cmd *cobra.Command, flags *rootFlags, opts backfillOpts) error 
 		return emitDryRunEstimate(cmd, flags, from, to, opts)
 	}
 
-	if !cfg.HasOAuth() {
-		return authErr(fmt.Errorf(
-			"no OAuth token configured. Run `producthunt-pp-cli auth register` first (Atom-runtime commands do not need it; only backfill and search --enrich)",
-		))
+	if !cfg.HasGraphQLToken() {
+		return emitMissingGraphQLAuth(cmd, flags, "backfill needs Product Hunt GraphQL auth because the anonymous Atom feed cannot retroactively fetch historical windows")
 	}
 
 	dbPath := defaultDBPath("producthunt-pp-cli")
@@ -361,6 +360,20 @@ func handleBackfillError(cmd *cobra.Command, flags *rootFlags, db *store.Store, 
 	return apiErr(err)
 }
 
+func emitMissingGraphQLAuth(cmd *cobra.Command, flags *rootFlags, reason string) error {
+	if flags.asJSON || flags.agent {
+		result := map[string]any{
+			"error":                 "missing_graphql_auth",
+			"can_run_anonymously":   false,
+			"anonymous_alternative": "Run `producthunt-pp-cli sync` on a schedule to accumulate Atom history from now forward.",
+			"auth_hint":             graphQLAuthHint(reason),
+		}
+		raw, _ := json.Marshal(result)
+		_ = printOutputWithFlags(cmd.OutOrStdout(), raw, flags)
+	}
+	return authErr(fmt.Errorf("%s. Run `producthunt-pp-cli auth setup` for guided setup, or configure PRODUCTHUNT_DEVELOPER_TOKEN", reason))
+}
+
 // persistAndExitRateLimited saves the cursor and exits with a typed
 // rateLimitErr (exit code 3) and a message the user can act on.
 func persistAndExitRateLimited(cmd *cobra.Command, flags *rootFlags, db *store.Store, state *store.BackfillState, cursor string, pages, upserted int, budget phgraphql.Budget) error {
@@ -417,14 +430,14 @@ func emitDryRunEstimate(cmd *cobra.Command, flags *rootFlags, from, to string, o
 	w := cmd.OutOrStdout()
 	if flags.asJSON {
 		result := map[string]any{
-			"dry_run":                true,
-			"window":                 map[string]string{"from": from, "to": to},
-			"window_days":            windowDays,
-			"estimated_posts":        estPosts,
-			"estimated_pages":        estPages,
-			"estimated_complexity":   estComplexity,
-			"budget_limit":           6250,
-			"percent_of_one_window":  fmt.Sprintf("%.1f%%", float64(estComplexity)/6250.0*100.0),
+			"dry_run":               true,
+			"window":                map[string]string{"from": from, "to": to},
+			"window_days":           windowDays,
+			"estimated_posts":       estPosts,
+			"estimated_pages":       estPages,
+			"estimated_complexity":  estComplexity,
+			"budget_limit":          6250,
+			"percent_of_one_window": fmt.Sprintf("%.1f%%", float64(estComplexity)/6250.0*100.0),
 		}
 		raw, _ := json.Marshal(result)
 		return printOutputWithFlags(w, raw, flags)
@@ -535,8 +548,8 @@ func runBackfillResume(cmd *cobra.Command, flags *rootFlags, windowIDFlag string
 	if err != nil {
 		return configErr(err)
 	}
-	if !cfg.HasOAuth() {
-		return authErr(fmt.Errorf("no OAuth token configured. Run `producthunt-pp-cli auth register` first"))
+	if !cfg.HasGraphQLToken() {
+		return emitMissingGraphQLAuth(cmd, flags, "backfill resume needs the same Product Hunt GraphQL auth used by the original backfill")
 	}
 
 	dbPath := defaultDBPath("producthunt-pp-cli")

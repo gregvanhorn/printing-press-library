@@ -75,8 +75,12 @@ func TestAttemptEnrich_NoOAuthIsNoop(t *testing.T) {
 	// Should return nil without making any HTTP calls — we don't provide
 	// a mock server, so a real attempt would fail on DNS. nil return is
 	// the contract.
-	if err := attemptEnrich(context.Background(), flags, db, cfg, "posthog"); err != nil {
+	meta, err := attemptEnrich(context.Background(), flags, db, cfg, "posthog")
+	if err != nil {
 		t.Fatalf("enrich without OAuth should be a no-op, got err: %v", err)
+	}
+	if meta == nil || meta.SkippedReason != "missing_graphql_token" || meta.AuthHint == nil {
+		t.Fatalf("expected missing auth metadata, got %+v", meta)
 	}
 	count, _ := db.PostCount()
 	if count != 0 {

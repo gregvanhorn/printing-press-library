@@ -13,9 +13,9 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/client"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/config"
+	"github.com/spf13/cobra"
 )
 
 var version = "1.1.0"
@@ -64,8 +64,9 @@ func Execute() error {
 		Long: `Token-free Product Hunt CLI.
 
 Read the public Atom feed, persist a local SQLite history, and compose trend, calendar,
-maker, and tagline views that Product Hunt's own UI hides. No OAuth, no complexity budget,
-no resident browser.
+maker, and tagline views that Product Hunt's own UI hides. Anonymous mode needs no
+OAuth, no complexity budget, and no resident browser; optional GraphQL auth unlocks
+historical backfill and search enrichment.
 
 Highlights (only possible because we keep a local /feed snapshot store):
   • trend <slug>       First-seen and how long a product lingered on the feed

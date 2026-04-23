@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/store"
+	"github.com/spf13/cobra"
 )
 
 func newListCmd(flags *rootFlags) *cobra.Command {

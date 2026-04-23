@@ -8,8 +8,8 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/atom"
+	"github.com/spf13/cobra"
 )
 
 func newInfoCmd(flags *rootFlags) *cobra.Command {

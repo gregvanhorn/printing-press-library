@@ -10,12 +10,14 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+
+	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/config"
 )
 
 // agentContextSchemaVersion is bumped on any breaking change to the JSON
 // shape emitted by `agent-context`. Agents should check this before
-// parsing. Shape at v2 adds optional browser-sniff discovery context.
-const agentContextSchemaVersion = "2"
+// parsing. Shape at v3 adds Product Hunt access tiers and GraphQL auth hints.
+const agentContextSchemaVersion = "3"
 
 // agentContext is the structured description of this CLI consumed by AI
 // agents. Inspired by Cloudflare's /cdn-cgi/explorer/api runtime endpoint
@@ -38,8 +40,15 @@ type agentContextCLI struct {
 }
 
 type agentContextAuth struct {
-	Mode    string   `json:"mode"`
-	EnvVars []string `json:"env_vars"`
+	Mode                 string   `json:"mode"`
+	EnvVars              []string `json:"env_vars"`
+	AnonymousHistoryMode string   `json:"anonymous_history_mode"`
+	GraphQLConfigured    bool     `json:"graphql_configured"`
+	CanBackfill          bool     `json:"can_backfill"`
+	CanEnrichSearch      bool     `json:"can_enrich_search"`
+	SetupCommand         string   `json:"setup_command,omitempty"`
+	SetupURL             string   `json:"setup_url,omitempty"`
+	Unlocked             []string `json:"unlocked,omitempty"`
 }
 
 type agentContextDiscovery struct {
@@ -95,11 +104,8 @@ reading source. Schema is versioned via schema_version.`,
 }
 
 func buildAgentContext(rootCmd *cobra.Command) agentContext {
-	envVars := []string{}
-	authMode := "none"
-	if authMode == "" {
-		authMode = "none"
-	}
+	cfg, _ := config.Load("")
+	authStatus := buildAuthStatus(cfg)
 	profiles := ListProfileNames()
 	if profiles == nil {
 		profiles = []string{}
@@ -112,8 +118,15 @@ func buildAgentContext(rootCmd *cobra.Command) agentContext {
 			Version:     rootCmd.Version,
 		},
 		Auth: agentContextAuth{
-			Mode:    authMode,
-			EnvVars: envVars,
+			Mode:                 authStatus.Mode,
+			EnvVars:              authStatus.EnvVars,
+			AnonymousHistoryMode: authStatus.AnonymousHistoryMode,
+			GraphQLConfigured:    authStatus.GraphQLConfigured,
+			CanBackfill:          authStatus.CanBackfill,
+			CanEnrichSearch:      authStatus.CanEnrichSearch,
+			SetupCommand:         authStatus.SetupCommand,
+			SetupURL:             authStatus.SetupURL,
+			Unlocked:             authStatus.Unlocked,
 		},
 		Discovery:                  buildAgentDiscoveryContext(),
 		Commands:                   collectAgentCommands(rootCmd),
@@ -134,6 +147,7 @@ func buildAgentDiscoveryContext() *agentContextDiscovery {
 		},
 		AuthCandidates: []string{
 			"none",
+			"producthunt_graphql_token",
 		},
 		Protections: []string{
 			"cloudflare_turnstile (90% confidence)",
@@ -153,8 +167,9 @@ func buildAgentDiscoveryContext() *agentContextDiscovery {
 			"today — Direct render of /feed latest 50",
 			"recent — Live fetch of /feed with --limit",
 			"sync — Persist /feed snapshot to local store",
+			"backfill — Authenticated GraphQL historical seed; optional Product Hunt API token required",
 			"list — Query persisted snapshots by date/author",
-			"search — FTS over stored titles and taglines",
+			"search — FTS over stored titles and taglines; --enrich can top up with authenticated GraphQL",
 			"info — Show /feed entry for a slug",
 			"trend — Rank/first-seen trajectory from persisted snapshots",
 			"watch — Diff current /feed vs last snapshot",

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/store"
+	"github.com/spf13/cobra"
 )
 
 // trendPayload describes a post's trajectory across every snapshot that
