@@ -122,6 +122,17 @@ Doctor treats Agentforce MCP and Salesforce DX MCP as first-class neighboring to
 - `auth login --web --client-id <id>` uses a loopback OAuth web flow with PKCE.
 - `auth login --jwt --org <alias>` supports CI, but bundle emission requires `agent context --run-as-user <UserId>` so reads are scoped to the acting user.
 
+> **Note on `--org`:** Command examples below use `--org prod` for clarity, but the CLI currently resolves the target org via `sf config set target-org=<alias>` preflight for most commands. A global `--org` persistent flag is planned — see [`docs/plans/2026-04-24-001-fix-sf360-live-verify-findings-plan.md`](docs/plans/2026-04-24-001-fix-sf360-live-verify-findings-plan.md) Phase 1. If a command rejects `--org`, set the default org with `sf config set target-org=<alias>` and retry without the flag.
+
+### Auth targets
+
+| Target | Login command |
+|---|---|
+| Production | `sf org login web --alias prod` |
+| Sandbox (generic) | `sf org login web --alias sandbox --instance-url https://test.salesforce.com` |
+| Sandbox (My Domain) | `sf org login web --alias sandbox --instance-url https://<mydomain>--<sandbox>.sandbox.my.salesforce.com` |
+| Developer Edition | `sf org login web --alias de` |
+
 ```bash
 salesforce-headless-360-pp-cli auth login --sf prod
 salesforce-headless-360-pp-cli auth login --web --client-id "$SF_CLIENT_ID" --org sandbox
@@ -260,6 +271,23 @@ Claude Desktop example:
 - `agent verify` with an unknown key means the bundle signer is not present in the local keystore; run `trust register --org <alias>`.
 - Data Cloud, Slack linkage, and Slack Web API yellow rows mean optional enrichments are unavailable, not that REST Customer 360 reads are blocked.
 
+### Sandbox auth gotchas
+
+- **Sandbox password is snapshot from prod at provisioning time.** If you rotated your prod password after the sandbox was created, the sandbox has the old one. Use the sandbox login page's "Forgot Your Password?" link — the reset email is delivered to your real prod inbox (Salesforce strips the `.<sandbox-name>` suffix during mail delivery).
+- **The "Log In" shortcut from Setup → Sandboxes does not always carry prod SSO.** On some orgs it drops you at the sandbox password form. If that happens, use the Forgot Password path instead.
+- **Some orgs require Sandbox Access public-group selection when creating a sandbox.** If the New Sandbox form rejects with "Enter a valid public group name," create a public group containing yourself first (Setup → Public Groups → New, 30 seconds), then retry.
+
+### Running verification against a real org
+
+The canonical runbook is [`docs/plans/2026-04-22-004-feat-salesforce-360-writes-plan.md`](docs/plans/2026-04-22-004-feat-salesforce-360-writes-plan.md). Before running it:
+
+1. Deploy the CLI's metadata to your sandbox: `sf project deploy start --source-dir metadata --target-org <alias>`.
+2. Assign the permission set: `sf org assign permset --name SF360_Key_Registrar --target-org <alias>`.
+3. Seed test fixtures: `ORG=<alias> bash scripts/seed-run.sh`.
+4. Export env vars and run: `bash scripts/live-verify.sh`.
+
+The most recent live-verification report against a real Developer sandbox is in [`docs/live-verification-report.md`](docs/live-verification-report.md). Detailed findings from that run are in [`docs/findings/2026-04-24-live-verify-findings.md`](docs/findings/2026-04-24-live-verify-findings.md).
+
 ## FAQ
 
 ### Does this replace Agentforce MCP or Salesforce DX MCP?
@@ -268,7 +296,7 @@ No. If those tools cover your task directly, use them. This CLI is for portable 
 
 ### Where is the live verification report?
 
-The live verification report will live at [docs/live-verification-report.md](docs/live-verification-report.md). Unit J owns that artifact.
+At [docs/live-verification-report.md](docs/live-verification-report.md). The first run against a real Developer sandbox was completed 2026-04-24 by Trent Matthias (NFC). The runbook used is [docs/plans/2026-04-22-004-feat-salesforce-360-writes-plan.md](docs/plans/2026-04-22-004-feat-salesforce-360-writes-plan.md), and 20 findings that surfaced during that run are catalogued in [docs/findings/2026-04-24-live-verify-findings.md](docs/findings/2026-04-24-live-verify-findings.md) with fix plans at [docs/plans/2026-04-24-001-fix-sf360-live-verify-findings-plan.md](docs/plans/2026-04-24-001-fix-sf360-live-verify-findings-plan.md).
 
 ### Does this CLI send telemetry?
 

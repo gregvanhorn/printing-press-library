@@ -57,6 +57,12 @@ salesforce-headless-360-pp-cli agent write-audit inspect <jti>
 salesforce-headless-360-pp-cli agent write-audit verify <jti>
 ```
 
+## Known Limitations
+
+- **Task and Event writes do not persist idempotency keys.** `agent log-activity` creates Tasks without an `SF360_Idempotency_Key__c` field (Activity-object metadata restrictions deferred this to v1.2). Agents should treat Task retries as potentially duplicating until resolved. See `docs/findings/2026-04-24-live-verify-findings.md#finding-f-008`.
+- **`--org <alias>` support varies by command.** `trust register` requires it. Most other commands resolve the target org via `sf config get target-org` (set once per session: `sf config set target-org=<alias>`). See `docs/plans/2026-04-24-001-fix-sf360-live-verify-findings-plan.md` Phase 1 for the planned global-flag unification.
+- **`FLS.AllowFieldWrite(user)` currently discards the `user` parameter.** `--run-as-user` is enforced only at the Apex companion layer. Writes through the UI API path without the Apex companion use the acting token holder's FLS, not the `--run-as-user` target's. See `docs/findings/2026-04-24-live-verify-findings.md#finding-f-004`.
+
 ## Safety Notes
 
 - FLS enforcement is always on before Salesforce records enter bundles, sync output, Data Cloud enrichment, or Slack linkage summaries.
