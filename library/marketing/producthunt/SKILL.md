@@ -1,6 +1,6 @@
 ---
 name: pp-producthunt
-description: "Read-only Product Hunt CLI backed by the public Atom feed (`/feed`) and a local SQLite store. Use for today's featured launches, rank trajectory over time, per-day launch calendars, top-maker aggregates, tagline full-text search, co-occurrence signals, and diff-since-last-sync alerts. Do NOT use for posting, upvoting, commenting, following, writing, the official GraphQL API, post detail pages, historical leaderboards, user profiles, topics, or newsletter content (Cloudflare-gated; stubs exist but exit 3). Trigger phrases: `today's top product hunt`, `product hunt trend for <slug>`, `product hunt makers this week`, `what launched on product hunt today`, `product hunt tagline search`, `run producthunt-pp-cli`."
+description: "Read-only Product Hunt CLI backed by the public Atom feed (`/feed`), optional Product Hunt GraphQL auth, and a local SQLite store. Use for today's featured launches, rank trajectory over time, per-day launch calendars, top-maker aggregates, tagline full-text search, GraphQL-seeded historical backfill, search enrichment, co-occurrence signals, and diff-since-last-sync alerts. Do NOT use for posting, upvoting, commenting, following, writing, arbitrary GraphQL exploration/mutations, post detail pages, historical leaderboards, user profiles, topics, or newsletter content (Cloudflare-gated; stubs exist but exit 3). Trigger phrases: `today's top product hunt`, `product hunt trend for <slug>`, `product hunt makers this week`, `what launched on product hunt today`, `product hunt tagline search`, `run producthunt-pp-cli`."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
 metadata: '{"openclaw":{"requires":{"bins":["producthunt-pp-cli"]},"install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/marketing/producthunt/cmd/producthunt-pp-cli@latest","bins":["producthunt-pp-cli"],"label":"Install via go install"}]}}'
@@ -11,13 +11,15 @@ metadata: '{"openclaw":{"requires":{"bins":["producthunt-pp-cli"]},"install":[{"
 A self-warming read-only terminal view of Product Hunt. Three tiers, smallest first:
 
 1. **Atom auto-sync (always on, no auth).** Any read command (`search`, `list`, `today`, etc.) checks `ph_meta.last_sync_at` and silently syncs the public `/feed` when the local store is >24h stale. No flags needed — integrators just call `search` and the CLI keeps itself fresh.
-2. **`search --enrich` (opt-in, OAuth required).** When local FTS returns fewer than `--enrich-threshold` results, fires one narrow GraphQL query for the topic, upserts matches, and re-runs the search. Fail-soft.
-3. **`backfill` (explicit, OAuth required).** Paginates GraphQL over a window (default 30 days) and seeds the store in one shot. Budget-aware, resumable via `backfill resume`.
+2. **`search --enrich` (opt-in, Product Hunt GraphQL auth required).** When local FTS returns fewer than `--enrich-threshold` results, fires one narrow read-only GraphQL query for the topic, upserts matches, and re-runs the search. Fail-soft.
+3. **`backfill` (explicit, Product Hunt GraphQL auth required).** Paginates GraphQL over a window (default 30 days) and seeds the store in one shot. Budget-aware, resumable via `backfill resume`.
 
 Authentication:
 
 - The Atom runtime is token-free by construction — no setup needed.
-- OAuth (Tier 2 + 3) is opt-in: run `auth register` once, paste a client_id/client_secret from https://www.producthunt.com/v2/oauth/applications.
+- GraphQL auth (Tier 2 + 3) is opt-in. Run `auth setup` for instructions, then either:
+- Create a Product Hunt application at https://www.producthunt.com/v2/oauth/applications with redirect URI `https://localhost/callback`, then run `auth register`.
+- For agents/CI, set `PRODUCTHUNT_DEVELOPER_TOKEN` (or `PRODUCTHUNT_GRAPHQL_TOKEN`) and run `auth set-token --token-env PRODUCTHUNT_DEVELOPER_TOKEN`.
 
 No write operations against Product Hunt. This CLI reads data and persists it locally; it does not post, upvote, comment, or follow.
 
@@ -35,7 +37,7 @@ No write operations against Product Hunt. This CLI reads data and persists it lo
 
 - The user wants to **post a product, upvote, comment, follow** — this CLI has no write path. Decline or refer them to producthunt.com.
 - The user needs **post detail pages, comments, historical daily leaderboards, topic feeds, user profiles, collections, or newsletter issues**. Those routes are Cloudflare-gated and ship as stubs that exit 3. Stub names below.
-- The user explicitly wants the **official GraphQL API at `api.producthunt.com`** — this CLI does not use it.
+- The user wants **arbitrary GraphQL queries, mutations, schema exploration, or write-like actions**. The CLI only uses a curated read-only Product Hunt GraphQL path for `backfill` and `search --enrich`.
 
 ## Cloudflare-Gated Stubs (Exit 3)
 
@@ -71,11 +73,13 @@ Full flag list in `producthunt-pp-cli --help`.
 | `today [--limit N] [--live]` | Top N featured launches (store first, live `/feed` fallback) |
 | `recent [--limit N]` | Always live-fetch `/feed` |
 | `sync [--dry-run-feed] [--db PATH]` | Fetch `/feed` and persist a ranked snapshot (auto-sync runs this implicitly when the store is stale) |
-| `backfill [--days N \| --from DATE --to DATE] [--dry-run]` | Seed the store with a bulk 30-day history via GraphQL (requires `auth register` first) |
+| `backfill [--days N \| --from DATE --to DATE] [--dry-run]` | Seed the store with a bulk 30-day history via GraphQL (requires GraphQL auth; run `auth setup`) |
 | `backfill resume [--window-id ID]` | Continue an interrupted backfill from the saved cursor |
-| `auth register [--client-id ID --client-secret SECRET]` | Register a PH OAuth app and persist the client_credentials token |
+| `auth setup [--json]` | Show guided Product Hunt app setup, including redirect URI and agent-safe env var paths |
+| `auth register [--client-id ID --client-secret SECRET] [--no-input]` | Exchange a Product Hunt OAuth app API key/secret for a client_credentials token |
+| `auth set-token --token-env PRODUCTHUNT_DEVELOPER_TOKEN` | Persist an existing developer/API token without putting it in shell history |
 | `list [--author NAME] [--since DUR] [--until DUR] [--sort FIELD] [--asc] [--limit N]` | Query the local store |
-| `search <query> [--limit N] [--enrich] [--enrich-threshold N]` | FTS5 match across slug, title, tagline, author. `--enrich` tops up from GraphQL when local results are thin (OAuth required). |
+| `search <query> [--limit N] [--enrich] [--enrich-threshold N]` | FTS5 match across slug, title, tagline, author. `--enrich` tops up from GraphQL when local results are thin (GraphQL auth required). |
 | `info <slug> [--live] [--external] [--url-only]` | Single post payload |
 | `open <slug> [--external] [--dry]` | Open in the default browser |
 | `feed raw [--validate]` | Raw Atom XML to stdout |
@@ -100,7 +104,7 @@ Full flag list in `producthunt-pp-cli --help`.
 | `doctor [--fail-on error] [--json]` | Probe `/feed`, parse Atom, verify schema, list CF-gated routes |
 | `version` | Print CLI version |
 | `which <capability>` | Resolve a natural-language capability query to a command name |
-| `auth {status,set-token,logout}` | Scaffolded; **inert for this CLI** (no auth needed) |
+| `auth {setup,status,register,set-token,logout}` | Optional GraphQL credential setup/status. Atom commands do not require auth. |
 | `profile {save,list,show,delete}` | Saved flag sets for reuse |
 | `feedback "<note>"` / `feedback list` | Record surprises locally at `~/.producthunt-pp-cli/feedback.jsonl` |
 | `agent-context` | Dump full command/flag inventory as JSON |
@@ -192,7 +196,7 @@ producthunt-pp-cli which "<capability in the user's own words>"
   producthunt-pp-cli calendar --days 7 --agent --select 'days.date,days.count'
   ```
 
-- **Response shape:** bare JSON array or object. **No `{meta, results}` envelope** — parse elements directly.
+- **Response shape:** most commands emit a bare JSON array or object. Commands that include auth/enrichment hints can emit `{"results":[...],"_meta":{...}}`; `--select slug,title` applies to `results` while preserving `_meta`.
 
 ### Flags that exist but don't behave as they might elsewhere
 
@@ -214,7 +218,43 @@ Codes 4 (auth) and 7 (rate limit) are defined in the generator but not raised by
 
 ## Auth Setup
 
-None. The CLI reads the public Atom feed. `producthunt-pp-cli doctor --json` confirms connectivity and schema; failure there is actionable, not an auth issue.
+No auth is required for Atom-backed commands. Use auth only when the user needs immediate historical backfill or GraphQL search enrichment beyond snapshots already accumulated locally.
+
+Interactive setup:
+
+```bash
+producthunt-pp-cli auth setup
+```
+
+Create the Product Hunt app at https://www.producthunt.com/v2/oauth/applications with:
+
+| Field | Value |
+|-------|-------|
+| Name | `producthunt-pp-cli` (or any recognizable local name) |
+| Redirect URI | `https://localhost/callback` |
+
+Then run:
+
+```bash
+producthunt-pp-cli auth register
+producthunt-pp-cli auth status --json
+```
+
+Agent/CI setup without prompts:
+
+```bash
+PRODUCTHUNT_CLIENT_ID=... PRODUCTHUNT_CLIENT_SECRET=... \
+  producthunt-pp-cli auth register --no-input --json
+```
+
+If you already have a Product Hunt developer/API token:
+
+```bash
+PRODUCTHUNT_DEVELOPER_TOKEN=... \
+  producthunt-pp-cli auth set-token --token-env PRODUCTHUNT_DEVELOPER_TOKEN --json
+```
+
+`auth status` and `doctor --json` report configured capabilities, but they do not live-validate the token. Use `producthunt-pp-cli backfill --days 30 --dry-run` to verify API access before a real backfill.
 
 ## Agent Feedback
 

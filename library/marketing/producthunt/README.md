@@ -196,9 +196,9 @@ Cloudflare blocks Product Hunt's HTML routes for automated HTTP clients. These c
 
 ### Utility
 
-`doctor` · `version` · `auth {status,set-token,logout}` · `profile` · `which` · `feedback` · `agent-context` · `api` · `workflow` · `export` · `import`
+`doctor` · `version` · `auth {setup,status,register,set-token,logout}` · `profile` · `which` · `feedback` · `agent-context` · `api` · `workflow` · `export` · `import`
 
-The `auth` subcommands are scaffolded but inert for this build (no credentials are required). They remain so that future Cloudflare-clearance imports can ship without reshaping the command tree.
+Auth is optional: Atom-backed commands need no credentials, while `backfill` and `search --enrich` use configured Product Hunt GraphQL credentials when present.
 
 ## Output Formats
 
