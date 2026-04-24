@@ -118,7 +118,7 @@ func slugFromURL(u string) string {
 // PH's atom feed wraps the tagline in a <p>, then places Discussion and Link
 // anchors in a second <p>. The Link anchor points at /r/p/{id}, the PH redirect
 // that ultimately forwards to the product's own landing page. Returning that
-// URL is enough — the CLI's open/info commands can either hop the redirect
+// URL is enough — the CLI's open/get commands can either hop the redirect
 // server-side or hand it to the user's default browser.
 var externalURLRE = regexp.MustCompile(`https?://www\.producthunt\.com/r/p/\d+\?app_id=\d+`)
 

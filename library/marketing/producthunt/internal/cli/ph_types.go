@@ -8,7 +8,7 @@ import (
 )
 
 // postPayload is the JSON shape the CLI emits for a single post. Stable by
-// design — every command that returns posts (today, info, list, search,
+// design — every command that returns posts (today, get, list, search,
 // watch, trend, etc.) uses this so `--select` paths work consistently.
 type postPayload struct {
 	ID            int64  `json:"id"`
@@ -61,7 +61,7 @@ func postsToJSON(posts []store.Post) json.RawMessage {
 	return json.RawMessage(buf)
 }
 
-// postToJSON marshals a single post. Used by commands like `info` that return
+// postToJSON marshals a single post. Used by commands like `get` that return
 // one object rather than an array.
 func postToJSON(p store.Post) json.RawMessage {
 	buf, _ := json.Marshal(postPayloadOf(p))

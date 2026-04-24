@@ -12,10 +12,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/atom"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/config"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/store"
+	"github.com/spf13/cobra"
 )
 
 func newDoctorCmd(flags *rootFlags) *cobra.Command {
@@ -36,8 +36,11 @@ func newDoctorCmd(flags *rootFlags) *cobra.Command {
 				report["base_url"] = cfg.BaseURL
 			}
 
-			// Check auth
-			report["auth"] = "not required"
+			// Check auth. Anonymous Atom mode is healthy; GraphQL auth is an
+			// optional capability for historical backfill and search enrichment.
+			authStatus := buildAuthStatus(cfg)
+			report["auth"] = authStatus.Mode
+			report["auth_capabilities"] = authStatus
 
 			// Check auth environment variables
 
@@ -173,7 +176,7 @@ func newDoctorCmd(flags *rootFlags) *cobra.Command {
 					indicator = yellow("INFO")
 				case strings.Contains(s, "error") || strings.Contains(s, "not configured") || strings.Contains(s, "unreachable") || strings.Contains(s, "invalid") || strings.Contains(s, "missing"):
 					indicator = red("FAIL")
-				case s == "not required":
+				case s == "atom_only":
 					// Public APIs: no auth needed is a healthy state, not a warning.
 					indicator = green("OK")
 				case strings.Contains(s, "not ") || strings.Contains(s, "skipped") || strings.Contains(s, "inferred"):

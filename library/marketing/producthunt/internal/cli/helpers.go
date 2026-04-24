@@ -262,6 +262,11 @@ func filterFieldsRec(data json.RawMessage, paths [][]string) json.RawMessage {
 
 	var obj map[string]json.RawMessage
 	if err := json.Unmarshal(data, &obj); err == nil {
+		if results, hasResults := obj["results"]; hasResults {
+			if meta, hasMeta := obj["_meta"]; hasMeta {
+				return filterMetaResultsWrapper(results, meta, paths)
+			}
+		}
 		keepWhole := map[string]bool{}
 		subPaths := map[string][][]string{}
 		for _, p := range paths {
@@ -294,6 +299,65 @@ func filterFieldsRec(data json.RawMessage, paths [][]string) json.RawMessage {
 	}
 
 	return data
+}
+
+func filterMetaResultsWrapper(results, meta json.RawMessage, paths [][]string) json.RawMessage {
+	resultPaths := [][]string{}
+	metaPaths := [][]string{}
+	includeResults := false
+	includeWholeResults := false
+	includeMeta := false
+	includeWholeMeta := false
+
+	for _, p := range paths {
+		if len(p) == 0 {
+			continue
+		}
+		switch p[0] {
+		case "results":
+			includeResults = true
+			if len(p) == 1 {
+				includeWholeResults = true
+			} else {
+				resultPaths = append(resultPaths, p[1:])
+			}
+		case "_meta":
+			includeMeta = true
+			if len(p) == 1 {
+				includeWholeMeta = true
+			} else {
+				metaPaths = append(metaPaths, p[1:])
+			}
+		default:
+			// Search wraps array output as {"results":[...],"_meta":{...}}.
+			// Keep agent ergonomics: --select slug,title should apply to the
+			// result rows, not discard both top-level wrapper fields.
+			includeResults = true
+			resultPaths = append(resultPaths, p)
+		}
+	}
+
+	filtered := map[string]json.RawMessage{}
+	if includeResults {
+		if includeWholeResults || len(resultPaths) == 0 {
+			filtered["results"] = results
+		} else {
+			filtered["results"] = filterFieldsRec(results, resultPaths)
+		}
+	}
+	if includeMeta {
+		if includeWholeMeta || len(metaPaths) == 0 {
+			filtered["_meta"] = meta
+		} else {
+			filtered["_meta"] = filterFieldsRec(meta, metaPaths)
+		}
+	} else {
+		// Metadata is why this wrapper exists; preserve it unless the caller
+		// explicitly selected only wrapper-level fields.
+		filtered["_meta"] = meta
+	}
+	result, _ := json.Marshal(filtered)
+	return result
 }
 
 // matchSelectSegment returns the matching lowercase segment, or "" if no match.
@@ -389,6 +453,18 @@ func compactFields(data json.RawMessage) json.RawMessage {
 	// Single object — use blocklist
 	var obj map[string]any
 	if err := json.Unmarshal(data, &obj); err == nil {
+		if results, hasResults := obj["results"]; hasResults {
+			if _, hasMeta := obj["_meta"]; hasMeta {
+				raw, err := json.Marshal(results)
+				if err == nil {
+					obj["results"] = json.RawMessage(compactFields(raw))
+				}
+				out, err := json.Marshal(obj)
+				if err == nil {
+					return out
+				}
+			}
+		}
 		return compactObjectFields(obj)
 	}
 
@@ -399,8 +475,12 @@ func compactFields(data json.RawMessage) json.RawMessage {
 func compactListFields(items []map[string]any) json.RawMessage {
 	keepFields := map[string]bool{
 		"id": true, "name": true, "title": true, "identifier": true,
+		"slug": true, "tagline": true, "author": true,
 		"status": true, "state": true, "type": true, "priority": true,
 		"url": true, "email": true, "key": true,
+		"discussion_url": true, "external_url": true,
+		"published": true, "first_seen": true, "last_seen": true,
+		"seen_count": true, "rank": true,
 		"created_at": true, "updated_at": true, "createdAt": true, "updatedAt": true,
 	}
 

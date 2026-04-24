@@ -8,19 +8,20 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/atom"
+	"github.com/spf13/cobra"
 )
 
-func newInfoCmd(flags *rootFlags) *cobra.Command {
+func newGetCmd(flags *rootFlags) *cobra.Command {
 	var dbPath string
 	var live bool
 	var external bool
 	var urlOnly bool
 
 	cmd := &cobra.Command{
-		Use:   "info <slug>",
-		Short: "Show the post for a given slug",
+		Use:     "get <slug>",
+		Aliases: []string{"info"},
+		Short:   "Show the post for a given slug",
 		Long: `Return the stored post for a Product Hunt slug. By default reads from
 the local store and falls back to a live /feed scan when the slug isn't
 there yet. --live forces a live fetch.
@@ -28,16 +29,16 @@ there yet. --live forces a live fetch.
 Output is the stable post payload (id, slug, title, tagline, author,
 discussion_url, external_url, published, updated).`,
 		Example: `  # Look up a slug from your local store
-  producthunt-pp-cli info seeknal
+  producthunt-pp-cli get seeknal
 
   # Force a live /feed scan
-  producthunt-pp-cli info cavalry-2 --live
+  producthunt-pp-cli get cavalry-2 --live
 
   # Just the external URL (for piping into open)
-  producthunt-pp-cli info seeknal --url-only
+  producthunt-pp-cli get seeknal --url-only
 
   # External URL only, as JSON
-  producthunt-pp-cli info seeknal --external --json`,
+  producthunt-pp-cli get seeknal --external --json`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			slug := args[0]
@@ -78,7 +79,7 @@ discussion_url, external_url, published, updated).`,
 	cmd.Flags().StringVar(&dbPath, "db", "", "Path to local SQLite store")
 	cmd.Flags().BoolVar(&live, "live", false, "Force a live /feed fetch, bypass store")
 	cmd.Flags().BoolVar(&external, "external", false, "Emit only the external URL")
-	cmd.Flags().BoolVar(&urlOnly, "url-only", false, "Emit only the URL (useful for 'producthunt-pp-cli info <slug> --url-only | xargs open')")
+	cmd.Flags().BoolVar(&urlOnly, "url-only", false, "Emit only the URL (useful for 'producthunt-pp-cli get <slug> --url-only | xargs open')")
 	return cmd
 }
 

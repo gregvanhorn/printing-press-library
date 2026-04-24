@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/store"
+	"github.com/spf13/cobra"
 )
 
 type makerTallyPayload struct {
@@ -49,6 +49,7 @@ returns [].`,
 				}
 				sinceT = t
 			}
+			autoWarm(flags, dbPath)
 			db, err := openStore(dbPath)
 			if err != nil {
 				return configErr(err)

@@ -12,7 +12,12 @@ import (
 // row so stale binaries refuse to read newer-shaped tables rather than
 // corrupting data. Independent from StoreSchemaVersion so generator bumps
 // and PH-specific bumps don't collide.
-const PHTablesSchemaVersion = 1
+//
+// Version history:
+//
+//   1 - initial: posts, posts_fts, snapshots, snapshot_entries, ph_meta
+//   2 - adds ph_backfill_state (for GraphQL backfill cursor persistence)
+const PHTablesSchemaVersion = 2
 
 // EnsurePHTables is idempotent; call once per Open(). It adds the
 // Product-Hunt-specific tables on top of the generator's resources/feed tables:
@@ -71,6 +76,23 @@ func EnsurePHTables(s *Store) error {
 		// existed. SQLite errors on duplicate ALTER; we swallow with a
 		// separate statement guarded by PRAGMA introspection.
 		`CREATE INDEX IF NOT EXISTS idx_snapshot_entries_post ON snapshot_entries(post_id)`,
+
+		// Schema v2: backfill state. Each row represents one contiguous
+		// window the caller has asked the CLI to pull from GraphQL. Keyed
+		// by a deterministic window_id hash so resuming the same window is
+		// idempotent. cursor is opaque PH-provided pagination state.
+		`CREATE TABLE IF NOT EXISTS ph_backfill_state (
+			window_id TEXT PRIMARY KEY,
+			posted_after TEXT NOT NULL,
+			posted_before TEXT NOT NULL,
+			cursor TEXT,
+			pages_completed INTEGER NOT NULL DEFAULT 0,
+			posts_upserted INTEGER NOT NULL DEFAULT 0,
+			last_run_at DATETIME,
+			last_error TEXT,
+			completed_at DATETIME
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_backfill_incomplete ON ph_backfill_state(completed_at) WHERE completed_at IS NULL`,
 	}
 	for _, stmt := range stmts {
 		if _, err := s.db.Exec(stmt); err != nil {
@@ -634,4 +656,201 @@ func nullableTime(t time.Time) any {
 		return nil
 	}
 	return t
+}
+
+// ---------- ph_meta key/value helpers ----------
+
+// Well-known ph_meta keys. These drive auto-sync freshness decisions and
+// diagnostic output; keep names stable across versions.
+const (
+	PHMetaLastSyncAt   = "last_sync_at"
+	PHMetaLastCaller   = "last_caller"
+	PHMetaSchemaVersion = "ph_schema_version"
+)
+
+// GetPHMeta returns the value stored at the given ph_meta key, or empty string
+// if the key does not exist. Callers treat "" as "unknown" rather than "set".
+func (s *Store) GetPHMeta(key string) (string, error) {
+	var v string
+	err := s.db.QueryRow(`SELECT value FROM ph_meta WHERE key = ?`, key).Scan(&v)
+	if err == sql.ErrNoRows {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("get ph_meta %q: %w", key, err)
+	}
+	return v, nil
+}
+
+// SetPHMeta upserts a ph_meta key/value pair, refreshing updated_at.
+func (s *Store) SetPHMeta(key, value string) error {
+	_, err := s.db.Exec(
+		`INSERT INTO ph_meta (key, value, updated_at) VALUES (?, ?, ?)
+		 ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+		key, value, time.Now(),
+	)
+	if err != nil {
+		return fmt.Errorf("set ph_meta %q: %w", key, err)
+	}
+	return nil
+}
+
+// LastSyncAt returns the time of the most recent successful sync, or the zero
+// time if no sync has ever run. Used by auto-sync staleness checks.
+func (s *Store) LastSyncAt() (time.Time, error) {
+	v, err := s.GetPHMeta(PHMetaLastSyncAt)
+	if err != nil {
+		return time.Time{}, err
+	}
+	if v == "" {
+		return time.Time{}, nil
+	}
+	return parseStoredTime(v), nil
+}
+
+// RecordSync stamps the current time as last_sync_at and records the caller
+// identity for diagnostics. caller may be empty when the sync was user-initiated
+// from the terminal rather than through an integrator.
+func (s *Store) RecordSync(caller string) error {
+	if err := s.SetPHMeta(PHMetaLastSyncAt, time.Now().UTC().Format(time.RFC3339)); err != nil {
+		return err
+	}
+	if caller != "" {
+		if err := s.SetPHMeta(PHMetaLastCaller, caller); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ---------- ph_backfill_state helpers ----------
+
+// BackfillState represents one row in ph_backfill_state. Cursor is opaque
+// PH-provided pagination state; empty means "start from the beginning".
+// CompletedAt is zero until the backfill finishes cleanly.
+type BackfillState struct {
+	WindowID       string
+	PostedAfter    string
+	PostedBefore   string
+	Cursor         string
+	PagesCompleted int
+	PostsUpserted  int
+	LastRunAt      time.Time
+	LastError      string
+	CompletedAt    time.Time
+}
+
+// IsComplete reports whether the backfill has finished successfully.
+func (b *BackfillState) IsComplete() bool {
+	return !b.CompletedAt.IsZero()
+}
+
+// GetBackfillState loads the row for windowID, or returns (nil, nil) when the
+// window has never been seen. Callers use (nil, nil) as the signal to start a
+// fresh backfill.
+func (s *Store) GetBackfillState(windowID string) (*BackfillState, error) {
+	row := s.db.QueryRow(
+		`SELECT window_id, posted_after, posted_before,
+		        COALESCE(cursor, ''),
+		        pages_completed, posts_upserted,
+		        COALESCE(last_run_at, ''),
+		        COALESCE(last_error, ''),
+		        COALESCE(completed_at, '')
+		 FROM ph_backfill_state WHERE window_id = ?`,
+		windowID,
+	)
+	var (
+		b                     BackfillState
+		lastRunStr, completedStr string
+	)
+	err := row.Scan(
+		&b.WindowID, &b.PostedAfter, &b.PostedBefore,
+		&b.Cursor,
+		&b.PagesCompleted, &b.PostsUpserted,
+		&lastRunStr, &b.LastError, &completedStr,
+	)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get backfill state %q: %w", windowID, err)
+	}
+	b.LastRunAt = parseStoredTime(lastRunStr)
+	b.CompletedAt = parseStoredTime(completedStr)
+	return &b, nil
+}
+
+// UpsertBackfillState persists the row. Used both for initial creation and
+// per-page cursor updates during a running backfill.
+func (s *Store) UpsertBackfillState(b BackfillState) error {
+	_, err := s.db.Exec(
+		`INSERT INTO ph_backfill_state
+		   (window_id, posted_after, posted_before, cursor, pages_completed, posts_upserted, last_run_at, last_error, completed_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		 ON CONFLICT(window_id) DO UPDATE SET
+		   cursor = excluded.cursor,
+		   pages_completed = excluded.pages_completed,
+		   posts_upserted = excluded.posts_upserted,
+		   last_run_at = excluded.last_run_at,
+		   last_error = excluded.last_error,
+		   completed_at = excluded.completed_at`,
+		b.WindowID, b.PostedAfter, b.PostedBefore,
+		nullableString(b.Cursor),
+		b.PagesCompleted, b.PostsUpserted,
+		nullableTime(b.LastRunAt),
+		nullableString(b.LastError),
+		nullableTime(b.CompletedAt),
+	)
+	if err != nil {
+		return fmt.Errorf("upsert backfill state %q: %w", b.WindowID, err)
+	}
+	return nil
+}
+
+// PendingBackfillStates returns every row where completed_at IS NULL,
+// ordered by last_run_at DESC. Used by `backfill resume` to find work.
+func (s *Store) PendingBackfillStates() ([]BackfillState, error) {
+	rows, err := s.db.Query(
+		`SELECT window_id, posted_after, posted_before,
+		        COALESCE(cursor, ''),
+		        pages_completed, posts_upserted,
+		        COALESCE(last_run_at, ''),
+		        COALESCE(last_error, ''),
+		        ''
+		 FROM ph_backfill_state
+		 WHERE completed_at IS NULL
+		 ORDER BY last_run_at DESC`,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list pending backfills: %w", err)
+	}
+	defer rows.Close()
+	var out []BackfillState
+	for rows.Next() {
+		var (
+			b                     BackfillState
+			lastRunStr, completedStr string
+		)
+		if err := rows.Scan(
+			&b.WindowID, &b.PostedAfter, &b.PostedBefore,
+			&b.Cursor,
+			&b.PagesCompleted, &b.PostsUpserted,
+			&lastRunStr, &b.LastError, &completedStr,
+		); err != nil {
+			return nil, err
+		}
+		b.LastRunAt = parseStoredTime(lastRunStr)
+		b.CompletedAt = parseStoredTime(completedStr)
+		out = append(out, b)
+	}
+	return out, rows.Err()
+}
+
+// nullableString returns a nil interface when the string is empty so INSERT
+// stores NULL instead of "". Kept symmetric with nullableTime above.
+func nullableString(s string) any {
+	if s == "" {
+		return nil
+	}
+	return s
 }

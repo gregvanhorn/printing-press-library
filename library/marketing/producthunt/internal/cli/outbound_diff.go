@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/store"
+	"github.com/spf13/cobra"
 )
 
 type outboundDriftRow struct {
@@ -44,6 +44,7 @@ one snapshot cannot detect drift.`,
 			if err != nil {
 				return usageErr(fmt.Errorf("--since: %w", err))
 			}
+			autoWarm(flags, dbPath)
 			db, err := openStore(dbPath)
 			if err != nil {
 				return configErr(err)

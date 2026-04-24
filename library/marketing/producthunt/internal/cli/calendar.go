@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/store"
+	"github.com/spf13/cobra"
 )
 
 type calendarDayPayload struct {
@@ -51,6 +51,7 @@ aggregate counts only.`,
   # Last 30 days, agent-narrow
   producthunt-pp-cli calendar --days 30 --agent --select 'days.date,days.count'`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			autoWarm(flags, dbPath)
 			db, err := openStore(dbPath)
 			if err != nil {
 				return configErr(err)

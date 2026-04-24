@@ -1,10 +1,16 @@
 # Product Hunt CLI
 
-**A terminal view of Product Hunt that doesn't need an API key.**
+**A self-warming terminal view of Product Hunt.**
 
-[Product Hunt](https://www.producthunt.com) is the daily launch board for new products — makers post, hunters submit, and the community votes and comments. The official API is GraphQL and requires OAuth registration plus a 6,250-complexity-points-per-15-minute budget that makes bulk reads impractical.
+[Product Hunt](https://www.producthunt.com) is the daily launch board for new products — makers post, hunters submit, and the community votes and comments.
 
-This CLI skips all of that. It reads Product Hunt's public Atom feed (`/feed`, 50 newest featured launches), parses every entry, and persists the result to a local SQLite database. From that store it builds views the Product Hunt website itself doesn't expose — rank trajectory for a product over time, week-at-a-glance launch calendars, top-maker aggregates, and tagline-wide full-text search. Every command speaks JSON, filters fields with `--select`, and exits with typed codes for scripts and agents.
+This CLI ships three tiers of access, picking the lightest one automatically:
+
+1. **Atom auto-sync (always on, no auth).** Every read command checks whether the local SQLite store is stale (>24h since last sync) and silently fetches the public `/feed` before serving the query. Integrators just call `search`/`list`/etc. — the CLI keeps itself fresh. This builds history from the moment you start syncing.
+2. **`search --enrich` (opt-in, authenticated).** When local results are thin for a topic, fires one narrow GraphQL query for that topic over the last 30 days. Fail-soft: if Product Hunt GraphQL auth isn't configured or the budget is close to the floor, local results are returned with structured metadata explaining the skipped enrichment.
+3. **`backfill` (explicit, authenticated).** Paginates the Product Hunt GraphQL `posts` field over a window (default 30 days) and seeds the store in one shot. Budget-aware, resumable via `backfill resume`. Used for cold-starts, gap recovery after offline periods, or deliberate historical windows.
+
+Every command speaks JSON, filters fields with `--select`, and exits with typed codes for scripts and agents.
 
 ## Install
 
@@ -20,15 +26,59 @@ Download from [Releases](https://github.com/mvanhorn/printing-press-library/rele
 
 ## Authentication
 
-No credentials required. The CLI reads the public Atom feed only — no OAuth, no tokens, no env vars.
+The Atom runtime is token-free by construction. All the daily-driver commands (`sync`, `today`, `recent`, `list`, `search`, `trend`, `calendar`, `makers`, `tagline-grep`, `watch`, `outbound-diff`) read the public `/feed` and need no credentials.
+
+Product Hunt GraphQL auth is opt-in and unlocks two capabilities that the anonymous Atom feed cannot provide:
+
+- `search --enrich` — top up thin local search results from the GraphQL API
+- `backfill` — bulk-seed historical posts in one call
+
+Anonymous mode cannot retroactively backfill the past because `/feed` exposes only the current feed window. It can build durable long-term history by running `sync` or relying on auto-sync from now forward.
+
+For guided setup:
+
+```bash
+producthunt-pp-cli auth setup
+```
+
+OAuth app path:
+
+```bash
+# Visit https://www.producthunt.com/v2/oauth/applications
+# Create an app:
+#   Name: producthunt-pp-cli
+#   Redirect URI: https://localhost/callback
+producthunt-pp-cli auth register
+```
+
+Agent/CI path:
+
+```bash
+PRODUCTHUNT_CLIENT_ID=... PRODUCTHUNT_CLIENT_SECRET=... \
+  producthunt-pp-cli auth register --no-input
+
+PRODUCTHUNT_DEVELOPER_TOKEN=... \
+  producthunt-pp-cli auth set-token --token-env PRODUCTHUNT_DEVELOPER_TOKEN
+```
+
+The CLI saves credentials to `~/.config/producthunt-pp-cli/config.toml` with `0600` perms. Revoke with `auth logout`. `auth status --json`, `doctor --json`, and `agent-context` expose whether GraphQL-powered features are currently available.
 
 Product Hunt's HTML pages (post detail, user profiles, topic pages, historical leaderboards, newsletter archive) are gated by Cloudflare against automated HTTP clients. Commands that would need those routes (`post`, `comments`, `leaderboard`, `topic`, `user`, `collection`, `newsletter`) ship as explicit stubs that emit a structured JSON explanation and exit with code 3. They are named in the command reference below so agents and scripts can discover the gap without hitting opaque timeouts.
 
 ## Quick Start
 
 ```bash
-# First run: pull the current /feed into your local store.
+# First run: no setup needed — auto-sync fires when the store is stale.
+producthunt-pp-cli search "ai agent"
+
+# Or kick off a manual sync explicitly.
 producthunt-pp-cli sync
+
+# Optional Tier 2/3: configure Product Hunt GraphQL, then bulk-seed 30 days.
+producthunt-pp-cli auth setup
+producthunt-pp-cli auth register
+producthunt-pp-cli backfill --days 30 --dry-run  # estimate first
+producthunt-pp-cli backfill --days 30
 
 # Agent-friendly shortlist with only the fields you want.
 producthunt-pp-cli today --limit 10 --json --select 'slug,title,tagline,author'
@@ -121,7 +171,7 @@ These capabilities aren't available in any other Product Hunt tool.
 | `sync` | Fetch `/feed` and persist a ranked snapshot |
 | `list` | Filter the local store by author, date range, or sort field |
 | `search <query>` | FTS5 match across titles, taglines, authors, and slugs |
-| `info <slug>` | One post's full `/feed` payload |
+| `get <slug>` | One post's full `/feed` payload (`info` remains an alias) |
 | `open <slug>` | Launch the Product Hunt page in your default browser |
 | `feed raw` | Dump the raw Atom XML to stdout |
 | `feed refresh` | Alias for `sync` |
@@ -146,9 +196,9 @@ Cloudflare blocks Product Hunt's HTML routes for automated HTTP clients. These c
 
 ### Utility
 
-`doctor` · `version` · `auth {status,set-token,logout}` · `profile` · `which` · `feedback` · `agent-context` · `api` · `workflow` · `export` · `import`
+`doctor` · `version` · `auth {setup,status,register,set-token,logout}` · `profile` · `which` · `feedback` · `agent-context` · `api` · `workflow` · `export` · `import`
 
-The `auth` subcommands are scaffolded but inert for this build (no credentials are required). They remain so that future Cloudflare-clearance imports can ship without reshaping the command tree.
+Auth is optional: Atom-backed commands need no credentials, while `backfill` and `search --enrich` use configured Product Hunt GraphQL credentials when present.
 
 ## Output Formats
 
@@ -276,7 +326,7 @@ Override the store path with `--db <path>` on any command that reads or writes i
 ## Troubleshooting
 
 - **Empty results after install** — run `producthunt-pp-cli sync` first. The store starts empty and the CLI refuses to fabricate data.
-- **`post <slug>`, `leaderboard daily`, etc. exit with code 3** — expected. Those commands are Cloudflare-gated stubs. Use `info <slug>` for `/feed`-level metadata and `open <slug>` to view the real page in your browser.
+- **`post <slug>`, `leaderboard daily`, etc. exit with code 3** — expected. Those commands are Cloudflare-gated stubs. Use `get <slug>` for `/feed`-level metadata and `open <slug>` to view the real page in your browser.
 - **`/feed` parse fails** — run `producthunt-pp-cli doctor --json` to confirm the feed is still serving Atom XML. Product Hunt occasionally returns a 503 during deploys.
 - **`search` returns nothing** — FTS5 only indexes what has been synced. One snapshot is 50 entries; run `sync` on a schedule to build a meaningful index.
 - **`trend <slug>` says "not in store"** — the slug was not in any snapshot the CLI has taken. Run `sync` when the product is currently featured, or wait for the next sync to pick it up.

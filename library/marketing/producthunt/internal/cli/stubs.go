@@ -52,19 +52,19 @@ func emitGated(cmd *cobra.Command, flags *rootFlags, feature string, reason stri
 func newPostCmd(flags *rootFlags) *cobra.Command {
 	return &cobra.Command{
 		Use:     "post <slug>",
-		Short:   "(stub) Full post detail — CF-gated, use 'info <slug>' instead",
+		Short:   "(stub) Full post detail — CF-gated, use 'get <slug>' instead",
 		Example: `  producthunt-pp-cli post seeknal --json`,
 		Long: `Product Hunt's post detail HTML pages at /posts/<slug> are blocked by
 Cloudflare for automated HTTP clients. This build does not fetch them.
 
 For /feed-level metadata on a slug (id, title, tagline, author, published,
-discussion URL, external URL), use 'info <slug>'. To read the real page
+discussion URL, external URL), use 'get <slug>'. To read the real page
 in a browser, use 'open <slug>'.`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return emitGated(cmd, flags, "post <slug>",
 				"producthunt.com/posts/<slug> is Cloudflare-gated and not reachable from a Go HTTP client.",
-				"Use 'info <slug>' (reads /feed), or 'open <slug>' to view the HTML page in your browser.",
+				"Use 'get <slug>' (reads /feed), or 'open <slug>' to view the HTML page in your browser.",
 				map[string]any{"requested_slug": args[0]})
 		},
 	}

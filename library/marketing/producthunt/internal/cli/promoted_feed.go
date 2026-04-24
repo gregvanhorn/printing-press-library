@@ -10,8 +10,8 @@ package cli
 import (
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/atom"
+	"github.com/spf13/cobra"
 )
 
 func newFeedPromotedCmd(flags *rootFlags) *cobra.Command {

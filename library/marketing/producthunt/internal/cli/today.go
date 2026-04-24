@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/atom"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/store"
+	"github.com/spf13/cobra"
 )
 
 func newTodayCmd(flags *rootFlags) *cobra.Command {
@@ -38,6 +38,7 @@ the topmost entry in the feed at fetch time.`,
 			if limit <= 0 {
 				limit = 10
 			}
+			autoWarm(flags, dbPath)
 
 			// Resolve data source: --live forces network; otherwise prefer
 			// store with live fallback when store is empty.

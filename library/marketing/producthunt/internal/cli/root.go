@@ -13,12 +13,12 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/client"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/config"
+	"github.com/spf13/cobra"
 )
 
-var version = "1.0.0"
+var version = "1.1.0"
 
 type rootFlags struct {
 	asJSON       bool
@@ -39,6 +39,15 @@ type rootFlags struct {
 	rateLimit    float64
 	dataSource   string
 
+	// Self-warming knobs. See ph_autosync.go.
+	noAutoSync bool
+	caller     string
+
+	// Populated by EnsureFresh when an auto-sync-aware command runs it.
+	// Attached to the command's JSON output as _meta.auto_synced via
+	// attachAutoSyncMeta before the result goes to printOutputWithFlags.
+	autoSyncMeta *AutoSyncMeta
+
 	// deliverBuf captures command output when --deliver is set to a
 	// non-stdout sink. Flushed to the sink after Execute returns.
 	deliverBuf  *bytes.Buffer
@@ -55,8 +64,9 @@ func Execute() error {
 		Long: `Token-free Product Hunt CLI.
 
 Read the public Atom feed, persist a local SQLite history, and compose trend, calendar,
-maker, and tagline views that Product Hunt's own UI hides. No OAuth, no complexity budget,
-no resident browser.
+maker, and tagline views that Product Hunt's own UI hides. Anonymous mode needs no
+OAuth, no complexity budget, and no resident browser; optional GraphQL auth unlocks
+historical backfill and search enrichment.
 
 Highlights (only possible because we keep a local /feed snapshot store):
   • trend <slug>       First-seen and how long a product lingered on the feed
@@ -97,6 +107,8 @@ See README.md or the bundled SKILL.md for recipes.`,
 	rootCmd.PersistentFlags().StringVar(&flags.profileName, "profile", "", "Apply values from a saved profile (see 'producthunt-pp-cli profile list')")
 	rootCmd.PersistentFlags().StringVar(&flags.deliverSpec, "deliver", "", "Route output to a sink: stdout (default), file:<path>, webhook:<url>")
 	rootCmd.PersistentFlags().Float64Var(&flags.rateLimit, "rate-limit", 0, "Max requests per second (0 to disable)")
+	rootCmd.PersistentFlags().BoolVar(&flags.noAutoSync, "no-auto-sync", false, "Skip the automatic Atom sync that read commands run when the local store is >24h stale")
+	rootCmd.PersistentFlags().StringVar(&flags.caller, "caller", "", "Identify the calling integrator in logs (e.g. 'last30days/3.0.1') for debugging and diagnostics")
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		if flags.deliverSpec != "" {
@@ -153,13 +165,14 @@ See README.md or the bundled SKILL.md for recipes.`,
 	}
 	rootCmd.AddCommand(newDoctorCmd(&flags))
 	rootCmd.AddCommand(newAuthCmd(&flags))
-	rootCmd.AddCommand(newAgentContextCmd(rootCmd))
+	rootCmd.AddCommand(newAgentContextCmd(rootCmd, &flags))
 	rootCmd.AddCommand(newProfileCmd(&flags))
 	rootCmd.AddCommand(newFeedbackCmd(&flags))
 	rootCmd.AddCommand(newWhichCmd(&flags))
 	rootCmd.AddCommand(newExportCmd(&flags))
 	rootCmd.AddCommand(newImportCmd(&flags))
 	rootCmd.AddCommand(newSyncCmd(&flags))
+	rootCmd.AddCommand(newBackfillCmd(&flags))
 	rootCmd.AddCommand(newWorkflowCmd(&flags))
 	rootCmd.AddCommand(newAPICmd(&flags))
 	rootCmd.AddCommand(newFeedPromotedCmd(&flags))
@@ -170,7 +183,7 @@ See README.md or the bundled SKILL.md for recipes.`,
 	rootCmd.AddCommand(newRecentCmd(&flags))
 	rootCmd.AddCommand(newListCmd(&flags))
 	rootCmd.AddCommand(newSearchCmd(&flags))
-	rootCmd.AddCommand(newInfoCmd(&flags))
+	rootCmd.AddCommand(newGetCmd(&flags))
 	rootCmd.AddCommand(newOpenCmd(&flags))
 	rootCmd.AddCommand(newTrendCmd(&flags))
 	rootCmd.AddCommand(newWatchCmd(&flags))

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/marketing/producthunt/internal/store"
+	"github.com/spf13/cobra"
 )
 
 func newListCmd(flags *rootFlags) *cobra.Command {
@@ -41,6 +41,7 @@ Run 'sync' first to populate the store. An empty store returns [].`,
   # Agent-friendly narrow payload, top 5 most-seen
   producthunt-pp-cli list --sort seen_count --limit 5 --agent`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			autoWarm(flags, dbPath)
 			db, err := openStore(dbPath)
 			if err != nil {
 				return configErr(err)
