@@ -74,6 +74,13 @@ Once synced, use the 'search' command for instant full-text search.`,
 			if len(resources) == 0 {
 				resources = defaultSyncResources()
 			}
+			for i, resource := range resources {
+				spec, ok := resolveResourceSpec(resource)
+				if !ok {
+					return usageErr(fmt.Errorf("unknown sync resource %q (supported: %s)", resource, strings.Join(knownResourceNames(), ", ")))
+				}
+				resources[i] = spec.Name
+			}
 
 			// --full: clear all sync cursors before starting
 			if full {
@@ -173,7 +180,11 @@ func syncResource(c interface {
 		fmt.Fprintf(os.Stderr, `{"event":"sync_start","resource":"%s"}`+"\n", resource)
 	}
 
-	path := syncResourcePath(resource)
+	spec, ok := resolveResourceSpec(resource)
+	if !ok {
+		return syncResult{Resource: resource, Err: usageErr(fmt.Errorf("unknown sync resource %q", resource)), Duration: time.Since(started)}
+	}
+	path := spec.Path
 	var totalCount int
 
 	// Resume cursor from sync_state (unless --full cleared it)
@@ -215,6 +226,12 @@ func syncResource(c interface {
 				fmt.Fprintf(os.Stderr, `{"event":"sync_error","resource":"%s","error":"%s"}`+"\n", resource, strings.ReplaceAll(err.Error(), `"`, `\"`))
 			}
 			return syncResult{Resource: resource, Count: totalCount, Err: fmt.Errorf("fetching %s: %w", resource, err), Duration: time.Since(started)}
+		}
+		if isDryRunPayload(data) {
+			if !humanFriendly {
+				fmt.Fprintf(os.Stderr, `{"event":"sync_complete","resource":"%s","total":0,"duration_ms":%d}`+"\n", resource, time.Since(started).Milliseconds())
+			}
+			return syncResult{Resource: resource, Count: 0, Duration: time.Since(started)}
 		}
 
 		// Try to extract items from the response.
@@ -471,42 +488,11 @@ func parseSinceDuration(s string) (time.Time, error) {
 }
 
 func defaultSyncResources() []string {
-	return []string{
-		"account",
-		"bluesky",
-		"facebook",
-		"google",
-		"instagram",
-		"linkedin",
-		"pinterest",
-		"reddit",
-		"tiktok",
-		"truthsocial",
-		"youtube",
+	resources := make([]string, 0, len(syncResourceSpecs))
+	for _, spec := range syncResourceSpecs {
+		resources = append(resources, spec.Name)
 	}
-}
-
-// syncResourcePath maps resource names to their actual API endpoint paths.
-// For REST APIs this is typically "/<resource>". For non-REST APIs (e.g., Steam)
-// this preserves the actual endpoint path like "/ISteamApps/GetAppList/v2".
-func syncResourcePath(resource string) string {
-	paths := map[string]string{
-		"account": "/v1/account/get-api-usage",
-		"bluesky": "/v1/bluesky/user/posts",
-		"facebook": "/v1/facebook/group/posts",
-		"google": "/v1/google/company/ads",
-		"instagram": "/v1/instagram/user/reels",
-		"linkedin": "/v1/linkedin/ads/search",
-		"pinterest": "/v1/pinterest/board",
-		"reddit": "/v1/reddit/search",
-		"tiktok": "/v1/tiktok/search/top",
-		"truthsocial": "/v1/truthsocial/user/posts",
-		"youtube": "/v1/youtube/channel",
-	}
-	if p, ok := paths[resource]; ok {
-		return p
-	}
-	return "/" + resource
+	return resources
 }
 
 func extractID(obj map[string]any) string {
@@ -519,4 +505,11 @@ func extractID(obj map[string]any) string {
 		}
 	}
 	return ""
+}
+
+func isDryRunPayload(data json.RawMessage) bool {
+	var stub struct {
+		DryRun bool `json:"dry_run"`
+	}
+	return json.Unmarshal(data, &stub) == nil && stub.DryRun
 }

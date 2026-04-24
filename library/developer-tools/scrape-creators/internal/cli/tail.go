@@ -66,6 +66,9 @@ native streaming instead of polling.`,
 			if err := fetchAndEmit(c, path, enc); err != nil {
 				fmt.Fprintf(os.Stderr, "warning: initial fetch failed: %v\n", err)
 			}
+			if !follow {
+				return nil
+			}
 
 			for {
 				select {
@@ -88,7 +91,9 @@ native streaming instead of polling.`,
 	return cmd
 }
 
-func fetchAndEmit(c interface{ Get(string, map[string]string) (json.RawMessage, error) }, path string, enc *json.Encoder) error {
+func fetchAndEmit(c interface {
+	Get(string, map[string]string) (json.RawMessage, error)
+}, path string, enc *json.Encoder) error {
 	data, err := c.Get(path, nil)
 	if err != nil {
 		return err

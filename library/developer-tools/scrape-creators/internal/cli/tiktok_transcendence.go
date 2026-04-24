@@ -18,7 +18,9 @@ import (
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
-func fetchTikTokVideos(c interface{ Get(string, map[string]string) (json.RawMessage, error) }, handle string) ([]map[string]any, error) {
+func fetchTikTokVideos(c interface {
+	Get(string, map[string]string) (json.RawMessage, error)
+}, handle string) ([]map[string]any, error) {
 	data, err := c.Get("/v3/tiktok/profile/videos", map[string]string{"handle": handle})
 	if err != nil {
 		return nil, err
@@ -96,19 +98,22 @@ Engagement rate = (likes + comments + shares) / views × 100`,
 				return classifyAPIError(err)
 			}
 			if len(videos) == 0 {
+				if flags.dryRun {
+					return nil
+				}
 				return fmt.Errorf("no videos found for @%s", handle)
 			}
 
 			// Compute per-video engagement rates
 			type vidResult struct {
-				ID          string  `json:"id"`
-				Description string  `json:"description"`
-				PlayCount   float64 `json:"play_count"`
-				LikeCount   float64 `json:"like_count"`
-				CommentCount float64 `json:"comment_count"`
-				ShareCount  float64 `json:"share_count"`
+				ID             string  `json:"id"`
+				Description    string  `json:"description"`
+				PlayCount      float64 `json:"play_count"`
+				LikeCount      float64 `json:"like_count"`
+				CommentCount   float64 `json:"comment_count"`
+				ShareCount     float64 `json:"share_count"`
 				EngagementRate float64 `json:"engagement_rate"`
-				CreatedAt   int64   `json:"created_at,omitempty"`
+				CreatedAt      int64   `json:"created_at,omitempty"`
 			}
 
 			var results []vidResult
@@ -124,14 +129,14 @@ Engagement rate = (likes + comments + shares) / views × 100`,
 					createdAt = int64(ct)
 				}
 				results = append(results, vidResult{
-					ID:          id,
-					Description: desc,
-					PlayCount:   play,
-					LikeCount:   like,
-					CommentCount: comment,
-					ShareCount:  share,
+					ID:             id,
+					Description:    desc,
+					PlayCount:      play,
+					LikeCount:      like,
+					CommentCount:   comment,
+					ShareCount:     share,
 					EngagementRate: math.Round(er*100) / 100,
-					CreatedAt:   createdAt,
+					CreatedAt:      createdAt,
 				})
 			}
 			avgER := totalER / float64(len(results))
@@ -152,12 +157,12 @@ Engagement rate = (likes + comments + shares) / views × 100`,
 
 			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
 				out, _ := json.MarshalIndent(map[string]any{
-					"handle":          handle,
-					"total_videos":    len(results),
+					"handle":                  handle,
+					"total_videos":            len(results),
 					"average_engagement_rate": math.Round(avgER*100) / 100,
-					"threshold_multiplier": threshold,
-					"threshold_rate":  math.Round(cutoff*100) / 100,
-					"spikes":          spikes,
+					"threshold_multiplier":    threshold,
+					"threshold_rate":          math.Round(cutoff*100) / 100,
+					"spikes":                  spikes,
 				}, "", "  ")
 				fmt.Fprintln(cmd.OutOrStdout(), string(out))
 				return nil
@@ -208,6 +213,9 @@ func newTiktokAnalyzeCmd(flags *rootFlags) *cobra.Command {
 				return classifyAPIError(err)
 			}
 			if len(videos) == 0 {
+				if flags.dryRun {
+					return nil
+				}
 				return fmt.Errorf("no videos found for @%s", handle)
 			}
 
@@ -291,6 +299,9 @@ func newTiktokCadenceCmd(flags *rootFlags) *cobra.Command {
 				return classifyAPIError(err)
 			}
 			if len(videos) == 0 {
+				if flags.dryRun {
+					return nil
+				}
 				return fmt.Errorf("no videos found for @%s", handle)
 			}
 
@@ -329,10 +340,10 @@ func newTiktokCadenceCmd(flags *rootFlags) *cobra.Command {
 			}
 
 			result := map[string]any{
-				"handle":     handle,
-				"total":      len(videos),
-				"by_day":     dayStats,
-				"by_hour":    hourStats,
+				"handle":  handle,
+				"total":   len(videos),
+				"by_day":  dayStats,
+				"by_hour": hourStats,
 			}
 
 			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
@@ -387,14 +398,14 @@ func newTiktokCompareCmd(flags *rootFlags) *cobra.Command {
 			}
 
 			type creatorStat struct {
-				Handle         string  `json:"handle"`
-				Nickname       string  `json:"nickname"`
-				Followers      float64 `json:"followers"`
-				Following      float64 `json:"following"`
-				Likes          float64 `json:"total_likes"`
-				VideoCount     float64 `json:"video_count"`
-				AvgEngagement  float64 `json:"avg_engagement_rate"`
-				Verified       bool    `json:"verified"`
+				Handle        string  `json:"handle"`
+				Nickname      string  `json:"nickname"`
+				Followers     float64 `json:"followers"`
+				Following     float64 `json:"following"`
+				Likes         float64 `json:"total_likes"`
+				VideoCount    float64 `json:"video_count"`
+				AvgEngagement float64 `json:"avg_engagement_rate"`
+				Verified      bool    `json:"verified"`
 			}
 
 			var stats []creatorStat
@@ -461,13 +472,13 @@ func newTiktokCompareCmd(flags *rootFlags) *cobra.Command {
 			var rows []map[string]any
 			for _, s := range stats {
 				rows = append(rows, map[string]any{
-					"handle":       "@" + s.Handle,
-					"name":         s.Nickname,
-					"followers":    formatCount(s.Followers),
-					"likes":        formatCount(s.Likes),
-					"videos":       int(s.VideoCount),
-					"avg_eng%":     fmt.Sprintf("%.2f", s.AvgEngagement),
-					"verified":     s.Verified,
+					"handle":    "@" + s.Handle,
+					"name":      s.Nickname,
+					"followers": formatCount(s.Followers),
+					"likes":     formatCount(s.Likes),
+					"videos":    int(s.VideoCount),
+					"avg_eng%":  fmt.Sprintf("%.2f", s.AvgEngagement),
+					"verified":  s.Verified,
 				})
 			}
 			return printAutoTable(cmd.OutOrStdout(), rows)
@@ -505,6 +516,9 @@ func newTiktokTranscriptsCmd(flags *rootFlags) *cobra.Command {
 				return classifyAPIError(err)
 			}
 			if len(videos) == 0 {
+				if flags.dryRun {
+					return nil
+				}
 				return fmt.Errorf("no videos found for @%s", handle)
 			}
 
@@ -617,7 +631,7 @@ func newAccountBudgetCmd(flags *rootFlags) *cobra.Command {
 			}
 
 			// Get current balance
-			balanceData, err := c.Get("/v1/account/getApiUsage", map[string]string{})
+			balanceData, err := c.Get("/v1/account/get-api-usage", map[string]string{})
 			if err != nil {
 				// Fallback: try profile endpoint which returns credits_remaining
 				balanceData, err = c.Get("/v1/tiktok/profile", map[string]string{"handle": "tiktok"})
@@ -627,7 +641,7 @@ func newAccountBudgetCmd(flags *rootFlags) *cobra.Command {
 			}
 
 			// Get daily usage
-			dailyData, _ := c.Get("/v1/account/getDailyUsageCount", map[string]string{})
+			dailyData, _ := c.Get("/v1/account/get-daily-usage-count", map[string]string{})
 
 			var balance map[string]any
 			json.Unmarshal(balanceData, &balance)

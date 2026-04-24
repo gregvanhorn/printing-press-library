@@ -14,16 +14,16 @@ import (
 )
 
 type Config struct {
-	BaseURL        string `toml:"base_url"`
-	AuthHeaderVal  string `toml:"auth_header"`
-	AuthSource     string `toml:"-"`
-	AccessToken    string `toml:"access_token"`
-	RefreshToken   string `toml:"refresh_token"`
-	TokenExpiry    time.Time `toml:"token_expiry"`
-	ClientID       string `toml:"client_id"`
-	ClientSecret   string `toml:"client_secret"`
-	Path           string `toml:"-"`
-	ScrapeCreatorsApiKeyAuth string `toml:"creators_api_key_auth"`
+	BaseURL                  string    `toml:"base_url"`
+	AuthHeaderVal            string    `toml:"auth_header"`
+	AuthSource               string    `toml:"-"`
+	AccessToken              string    `toml:"access_token"`
+	RefreshToken             string    `toml:"refresh_token"`
+	TokenExpiry              time.Time `toml:"token_expiry"`
+	ClientID                 string    `toml:"client_id"`
+	ClientSecret             string    `toml:"client_secret"`
+	Path                     string    `toml:"-"`
+	ScrapeCreatorsApiKeyAuth string    `toml:"creators_api_key_auth"`
 }
 
 func Load(configPath string) (*Config, error) {
@@ -64,20 +64,17 @@ func Load(configPath string) (*Config, error) {
 	if v := os.Getenv("SCRAPE_CREATORS_BASE_URL"); v != "" {
 		cfg.BaseURL = v
 	}
+	if cfg.AuthSource == "" && cfg.AuthHeaderVal != "" {
+		cfg.AuthSource = "config:auth_header"
+	}
 
 	return cfg, nil
 }
 
 func (c *Config) AuthHeader() string {
-	if c.AuthHeaderVal != "" {
-		return c.AuthHeaderVal
-	}
 	token := c.ScrapeCreatorsApiKeyAuth
 	if token == "" {
-		return ""
-	}
-	if c.ScrapeCreatorsApiKeyAuth == "" {
-		return ""
+		return c.AuthHeaderVal
 	}
 	return token
 }

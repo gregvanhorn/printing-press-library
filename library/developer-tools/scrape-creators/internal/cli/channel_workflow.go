@@ -55,82 +55,44 @@ and full resync. After archiving, use 'search' for instant full-text search.`,
 			}
 			defer s.Close()
 
-			resources := []string{"account", "bluesky", "facebook", "google", "instagram", "linkedin", "pinterest", "reddit", "tiktok", "truthsocial", "youtube",  }
+			resources := defaultSyncResources()
 			totalSynced := 0
+			errCount := 0
 
 			for _, resource := range resources {
-				cursor := ""
-				if !full {
-					existing, _, _, err := s.GetSyncState(resource)
-					if err == nil && existing != "" {
-						cursor = existing
-					}
-				}
-
 				fmt.Fprintf(cmd.ErrOrStderr(), "Syncing %s...\n", resource)
-
-				params := map[string]string{"limit": "100"}
-				if cursor != "" {
-					params["after"] = cursor
+				res := syncResource(c, s, resource, "", full)
+				if res.Err != nil {
+					fmt.Fprintf(cmd.ErrOrStderr(), "  warning: %s: %v\n", resource, res.Err)
+					errCount++
+					continue
 				}
-
-				count := 0
-				for {
-					data, fetchErr := c.Get("/"+resource, params)
-					if fetchErr != nil {
-						fmt.Fprintf(cmd.ErrOrStderr(), "  warning: %s: %v\n", resource, fetchErr)
-						break
-					}
-					var items []json.RawMessage
-					if err := json.Unmarshal(data, &items); err != nil {
-						// Might be a single object, not array
-						if err := s.Upsert(resource, resource+"-singleton", data); err != nil {
-							fmt.Fprintf(cmd.ErrOrStderr(), "  warning: store %s: %v\n", resource, err)
-						}
-						count++
-						break
-					}
-					if len(items) == 0 {
-						break
-					}
-					for _, item := range items {
-						var obj struct{ ID string `json:"id"` }
-						json.Unmarshal(item, &obj)
-						id := obj.ID
-						if id == "" {
-							id = fmt.Sprintf("%s-%d", resource, count)
-						}
-						if err := s.Upsert(resource, id, item); err != nil {
-							fmt.Fprintf(cmd.ErrOrStderr(), "  warning: store %s/%s: %v\n", resource, id, err)
-						}
-						cursor = id
-						count++
-					}
-					if len(items) < 100 {
-						break
-					}
-					params["after"] = cursor
-				}
-
-				if count > 0 {
-					s.SaveSyncState(resource, cursor, count)
-				}
-				totalSynced += count
-				fmt.Fprintf(cmd.ErrOrStderr(), "  %s: %d items\n", resource, count)
+				totalSynced += res.Count
+				fmt.Fprintf(cmd.ErrOrStderr(), "  %s: %d items\n", resource, res.Count)
 			}
 
 			if flags.asJSON {
 				enc := json.NewEncoder(cmd.OutOrStdout())
 				enc.SetIndent("", "  ")
-				return enc.Encode(map[string]any{
+				if err := enc.Encode(map[string]any{
 					"resources_synced": len(resources),
 					"total_items":      totalSynced,
 					"store_path":       dbPath,
 					"timestamp":        time.Now().UTC().Format(time.RFC3339),
-				})
+					"failed_resources": errCount,
+				}); err != nil {
+					return err
+				}
+				if errCount > 0 {
+					return apiErr(fmt.Errorf("%d resource(s) failed to archive", errCount))
+				}
+				return nil
 			}
 
 			fmt.Fprintf(cmd.OutOrStdout(), "Archived %d items across %d resources to %s\n", totalSynced, len(resources), dbPath)
+			if errCount > 0 {
+				return apiErr(fmt.Errorf("%d resource(s) failed to archive", errCount))
+			}
 			return nil
 		},
 	}
