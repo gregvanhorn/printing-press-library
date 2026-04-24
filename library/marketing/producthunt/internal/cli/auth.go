@@ -117,6 +117,17 @@ func newAuthSetTokenCmd(flags *rootFlags) *cobra.Command {
 				return configErr(fmt.Errorf("saving token: %w", err))
 			}
 
+			if flags.asJSON || flags.agent {
+				raw, _ := json.Marshal(map[string]any{
+					"status":         "saved",
+					"config_path":    cfg.Path,
+					"auth_mode":      cfg.GraphQLAuthMode(),
+					"token_source":   tokenSourceLabel(tokenEnv),
+					"unlocked":       []string{"backfill", "search --enrich"},
+					"token_redacted": true,
+				})
+				return printOutputWithFlags(cmd.OutOrStdout(), raw, flags)
+			}
 			fmt.Fprintf(cmd.OutOrStdout(), "Token saved to %s\n", cfg.Path)
 			return nil
 		},
@@ -177,9 +188,48 @@ func newAuthLogoutCmd(flags *rootFlags) *cobra.Command {
 				return configErr(fmt.Errorf("clearing tokens: %w", err))
 			}
 
-			// Warn if env vars still set
-			fmt.Fprintln(cmd.OutOrStdout(), "Logged out. Credentials cleared.")
+			activeEnvVars := activeGraphQLTokenEnvVars()
+			if flags.asJSON || flags.agent {
+				raw, _ := json.Marshal(map[string]any{
+					"status":                     "cleared",
+					"config_path":                cfg.Path,
+					"stored_credentials_cleared": true,
+					"env_credentials_active":     len(activeEnvVars) > 0,
+					"active_env_vars":            activeEnvVars,
+					"effective_mode":             effectiveModeAfterLogout(activeEnvVars),
+				})
+				return printOutputWithFlags(cmd.OutOrStdout(), raw, flags)
+			}
+			w := cmd.OutOrStdout()
+			fmt.Fprintln(w, "Logged out. Stored credentials cleared.")
+			if len(activeEnvVars) > 0 {
+				fmt.Fprintf(w, "Warning: env credentials are still active via %s; unset them to fully return to Atom-only mode.\n", strings.Join(activeEnvVars, ", "))
+			}
 			return nil
 		},
 	}
+}
+
+func tokenSourceLabel(tokenEnv string) string {
+	if tokenEnv != "" {
+		return "env:" + tokenEnv
+	}
+	return "argument"
+}
+
+func activeGraphQLTokenEnvVars() []string {
+	var active []string
+	for _, name := range config.GraphQLTokenEnvVars() {
+		if strings.TrimSpace(os.Getenv(name)) != "" {
+			active = append(active, name)
+		}
+	}
+	return active
+}
+
+func effectiveModeAfterLogout(activeEnvVars []string) string {
+	if len(activeEnvVars) > 0 {
+		return "developer_token_env"
+	}
+	return "atom_only"
 }

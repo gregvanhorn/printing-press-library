@@ -44,6 +44,7 @@ type agentContextAuth struct {
 	EnvVars              []string `json:"env_vars"`
 	AnonymousHistoryMode string   `json:"anonymous_history_mode"`
 	GraphQLConfigured    bool     `json:"graphql_configured"`
+	GraphQLValidation    string   `json:"graphql_validation"`
 	CanBackfill          bool     `json:"can_backfill"`
 	CanEnrichSearch      bool     `json:"can_enrich_search"`
 	SetupCommand         string   `json:"setup_command,omitempty"`
@@ -80,7 +81,7 @@ type agentContextFlag struct {
 	Default string `json:"default,omitempty"`
 }
 
-func newAgentContextCmd(rootCmd *cobra.Command) *cobra.Command {
+func newAgentContextCmd(rootCmd *cobra.Command, flags *rootFlags) *cobra.Command {
 	var pretty bool
 	cmd := &cobra.Command{
 		Use:   "agent-context",
@@ -91,7 +92,7 @@ reading source. Schema is versioned via schema_version.`,
 		Example: `  producthunt-pp-cli agent-context --pretty
   producthunt-pp-cli agent-context | jq '.commands[].name'`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := buildAgentContext(rootCmd)
+			ctx := buildAgentContext(rootCmd, flags)
 			enc := json.NewEncoder(os.Stdout)
 			if pretty {
 				enc.SetIndent("", "  ")
@@ -103,8 +104,12 @@ reading source. Schema is versioned via schema_version.`,
 	return cmd
 }
 
-func buildAgentContext(rootCmd *cobra.Command) agentContext {
-	cfg, _ := config.Load("")
+func buildAgentContext(rootCmd *cobra.Command, flags *rootFlags) agentContext {
+	configPath := ""
+	if flags != nil {
+		configPath = flags.configPath
+	}
+	cfg, _ := config.Load(configPath)
 	authStatus := buildAuthStatus(cfg)
 	profiles := ListProfileNames()
 	if profiles == nil {
@@ -122,6 +127,7 @@ func buildAgentContext(rootCmd *cobra.Command) agentContext {
 			EnvVars:              authStatus.EnvVars,
 			AnonymousHistoryMode: authStatus.AnonymousHistoryMode,
 			GraphQLConfigured:    authStatus.GraphQLConfigured,
+			GraphQLValidation:    authStatus.GraphQLValidation,
 			CanBackfill:          authStatus.CanBackfill,
 			CanEnrichSearch:      authStatus.CanEnrichSearch,
 			SetupCommand:         authStatus.SetupCommand,

@@ -47,11 +47,26 @@ func (c *Config) AutoSyncEnabled() bool {
 	return *c.AutoSync
 }
 
+// GraphQLTokenEnvVars returns the supported env vars, in precedence order.
+func GraphQLTokenEnvVars() []string {
+	return []string{"PRODUCTHUNT_GRAPHQL_TOKEN", "PRODUCTHUNT_DEVELOPER_TOKEN", "PRODUCTHUNT_API_TOKEN"}
+}
+
 // HasGraphQLToken reports whether Product Hunt GraphQL reads can be attempted.
 // Both OAuth client-credentials tokens and dashboard developer tokens are valid
-// for the public read-only GraphQL fields this CLI uses.
+// for the public read-only GraphQL fields this CLI uses. Unknown auth_type
+// values are deliberately not treated as GraphQL-capable because a stray token
+// in the config should not unlock API calls under an unsupported auth scheme.
 func (c *Config) HasGraphQLToken() bool {
-	return c != nil && c.AccessToken != "" && c.AuthType != "none"
+	if c == nil || c.AccessToken == "" {
+		return false
+	}
+	switch c.AuthType {
+	case "oauth", "developer_token", "graphql_token", "":
+		return true
+	default:
+		return false
+	}
 }
 
 // HasOAuth reports whether OAuth credentials are configured. Kept for older
@@ -62,7 +77,7 @@ func (c *Config) HasOAuth() bool {
 }
 
 func (c *Config) GraphQLAuthMode() string {
-	if !c.HasGraphQLToken() {
+	if c == nil || c.AccessToken == "" {
 		return "atom_only"
 	}
 	switch c.AuthType {
@@ -74,7 +89,7 @@ func (c *Config) GraphQLAuthMode() string {
 		// Backward-compatible with tokens saved before auth_type was set.
 		return "graphql_token"
 	default:
-		return c.AuthType
+		return "unsupported_auth_type"
 	}
 }
 
@@ -103,7 +118,7 @@ func Load(configPath string) (*Config, error) {
 	}
 
 	// Env var overrides
-	if v := firstEnv("PRODUCTHUNT_GRAPHQL_TOKEN", "PRODUCTHUNT_DEVELOPER_TOKEN", "PRODUCTHUNT_API_TOKEN"); v != "" {
+	if v := firstEnv(GraphQLTokenEnvVars()...); v != "" {
 		cfg.AccessToken = v
 		cfg.AuthType = "developer_token"
 		cfg.AuthSource = "env"

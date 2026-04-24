@@ -82,6 +82,8 @@ type authRegisterInputs struct {
 	ClientSecretEnv string
 }
 
+var exchangeClientCredentialsFunc = exchangeClientCredentials
+
 func runAuthRegister(cmd *cobra.Command, flags *rootFlags, inputs authRegisterInputs) error {
 	cfg, err := config.Load(flags.configPath)
 	if err != nil {
@@ -89,16 +91,20 @@ func runAuthRegister(cmd *cobra.Command, flags *rootFlags, inputs authRegisterIn
 	}
 
 	w := cmd.OutOrStdout()
-	fmt.Fprintln(w, bold("Register a Product Hunt OAuth application"))
-	fmt.Fprintln(w, "")
-	fmt.Fprintln(w, "1. Open this URL in your browser:")
-	fmt.Fprintln(w, "     https://www.producthunt.com/v2/oauth/applications")
-	fmt.Fprintln(w, "2. Click 'New application'.")
-	fmt.Fprintln(w, "3. Fill in:")
-	fmt.Fprintln(w, "     Name: producthunt-pp-cli")
-	fmt.Fprintln(w, "     Redirect URI: https://localhost/callback")
-	fmt.Fprintln(w, "4. Paste the API Key (client_id) and API Secret (client_secret) below.")
-	fmt.Fprintln(w, "")
+	humanOutput := !flags.asJSON && !flags.agent
+	interactiveHuman := humanOutput && !flags.noInput
+	if interactiveHuman {
+		fmt.Fprintln(w, bold("Register a Product Hunt OAuth application"))
+		fmt.Fprintln(w, "")
+		fmt.Fprintln(w, "1. Open this URL in your browser:")
+		fmt.Fprintln(w, "     https://www.producthunt.com/v2/oauth/applications")
+		fmt.Fprintln(w, "2. Click 'New application'.")
+		fmt.Fprintln(w, "3. Fill in:")
+		fmt.Fprintln(w, "     Name: producthunt-pp-cli")
+		fmt.Fprintln(w, "     Redirect URI: https://localhost/callback")
+		fmt.Fprintln(w, "4. Paste the API Key (client_id) and API Secret (client_secret) below.")
+		fmt.Fprintln(w, "")
+	}
 
 	clientID := strings.TrimSpace(inputs.ClientID)
 	clientSecret := strings.TrimSpace(inputs.ClientSecret)
@@ -137,18 +143,43 @@ func runAuthRegister(cmd *cobra.Command, flags *rootFlags, inputs authRegisterIn
 		return usageErr(fmt.Errorf("client_secret is required"))
 	}
 
-	fmt.Fprintln(w, "")
-	fmt.Fprintln(w, "Exchanging credentials for access token...")
+	if humanOutput {
+		if interactiveHuman {
+			fmt.Fprintln(w, "")
+		}
+		fmt.Fprintln(w, "Exchanging credentials for access token...")
+	}
 
-	ctx, cancel := context.WithTimeout(cmd.Context(), 20*time.Second)
+	parentCtx := cmd.Context()
+	if parentCtx == nil {
+		parentCtx = context.Background()
+	}
+	ctx, cancel := context.WithTimeout(parentCtx, 20*time.Second)
 	defer cancel()
-	token, expiry, err := exchangeClientCredentials(ctx, clientID, clientSecret, "")
+	token, expiry, err := exchangeClientCredentialsFunc(ctx, clientID, clientSecret, "")
 	if err != nil {
 		return authErr(fmt.Errorf("token exchange: %w", err))
 	}
 
 	if err := cfg.SaveOAuth(clientID, clientSecret, token, expiry); err != nil {
 		return configErr(fmt.Errorf("saving config: %w", err))
+	}
+
+	if flags.asJSON || flags.agent {
+		payload := map[string]any{
+			"status":         "authenticated",
+			"config_path":    cfg.Path,
+			"auth_mode":      cfg.GraphQLAuthMode(),
+			"client_id":      maskMiddle(clientID, 4, 4),
+			"token_redacted": true,
+			"unlocked":       []string{"backfill", "search --enrich"},
+			"next":           "producthunt-pp-cli backfill --days 30 --dry-run",
+		}
+		if !expiry.IsZero() {
+			payload["token_expires"] = expiry.Format(time.RFC3339)
+		}
+		raw, _ := json.Marshal(payload)
+		return printOutputWithFlags(cmd.OutOrStdout(), raw, flags)
 	}
 
 	fmt.Fprintln(w, green("Authenticated"))

@@ -165,7 +165,7 @@ See README.md or the bundled SKILL.md for recipes.`,
 	}
 	rootCmd.AddCommand(newDoctorCmd(&flags))
 	rootCmd.AddCommand(newAuthCmd(&flags))
-	rootCmd.AddCommand(newAgentContextCmd(rootCmd))
+	rootCmd.AddCommand(newAgentContextCmd(rootCmd, &flags))
 	rootCmd.AddCommand(newProfileCmd(&flags))
 	rootCmd.AddCommand(newFeedbackCmd(&flags))
 	rootCmd.AddCommand(newWhichCmd(&flags))

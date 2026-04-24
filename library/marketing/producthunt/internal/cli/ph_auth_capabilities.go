@@ -12,6 +12,7 @@ type authCapabilityStatus struct {
 	Mode                 string            `json:"mode"`
 	ConfigPath           string            `json:"config_path,omitempty"`
 	GraphQLConfigured    bool              `json:"graphql_configured"`
+	GraphQLValidation    string            `json:"graphql_validation"`
 	CanBackfill          bool              `json:"can_backfill"`
 	CanEnrichSearch      bool              `json:"can_enrich_search"`
 	AnonymousHistoryMode string            `json:"anonymous_history_mode"`
@@ -33,6 +34,7 @@ type authImprovementHint struct {
 func buildAuthStatus(cfg *config.Config) authCapabilityStatus {
 	status := authCapabilityStatus{
 		Mode:                 "atom_only",
+		GraphQLValidation:    "not_configured",
 		AnonymousHistoryMode: "public Atom /feed snapshots accumulate history from now forward; Atom cannot retroactively backfill past windows",
 		SetupCommand:         "producthunt-pp-cli auth setup",
 		SetupURL:             productHuntOAuthAppsURL,
@@ -53,11 +55,17 @@ func buildAuthStatus(cfg *config.Config) authCapabilityStatus {
 		if cfg.HasGraphQLToken() {
 			status.Mode = cfg.GraphQLAuthMode()
 			status.GraphQLConfigured = true
+			status.GraphQLValidation = "configured_not_validated"
 			status.CanBackfill = true
 			status.CanEnrichSearch = true
 			status.Unlocked = []string{"backfill", "search --enrich"}
 			status.SetupCommand = ""
 			status.SetupURL = ""
+			status.Notes = append(status.Notes, "Configured GraphQL credentials are not live-validated by status/doctor; run backfill --dry-run to test API access.")
+		} else if cfg.AccessToken != "" {
+			status.Mode = cfg.GraphQLAuthMode()
+			status.GraphQLValidation = "unsupported_auth_type"
+			status.Notes = append(status.Notes, "A token is present, but auth_type is unsupported; use auth setup or auth set-token to configure a supported Product Hunt GraphQL token.")
 		}
 	}
 	return status
