@@ -41,8 +41,8 @@ func newAuthStatusCmd(flags *rootFlags) *cobra.Command {
 				fmt.Fprintln(w, red("Not authenticated"))
 				fmt.Fprintln(w, "")
 				fmt.Fprintln(w, "Set your API key:")
-				fmt.Fprintln(w, "  export SCRAPE_CREATORS_API_KEY=\"your-token-here\"")
-				fmt.Fprintf(w, "  scrape-creators-pp-cli auth set-token <token>\n")
+				fmt.Fprintln(w, "  export SCRAPE_CREATORS_API_KEY=\"your-api-key-here\"")
+				fmt.Fprintf(w, "  scrape-creators-pp-cli auth set-token <api-key>\n")
 				return authErr(fmt.Errorf("no credentials configured"))
 			}
 
@@ -56,7 +56,7 @@ func newAuthStatusCmd(flags *rootFlags) *cobra.Command {
 
 func newAuthSetTokenCmd(flags *rootFlags) *cobra.Command {
 	return &cobra.Command{
-		Use:     "set-token <token>",
+		Use:     "set-token <api-key>",
 		Short:   "Save an API key to the config file",
 		Example: "  scrape-creators-pp-cli auth set-token sk_live_abc123",
 		Args:    cobra.ExactArgs(1),

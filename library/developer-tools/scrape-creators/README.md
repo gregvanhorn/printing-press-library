@@ -299,7 +299,7 @@ These platforms expose one endpoint each — run the top-level command directly.
 | `account daily-usage` | Daily usage |
 | `account most-used-routes` | Most-used endpoints |
 | `account budget` | Credit balance + projected days remaining (see Key Features) |
-| `auth set-token` / `auth status` / `auth logout` | Token management |
+| `auth set-token` / `auth status` / `auth logout` | API-key management |
 | `completion <shell>` | Generate shell completion (`bash`, `zsh`, `fish`, `powershell`) |
 | `doctor` | Environment / auth / connectivity health check |
 | `version` | Print version |
