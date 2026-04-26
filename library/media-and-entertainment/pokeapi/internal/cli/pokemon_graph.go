@@ -104,13 +104,11 @@ type pokemonMoveRow struct {
 	LevelLearnedAt int    `json:"level_learned_at"`
 }
 
-func newPokemonCmd(flags *rootFlags) *cobra.Command {
-	cmd := &cobra.Command{Use: "pokemon", Short: "Pokemon graph workflows"}
+func addPokemonGraphCommands(cmd *cobra.Command, flags *rootFlags) {
 	cmd.AddCommand(newPokemonProfileCmd(flags))
 	cmd.AddCommand(newPokemonEvolutionCmd(flags))
 	cmd.AddCommand(newPokemonMatchupsCmd(flags))
 	cmd.AddCommand(newPokemonMovesCmd(flags))
-	return cmd
 }
 
 func newTeamCmd(flags *rootFlags) *cobra.Command {

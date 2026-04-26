@@ -13,9 +13,9 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/media-and-entertainment/pokeapi/internal/client"
 	"github.com/mvanhorn/printing-press-library/library/media-and-entertainment/pokeapi/internal/config"
+	"github.com/spf13/cobra"
 )
 
 var version = "1.0.0"
@@ -143,9 +143,54 @@ See README.md or the bundled SKILL.md for recipes.`,
 		}
 		return nil
 	}
-	rootCmd.AddCommand(newV2Cmd(&flags))
+	rootCmd.AddCommand(newAbilityCmd(&flags))
+	rootCmd.AddCommand(newBerryCmd(&flags))
+	rootCmd.AddCommand(newBerryFirmnessCmd(&flags))
+	rootCmd.AddCommand(newBerryFlavorCmd(&flags))
+	rootCmd.AddCommand(newCharacteristicCmd(&flags))
+	rootCmd.AddCommand(newContestEffectCmd(&flags))
+	rootCmd.AddCommand(newContestTypeCmd(&flags))
+	rootCmd.AddCommand(newEggGroupCmd(&flags))
+	rootCmd.AddCommand(newEncounterConditionCmd(&flags))
+	rootCmd.AddCommand(newEncounterConditionValueCmd(&flags))
+	rootCmd.AddCommand(newEncounterMethodCmd(&flags))
+	rootCmd.AddCommand(newEvolutionChainCmd(&flags))
+	rootCmd.AddCommand(newEvolutionTriggerCmd(&flags))
+	rootCmd.AddCommand(newGenderCmd(&flags))
+	rootCmd.AddCommand(newGenerationCmd(&flags))
+	rootCmd.AddCommand(newGrowthRateCmd(&flags))
+	rootCmd.AddCommand(newItemCmd(&flags))
+	rootCmd.AddCommand(newItemAttributeCmd(&flags))
+	rootCmd.AddCommand(newItemCategoryCmd(&flags))
+	rootCmd.AddCommand(newItemFlingEffectCmd(&flags))
+	rootCmd.AddCommand(newItemPocketCmd(&flags))
+	rootCmd.AddCommand(newLanguageCmd(&flags))
+	rootCmd.AddCommand(newLocationCmd(&flags))
+	rootCmd.AddCommand(newLocationAreaCmd(&flags))
+	rootCmd.AddCommand(newMachineCmd(&flags))
+	rootCmd.AddCommand(newMoveCmd(&flags))
+	rootCmd.AddCommand(newMoveAilmentCmd(&flags))
+	rootCmd.AddCommand(newMoveBattleStyleCmd(&flags))
+	rootCmd.AddCommand(newMoveCategoryCmd(&flags))
+	rootCmd.AddCommand(newMoveDamageClassCmd(&flags))
+	rootCmd.AddCommand(newMoveLearnMethodCmd(&flags))
+	rootCmd.AddCommand(newMoveTargetCmd(&flags))
+	rootCmd.AddCommand(newNatureCmd(&flags))
+	rootCmd.AddCommand(newPalParkAreaCmd(&flags))
+	rootCmd.AddCommand(newPokeathlonStatCmd(&flags))
+	rootCmd.AddCommand(newPokedexCmd(&flags))
 	rootCmd.AddCommand(newPokemonCmd(&flags))
-	rootCmd.AddCommand(newTeamCmd(&flags))
+	rootCmd.AddCommand(newPokemonColorCmd(&flags))
+	rootCmd.AddCommand(newPokemonFormCmd(&flags))
+	rootCmd.AddCommand(newPokemonHabitatCmd(&flags))
+	rootCmd.AddCommand(newPokemonShapeCmd(&flags))
+	rootCmd.AddCommand(newPokemonSpeciesCmd(&flags))
+	rootCmd.AddCommand(newRegionCmd(&flags))
+	rootCmd.AddCommand(newStatCmd(&flags))
+	rootCmd.AddCommand(newSuperContestEffectCmd(&flags))
+	rootCmd.AddCommand(newTypeCmd(&flags))
+	rootCmd.AddCommand(newVersionCmd(&flags))
+	rootCmd.AddCommand(newVersionGroupCmd(&flags))
 	rootCmd.AddCommand(newDoctorCmd(&flags))
 	rootCmd.AddCommand(newAuthCmd(&flags))
 	rootCmd.AddCommand(newAgentContextCmd(rootCmd))
@@ -154,10 +199,11 @@ See README.md or the bundled SKILL.md for recipes.`,
 	rootCmd.AddCommand(newWhichCmd(&flags))
 	rootCmd.AddCommand(newExportCmd(&flags))
 	rootCmd.AddCommand(newImportCmd(&flags))
+	rootCmd.AddCommand(newSearchCmd(&flags))
 	rootCmd.AddCommand(newSyncCmd(&flags))
 	rootCmd.AddCommand(newAnalyticsCmd(&flags))
 	rootCmd.AddCommand(newWorkflowCmd(&flags))
-	rootCmd.AddCommand(newVersionCliCmd())
+	rootCmd.AddCommand(newTeamCmd(&flags))
 
 	err := rootCmd.Execute()
 	if err != nil && strings.Contains(err.Error(), "unknown flag") {
@@ -228,14 +274,4 @@ func (f *rootFlags) printTable(w *cobra.Command, headers []string, rows [][]stri
 		fmt.Fprintln(tw, line)
 	}
 	return tw.Flush()
-}
-
-func newVersionCliCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "version",
-		Short: "Print version",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("pokeapi-pp-cli %s\n", version)
-		},
-	}
 }

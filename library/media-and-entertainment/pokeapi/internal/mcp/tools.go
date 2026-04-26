@@ -22,7 +22,7 @@ import (
 // RegisterTools registers all API operations as MCP tools.
 func RegisterTools(s *server.MCPServer) {
 	s.AddTool(
-		mcplib.NewTool("v2_ability-list",
+		mcplib.NewTool("ability_list",
 			mcplib.WithDescription("Abilities provide passive effects for Pokémon in battle or in the overworld. Pokémon have multiple possible... Returns PaginatedAbilitySummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -31,46 +31,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/ability/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_ability-retrieve",
+		mcplib.NewTool("ability_retrieve",
 			mcplib.WithDescription("Abilities provide passive effects for Pokémon in battle or in the overworld. Pokémon have multiple possible... Returns AbilityDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/ability/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_berry-firmness-list",
-			mcplib.WithDescription("List berry firmness Returns PaginatedBerryFirmnessSummaryList."),
-			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
-			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
-			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
-		),
-		makeAPIHandler("GET", "/api/v2/berry-firmness/", []string{ }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_berry-firmness-retrieve",
-			mcplib.WithDescription("Get berry by firmness Returns BerryFirmnessDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
-		),
-		makeAPIHandler("GET", "/api/v2/berry-firmness/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_berry-flavor-list",
-			mcplib.WithDescription("List berry flavors Returns PaginatedBerryFlavorSummaryList."),
-			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
-			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
-			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
-		),
-		makeAPIHandler("GET", "/api/v2/berry-flavor/", []string{ }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_berry-flavor-retrieve",
-			mcplib.WithDescription("Get berries by flavor Returns BerryFlavorDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
-		),
-		makeAPIHandler("GET", "/api/v2/berry-flavor/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_berry-list",
+		mcplib.NewTool("berry_list",
 			mcplib.WithDescription("List berries Returns PaginatedBerrySummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -79,14 +47,46 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/berry/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_berry-retrieve",
+		mcplib.NewTool("berry_retrieve",
 			mcplib.WithDescription("Get a berry Returns BerryDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/berry/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_characteristic-list",
+		mcplib.NewTool("berry-firmness_list",
+			mcplib.WithDescription("List berry firmness Returns PaginatedBerryFirmnessSummaryList."),
+			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
+			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
+			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
+		),
+		makeAPIHandler("GET", "/api/v2/berry-firmness/", []string{ }),
+	)
+	s.AddTool(
+		mcplib.NewTool("berry-firmness_retrieve",
+			mcplib.WithDescription("Get berry by firmness Returns BerryFirmnessDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
+		),
+		makeAPIHandler("GET", "/api/v2/berry-firmness/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("berry-flavor_list",
+			mcplib.WithDescription("List berry flavors Returns PaginatedBerryFlavorSummaryList."),
+			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
+			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
+			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
+		),
+		makeAPIHandler("GET", "/api/v2/berry-flavor/", []string{ }),
+	)
+	s.AddTool(
+		mcplib.NewTool("berry-flavor_retrieve",
+			mcplib.WithDescription("Get berries by flavor Returns BerryFlavorDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
+		),
+		makeAPIHandler("GET", "/api/v2/berry-flavor/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("characteristic_list",
 			mcplib.WithDescription("List charecterictics Returns PaginatedCharacteristicSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -95,14 +95,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/characteristic/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_characteristic-retrieve",
+		mcplib.NewTool("characteristic_retrieve",
 			mcplib.WithDescription("Get characteristic Returns CharacteristicDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/characteristic/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_contest-effect-list",
+		mcplib.NewTool("contest-effect_list",
 			mcplib.WithDescription("List contest effects Returns PaginatedContestEffectSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -111,14 +111,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/contest-effect/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_contest-effect-retrieve",
+		mcplib.NewTool("contest-effect_retrieve",
 			mcplib.WithDescription("Get contest effect Returns ContestEffectDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/contest-effect/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_contest-type-list",
+		mcplib.NewTool("contest-type_list",
 			mcplib.WithDescription("List contest types Returns PaginatedContestTypeSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -127,14 +127,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/contest-type/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_contest-type-retrieve",
+		mcplib.NewTool("contest-type_retrieve",
 			mcplib.WithDescription("Get contest type Returns ContestTypeDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/contest-type/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_egg-group-list",
+		mcplib.NewTool("egg-group_list",
 			mcplib.WithDescription("List egg groups Returns PaginatedEggGroupSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -143,14 +143,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/egg-group/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_egg-group-retrieve",
+		mcplib.NewTool("egg-group_retrieve",
 			mcplib.WithDescription("Get egg group Returns EggGroupDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/egg-group/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_encounter-condition-list",
+		mcplib.NewTool("encounter-condition_list",
 			mcplib.WithDescription("List encounter conditions Returns PaginatedEncounterConditionSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -159,14 +159,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/encounter-condition/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_encounter-condition-retrieve",
+		mcplib.NewTool("encounter-condition_retrieve",
 			mcplib.WithDescription("Get encounter condition Returns EncounterConditionDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/encounter-condition/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_encounter-condition-value-list",
+		mcplib.NewTool("encounter-condition-value_list",
 			mcplib.WithDescription("List encounter condition values Returns PaginatedEncounterConditionValueSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -175,14 +175,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/encounter-condition-value/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_encounter-condition-value-retrieve",
+		mcplib.NewTool("encounter-condition-value_retrieve",
 			mcplib.WithDescription("Get encounter condition value Returns EncounterConditionValueDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/encounter-condition-value/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_encounter-method-list",
+		mcplib.NewTool("encounter-method_list",
 			mcplib.WithDescription("List encounter methods Returns PaginatedEncounterMethodSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -191,14 +191,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/encounter-method/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_encounter-method-retrieve",
+		mcplib.NewTool("encounter-method_retrieve",
 			mcplib.WithDescription("Get encounter method Returns EncounterMethodDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/encounter-method/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_evolution-chain-list",
+		mcplib.NewTool("evolution-chain_list",
 			mcplib.WithDescription("List evolution chains Returns PaginatedEvolutionChainSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -207,14 +207,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/evolution-chain/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_evolution-chain-retrieve",
+		mcplib.NewTool("evolution-chain_retrieve",
 			mcplib.WithDescription("Get evolution chain Returns EvolutionChainDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/evolution-chain/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_evolution-trigger-list",
+		mcplib.NewTool("evolution-trigger_list",
 			mcplib.WithDescription("List evolution triggers Returns PaginatedEvolutionTriggerSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -223,14 +223,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/evolution-trigger/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_evolution-trigger-retrieve",
+		mcplib.NewTool("evolution-trigger_retrieve",
 			mcplib.WithDescription("Get evolution trigger Returns EvolutionTriggerDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/evolution-trigger/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_gender-list",
+		mcplib.NewTool("gender_list",
 			mcplib.WithDescription("List genders Returns PaginatedGenderSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -239,14 +239,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/gender/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_gender-retrieve",
+		mcplib.NewTool("gender_retrieve",
 			mcplib.WithDescription("Get gender Returns GenderDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/gender/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_generation-list",
+		mcplib.NewTool("generation_list",
 			mcplib.WithDescription("List genrations Returns PaginatedGenerationSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -255,14 +255,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/generation/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_generation-retrieve",
+		mcplib.NewTool("generation_retrieve",
 			mcplib.WithDescription("Get genration Returns GenerationDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/generation/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_growth-rate-list",
+		mcplib.NewTool("growth-rate_list",
 			mcplib.WithDescription("List growth rates Returns PaginatedGrowthRateSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -271,62 +271,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/growth-rate/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_growth-rate-retrieve",
+		mcplib.NewTool("growth-rate_retrieve",
 			mcplib.WithDescription("Get growth rate Returns GrowthRateDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/growth-rate/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_item-attribute-list",
-			mcplib.WithDescription("List item attributes Returns PaginatedItemAttributeSummaryList."),
-			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
-			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
-			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
-		),
-		makeAPIHandler("GET", "/api/v2/item-attribute/", []string{ }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_item-attribute-retrieve",
-			mcplib.WithDescription("Get item attribute Returns ItemAttributeDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
-		),
-		makeAPIHandler("GET", "/api/v2/item-attribute/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_item-category-list",
-			mcplib.WithDescription("List item categories Returns PaginatedItemCategorySummaryList."),
-			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
-			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
-			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
-		),
-		makeAPIHandler("GET", "/api/v2/item-category/", []string{ }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_item-category-retrieve",
-			mcplib.WithDescription("Get item category Returns ItemCategoryDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
-		),
-		makeAPIHandler("GET", "/api/v2/item-category/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_item-fling-effect-list",
-			mcplib.WithDescription("List item fling effects Returns PaginatedItemFlingEffectSummaryList."),
-			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
-			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
-			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
-		),
-		makeAPIHandler("GET", "/api/v2/item-fling-effect/", []string{ }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_item-fling-effect-retrieve",
-			mcplib.WithDescription("Get item fling effect Returns ItemFlingEffectDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
-		),
-		makeAPIHandler("GET", "/api/v2/item-fling-effect/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_item-list",
+		mcplib.NewTool("item_list",
 			mcplib.WithDescription("List items Returns PaginatedItemSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -335,7 +287,62 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/item/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_item-pocket-list",
+		mcplib.NewTool("item_retrieve",
+			mcplib.WithDescription("Get item Returns ItemDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
+		),
+		makeAPIHandler("GET", "/api/v2/item/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("item-attribute_list",
+			mcplib.WithDescription("List item attributes Returns PaginatedItemAttributeSummaryList."),
+			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
+			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
+			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
+		),
+		makeAPIHandler("GET", "/api/v2/item-attribute/", []string{ }),
+	)
+	s.AddTool(
+		mcplib.NewTool("item-attribute_retrieve",
+			mcplib.WithDescription("Get item attribute Returns ItemAttributeDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
+		),
+		makeAPIHandler("GET", "/api/v2/item-attribute/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("item-category_list",
+			mcplib.WithDescription("List item categories Returns PaginatedItemCategorySummaryList."),
+			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
+			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
+			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
+		),
+		makeAPIHandler("GET", "/api/v2/item-category/", []string{ }),
+	)
+	s.AddTool(
+		mcplib.NewTool("item-category_retrieve",
+			mcplib.WithDescription("Get item category Returns ItemCategoryDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
+		),
+		makeAPIHandler("GET", "/api/v2/item-category/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("item-fling-effect_list",
+			mcplib.WithDescription("List item fling effects Returns PaginatedItemFlingEffectSummaryList."),
+			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
+			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
+			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
+		),
+		makeAPIHandler("GET", "/api/v2/item-fling-effect/", []string{ }),
+	)
+	s.AddTool(
+		mcplib.NewTool("item-fling-effect_retrieve",
+			mcplib.WithDescription("Get item fling effect Returns ItemFlingEffectDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
+		),
+		makeAPIHandler("GET", "/api/v2/item-fling-effect/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("item-pocket_list",
 			mcplib.WithDescription("List item pockets Returns PaginatedItemPocketSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -344,21 +351,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/item-pocket/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_item-pocket-retrieve",
+		mcplib.NewTool("item-pocket_retrieve",
 			mcplib.WithDescription("Get item pocket Returns ItemPocketDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/item-pocket/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_item-retrieve",
-			mcplib.WithDescription("Get item Returns ItemDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
-		),
-		makeAPIHandler("GET", "/api/v2/item/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_language-list",
+		mcplib.NewTool("language_list",
 			mcplib.WithDescription("List languages Returns PaginatedLanguageSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -367,29 +367,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/language/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_language-retrieve",
+		mcplib.NewTool("language_retrieve",
 			mcplib.WithDescription("Get language Returns LanguageDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/language/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_location-area-list",
-			mcplib.WithDescription("List location areas Returns PaginatedLocationAreaSummaryList."),
-			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
-			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
-		),
-		makeAPIHandler("GET", "/api/v2/location-area/", []string{ }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_location-area-retrieve",
-			mcplib.WithDescription("Get location area Returns LocationAreaDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("A unique integer value identifying this location area.")),
-		),
-		makeAPIHandler("GET", "/api/v2/location-area/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_location-list",
+		mcplib.NewTool("location_list",
 			mcplib.WithDescription("List locations Returns PaginatedLocationSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -398,14 +383,29 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/location/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_location-retrieve",
+		mcplib.NewTool("location_retrieve",
 			mcplib.WithDescription("Get location Returns LocationDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/location/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_machine-list",
+		mcplib.NewTool("location-area_list",
+			mcplib.WithDescription("List location areas Returns PaginatedLocationAreaSummaryList."),
+			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
+			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
+		),
+		makeAPIHandler("GET", "/api/v2/location-area/", []string{ }),
+	)
+	s.AddTool(
+		mcplib.NewTool("location-area_retrieve",
+			mcplib.WithDescription("Get location area Returns LocationAreaDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("A unique integer value identifying this location area.")),
+		),
+		makeAPIHandler("GET", "/api/v2/location-area/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("machine_list",
 			mcplib.WithDescription("List machines Returns PaginatedMachineSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -414,94 +414,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/machine/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_machine-retrieve",
+		mcplib.NewTool("machine_retrieve",
 			mcplib.WithDescription("Get machine Returns MachineDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/machine/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_move-ailment-list",
-			mcplib.WithDescription("List move meta ailments Returns PaginatedMoveMetaAilmentSummaryList."),
-			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
-			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
-			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
-		),
-		makeAPIHandler("GET", "/api/v2/move-ailment/", []string{ }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_move-ailment-retrieve",
-			mcplib.WithDescription("Get move meta ailment Returns MoveMetaAilmentDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
-		),
-		makeAPIHandler("GET", "/api/v2/move-ailment/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_move-battle-style-list",
-			mcplib.WithDescription("List move battle styles Returns PaginatedMoveBattleStyleSummaryList."),
-			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
-			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
-			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
-		),
-		makeAPIHandler("GET", "/api/v2/move-battle-style/", []string{ }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_move-battle-style-retrieve",
-			mcplib.WithDescription("Get move battle style Returns MoveBattleStyleDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
-		),
-		makeAPIHandler("GET", "/api/v2/move-battle-style/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_move-category-list",
-			mcplib.WithDescription("List move meta categories Returns PaginatedMoveMetaCategorySummaryList."),
-			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
-			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
-			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
-		),
-		makeAPIHandler("GET", "/api/v2/move-category/", []string{ }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_move-category-retrieve",
-			mcplib.WithDescription("Get move meta category Returns MoveMetaCategoryDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
-		),
-		makeAPIHandler("GET", "/api/v2/move-category/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_move-damage-class-list",
-			mcplib.WithDescription("List move damage classes Returns PaginatedMoveDamageClassSummaryList."),
-			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
-			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
-			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
-		),
-		makeAPIHandler("GET", "/api/v2/move-damage-class/", []string{ }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_move-damage-class-retrieve",
-			mcplib.WithDescription("Get move damage class Returns MoveDamageClassDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
-		),
-		makeAPIHandler("GET", "/api/v2/move-damage-class/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_move-learn-method-list",
-			mcplib.WithDescription("List move learn methods Returns PaginatedMoveLearnMethodSummaryList."),
-			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
-			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
-			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
-		),
-		makeAPIHandler("GET", "/api/v2/move-learn-method/", []string{ }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_move-learn-method-retrieve",
-			mcplib.WithDescription("Get move learn method Returns MoveLearnMethodDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
-		),
-		makeAPIHandler("GET", "/api/v2/move-learn-method/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_move-list",
+		mcplib.NewTool("move_list",
 			mcplib.WithDescription("List moves Returns PaginatedMoveSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -510,14 +430,94 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/move/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_move-retrieve",
+		mcplib.NewTool("move_retrieve",
 			mcplib.WithDescription("Get move Returns MoveDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/move/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_move-target-list",
+		mcplib.NewTool("move-ailment_list",
+			mcplib.WithDescription("List move meta ailments Returns PaginatedMoveMetaAilmentSummaryList."),
+			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
+			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
+			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
+		),
+		makeAPIHandler("GET", "/api/v2/move-ailment/", []string{ }),
+	)
+	s.AddTool(
+		mcplib.NewTool("move-ailment_retrieve",
+			mcplib.WithDescription("Get move meta ailment Returns MoveMetaAilmentDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
+		),
+		makeAPIHandler("GET", "/api/v2/move-ailment/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("move-battle-style_list",
+			mcplib.WithDescription("List move battle styles Returns PaginatedMoveBattleStyleSummaryList."),
+			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
+			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
+			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
+		),
+		makeAPIHandler("GET", "/api/v2/move-battle-style/", []string{ }),
+	)
+	s.AddTool(
+		mcplib.NewTool("move-battle-style_retrieve",
+			mcplib.WithDescription("Get move battle style Returns MoveBattleStyleDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
+		),
+		makeAPIHandler("GET", "/api/v2/move-battle-style/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("move-category_list",
+			mcplib.WithDescription("List move meta categories Returns PaginatedMoveMetaCategorySummaryList."),
+			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
+			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
+			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
+		),
+		makeAPIHandler("GET", "/api/v2/move-category/", []string{ }),
+	)
+	s.AddTool(
+		mcplib.NewTool("move-category_retrieve",
+			mcplib.WithDescription("Get move meta category Returns MoveMetaCategoryDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
+		),
+		makeAPIHandler("GET", "/api/v2/move-category/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("move-damage-class_list",
+			mcplib.WithDescription("List move damage classes Returns PaginatedMoveDamageClassSummaryList."),
+			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
+			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
+			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
+		),
+		makeAPIHandler("GET", "/api/v2/move-damage-class/", []string{ }),
+	)
+	s.AddTool(
+		mcplib.NewTool("move-damage-class_retrieve",
+			mcplib.WithDescription("Get move damage class Returns MoveDamageClassDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
+		),
+		makeAPIHandler("GET", "/api/v2/move-damage-class/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("move-learn-method_list",
+			mcplib.WithDescription("List move learn methods Returns PaginatedMoveLearnMethodSummaryList."),
+			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
+			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
+			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
+		),
+		makeAPIHandler("GET", "/api/v2/move-learn-method/", []string{ }),
+	)
+	s.AddTool(
+		mcplib.NewTool("move-learn-method_retrieve",
+			mcplib.WithDescription("Get move learn method Returns MoveLearnMethodDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
+		),
+		makeAPIHandler("GET", "/api/v2/move-learn-method/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("move-target_list",
 			mcplib.WithDescription("List move targets Returns PaginatedMoveTargetSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -526,14 +526,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/move-target/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_move-target-retrieve",
+		mcplib.NewTool("move-target_retrieve",
 			mcplib.WithDescription("Get move target Returns MoveTargetDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/move-target/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_nature-list",
+		mcplib.NewTool("nature_list",
 			mcplib.WithDescription("List natures Returns PaginatedNatureSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -542,14 +542,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/nature/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_nature-retrieve",
+		mcplib.NewTool("nature_retrieve",
 			mcplib.WithDescription("Get nature Returns NatureDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/nature/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_pal-park-area-list",
+		mcplib.NewTool("pal-park-area_list",
 			mcplib.WithDescription("List pal park areas Returns PaginatedPalParkAreaSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -558,14 +558,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/pal-park-area/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_pal-park-area-retrieve",
+		mcplib.NewTool("pal-park-area_retrieve",
 			mcplib.WithDescription("Get pal park area Returns PalParkAreaDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/pal-park-area/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_pokeathlon-stat-list",
+		mcplib.NewTool("pokeathlon-stat_list",
 			mcplib.WithDescription("List pokeathlon stats Returns PaginatedPokeathlonStatSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -574,14 +574,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/pokeathlon-stat/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_pokeathlon-stat-retrieve",
+		mcplib.NewTool("pokeathlon-stat_retrieve",
 			mcplib.WithDescription("Get pokeathlon stat Returns PokeathlonStatDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/pokeathlon-stat/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_pokedex-list",
+		mcplib.NewTool("pokedex_list",
 			mcplib.WithDescription("List pokedex Returns PaginatedPokedexSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -590,69 +590,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/pokedex/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_pokedex-retrieve",
+		mcplib.NewTool("pokedex_retrieve",
 			mcplib.WithDescription("Get pokedex Returns PokedexDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/pokedex/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_pokemon-color-list",
-			mcplib.WithDescription("List pokemon colors Returns PaginatedPokemonColorSummaryList."),
-			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
-			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
-			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
-		),
-		makeAPIHandler("GET", "/api/v2/pokemon-color/", []string{ }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_pokemon-color-retrieve",
-			mcplib.WithDescription("Get pokemon color Returns PokemonColorDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
-		),
-		makeAPIHandler("GET", "/api/v2/pokemon-color/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_pokemon-encounters-retrieve",
-			mcplib.WithDescription("Get pokemon encounter Returns array of PokemonEncountersRetrieveItem."),
-			mcplib.WithString("pokemon_id", mcplib.Required(), mcplib.Description("Pokemon id")),
-		),
-		makeAPIHandler("GET", "/api/v2/pokemon/{pokemon_id}/encounters", []string{"pokemon_id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_pokemon-form-list",
-			mcplib.WithDescription("List pokemon forms Returns PaginatedPokemonFormSummaryList."),
-			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
-			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
-			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
-		),
-		makeAPIHandler("GET", "/api/v2/pokemon-form/", []string{ }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_pokemon-form-retrieve",
-			mcplib.WithDescription("Get pokemon form Returns PokemonFormDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
-		),
-		makeAPIHandler("GET", "/api/v2/pokemon-form/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_pokemon-habitat-list",
-			mcplib.WithDescription("List pokemom habitas Returns PaginatedPokemonHabitatSummaryList."),
-			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
-			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
-			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
-		),
-		makeAPIHandler("GET", "/api/v2/pokemon-habitat/", []string{ }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_pokemon-habitat-retrieve",
-			mcplib.WithDescription("Get pokemom habita Returns PokemonHabitatDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
-		),
-		makeAPIHandler("GET", "/api/v2/pokemon-habitat/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_pokemon-list",
+		mcplib.NewTool("pokemon_list",
 			mcplib.WithDescription("List pokemon Returns PaginatedPokemonSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -661,14 +606,69 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/pokemon/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_pokemon-retrieve",
+		mcplib.NewTool("pokemon_retrieve",
 			mcplib.WithDescription("Get pokemon Returns PokemonDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/pokemon/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_pokemon-shape-list",
+		mcplib.NewTool("pokemon_encounters_pokemon-retrieve",
+			mcplib.WithDescription("Get pokemon encounter Returns array of PokemonRetrieveItem."),
+			mcplib.WithString("pokemon_id", mcplib.Required(), mcplib.Description("Pokemon id")),
+		),
+		makeAPIHandler("GET", "/api/v2/pokemon/{pokemon_id}/encounters", []string{"pokemon_id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("pokemon-color_list",
+			mcplib.WithDescription("List pokemon colors Returns PaginatedPokemonColorSummaryList."),
+			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
+			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
+			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
+		),
+		makeAPIHandler("GET", "/api/v2/pokemon-color/", []string{ }),
+	)
+	s.AddTool(
+		mcplib.NewTool("pokemon-color_retrieve",
+			mcplib.WithDescription("Get pokemon color Returns PokemonColorDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
+		),
+		makeAPIHandler("GET", "/api/v2/pokemon-color/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("pokemon-form_list",
+			mcplib.WithDescription("List pokemon forms Returns PaginatedPokemonFormSummaryList."),
+			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
+			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
+			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
+		),
+		makeAPIHandler("GET", "/api/v2/pokemon-form/", []string{ }),
+	)
+	s.AddTool(
+		mcplib.NewTool("pokemon-form_retrieve",
+			mcplib.WithDescription("Get pokemon form Returns PokemonFormDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
+		),
+		makeAPIHandler("GET", "/api/v2/pokemon-form/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("pokemon-habitat_list",
+			mcplib.WithDescription("List pokemom habitas Returns PaginatedPokemonHabitatSummaryList."),
+			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
+			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
+			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
+		),
+		makeAPIHandler("GET", "/api/v2/pokemon-habitat/", []string{ }),
+	)
+	s.AddTool(
+		mcplib.NewTool("pokemon-habitat_retrieve",
+			mcplib.WithDescription("Get pokemom habita Returns PokemonHabitatDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
+		),
+		makeAPIHandler("GET", "/api/v2/pokemon-habitat/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("pokemon-shape_list",
 			mcplib.WithDescription("List pokemon shapes Returns PaginatedPokemonShapeSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -677,14 +677,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/pokemon-shape/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_pokemon-shape-retrieve",
+		mcplib.NewTool("pokemon-shape_retrieve",
 			mcplib.WithDescription("Get pokemon shape Returns PokemonShapeDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/pokemon-shape/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_pokemon-species-list",
+		mcplib.NewTool("pokemon-species_list",
 			mcplib.WithDescription("List pokemon species Returns PaginatedPokemonSpeciesSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -693,14 +693,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/pokemon-species/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_pokemon-species-retrieve",
+		mcplib.NewTool("pokemon-species_retrieve",
 			mcplib.WithDescription("Get pokemon species Returns PokemonSpeciesDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/pokemon-species/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_region-list",
+		mcplib.NewTool("region_list",
 			mcplib.WithDescription("List regions Returns PaginatedRegionSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -709,14 +709,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/region/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_region-retrieve",
+		mcplib.NewTool("region_retrieve",
 			mcplib.WithDescription("Get region Returns RegionDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/region/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_stat-list",
+		mcplib.NewTool("stat_list",
 			mcplib.WithDescription("List stats Returns PaginatedStatSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -725,14 +725,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/stat/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_stat-retrieve",
+		mcplib.NewTool("stat_retrieve",
 			mcplib.WithDescription("Get stat Returns StatDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/stat/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_super-contest-effect-list",
+		mcplib.NewTool("super-contest-effect_list",
 			mcplib.WithDescription("List super contest effects Returns PaginatedSuperContestEffectSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -741,14 +741,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/super-contest-effect/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_super-contest-effect-retrieve",
+		mcplib.NewTool("super-contest-effect_retrieve",
 			mcplib.WithDescription("Get super contest effect Returns SuperContestEffectDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/super-contest-effect/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_type-list",
+		mcplib.NewTool("type_list",
 			mcplib.WithDescription("List types Returns PaginatedTypeSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -757,30 +757,14 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/type/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_type-retrieve",
+		mcplib.NewTool("type_retrieve",
 			mcplib.WithDescription("Get types Returns TypeDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/type/{id}/", []string{"id", }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_version-group-list",
-			mcplib.WithDescription("List version groups Returns PaginatedVersionGroupSummaryList."),
-			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
-			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
-			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
-		),
-		makeAPIHandler("GET", "/api/v2/version-group/", []string{ }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_version-group-retrieve",
-			mcplib.WithDescription("Get version group Returns VersionGroupDetail."),
-			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
-		),
-		makeAPIHandler("GET", "/api/v2/version-group/{id}/", []string{"id", }),
-	)
-	s.AddTool(
-		mcplib.NewTool("v2_version-list",
+		mcplib.NewTool("version_list",
 			mcplib.WithDescription("List versions Returns PaginatedVersionSummaryList."),
 			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
 			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
@@ -789,11 +773,27 @@ func RegisterTools(s *server.MCPServer) {
 		makeAPIHandler("GET", "/api/v2/version/", []string{ }),
 	)
 	s.AddTool(
-		mcplib.NewTool("v2_version-retrieve",
+		mcplib.NewTool("version_retrieve",
 			mcplib.WithDescription("Get version Returns VersionDetail."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
 		),
 		makeAPIHandler("GET", "/api/v2/version/{id}/", []string{"id", }),
+	)
+	s.AddTool(
+		mcplib.NewTool("version-group_list",
+			mcplib.WithDescription("List version groups Returns PaginatedVersionGroupSummaryList."),
+			mcplib.WithString("limit", mcplib.Description("Number of results to return per page.")),
+			mcplib.WithString("offset", mcplib.Description("The initial index from which to return the results.")),
+			mcplib.WithString("q", mcplib.Description("> Only available locally and not at [pokeapi.co](https://pokeapi.co/docs/v2) Case-insensitive query applied on the...")),
+		),
+		makeAPIHandler("GET", "/api/v2/version-group/", []string{ }),
+	)
+	s.AddTool(
+		mcplib.NewTool("version-group_retrieve",
+			mcplib.WithDescription("Get version group Returns VersionGroupDetail."),
+			mcplib.WithString("id", mcplib.Required(), mcplib.Description("This parameter can be a string or an integer.")),
+		),
+		makeAPIHandler("GET", "/api/v2/version-group/{id}/", []string{"id", }),
 	)
 	// Sync tool — populates local database for offline search and sql queries
 	s.AddTool(
@@ -804,6 +804,15 @@ func RegisterTools(s *server.MCPServer) {
 			mcplib.WithBoolean("full", mcplib.Description("Full resync ignoring checkpoints")),
 		),
 		handleSync,
+	)
+	// Search tool — faster than iterating list endpoints for finding specific items
+	s.AddTool(
+		mcplib.NewTool("search",
+			mcplib.WithDescription("Full-text search across all synced data. Faster than paginating list endpoints. Requires sync first."),
+			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Search query (supports FTS5 syntax: AND, OR, NOT, quotes for phrases)")),
+			mcplib.WithNumber("limit", mcplib.Description("Max results (default 25)")),
+		),
+		handleSearch,
 	)
 	// SQL tool — ad-hoc analysis on synced data without API calls
 	s.AddTool(
@@ -944,6 +953,33 @@ func handleSync(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallTo
 	return mcplib.NewToolResultText("sync not yet implemented via MCP - use the CLI: pokeapi-pp-cli sync"), nil
 }
 
+func handleSearch(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
+	args := req.GetArguments()
+	query, ok := args["query"].(string)
+	if !ok || query == "" {
+		return mcplib.NewToolResultError("query is required"), nil
+	}
+
+	limit := 25
+	if v, ok := args["limit"].(float64); ok && v > 0 {
+		limit = int(v)
+	}
+
+	db, err := store.Open(dbPath())
+	if err != nil {
+		return mcplib.NewToolResultError(fmt.Sprintf("opening database: %v", err)), nil
+	}
+	defer db.Close()
+
+	results, err := db.Search(query, limit)
+	if err != nil {
+		return mcplib.NewToolResultError(fmt.Sprintf("search failed: %v", err)), nil
+	}
+
+	data, _ := json.MarshalIndent(results, "", "  ")
+	return mcplib.NewToolResultText(string(data)), nil
+}
+
 func handleSQL(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
 	args := req.GetArguments()
 	query, ok := args["query"].(string)
@@ -999,9 +1035,337 @@ func handleContext(_ context.Context, _ mcplib.CallToolRequest) (*mcplib.CallToo
 		"tool_count":  97,
 		"resources": []map[string]any{
 			{
-				"name": "v2",
-				"description": "Manage v2",
-				"endpoints": []string{"ability-list", "ability-retrieve", "berry-firmness-list", "berry-firmness-retrieve", "berry-flavor-list", "berry-flavor-retrieve", "berry-list", "berry-retrieve", "characteristic-list", "characteristic-retrieve", "contest-effect-list", "contest-effect-retrieve", "contest-type-list", "contest-type-retrieve", "egg-group-list", "egg-group-retrieve", "encounter-condition-list", "encounter-condition-retrieve", "encounter-condition-value-list", "encounter-condition-value-retrieve", "encounter-method-list", "encounter-method-retrieve", "evolution-chain-list", "evolution-chain-retrieve", "evolution-trigger-list", "evolution-trigger-retrieve", "gender-list", "gender-retrieve", "generation-list", "generation-retrieve", "growth-rate-list", "growth-rate-retrieve", "item-attribute-list", "item-attribute-retrieve", "item-category-list", "item-category-retrieve", "item-fling-effect-list", "item-fling-effect-retrieve", "item-list", "item-pocket-list", "item-pocket-retrieve", "item-retrieve", "language-list", "language-retrieve", "location-area-list", "location-area-retrieve", "location-list", "location-retrieve", "machine-list", "machine-retrieve", "move-ailment-list", "move-ailment-retrieve", "move-battle-style-list", "move-battle-style-retrieve", "move-category-list", "move-category-retrieve", "move-damage-class-list", "move-damage-class-retrieve", "move-learn-method-list", "move-learn-method-retrieve", "move-list", "move-retrieve", "move-target-list", "move-target-retrieve", "nature-list", "nature-retrieve", "pal-park-area-list", "pal-park-area-retrieve", "pokeathlon-stat-list", "pokeathlon-stat-retrieve", "pokedex-list", "pokedex-retrieve", "pokemon-color-list", "pokemon-color-retrieve", "pokemon-encounters-retrieve", "pokemon-form-list", "pokemon-form-retrieve", "pokemon-habitat-list", "pokemon-habitat-retrieve", "pokemon-list", "pokemon-retrieve", "pokemon-shape-list", "pokemon-shape-retrieve", "pokemon-species-list", "pokemon-species-retrieve", "region-list", "region-retrieve", "stat-list", "stat-retrieve", "super-contest-effect-list", "super-contest-effect-retrieve", "type-list", "type-retrieve", "version-group-list", "version-group-retrieve", "version-list", "version-retrieve",  },
+				"name": "ability",
+				"description": "Manage ability",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "berry",
+				"description": "Manage berry",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "berry-firmness",
+				"description": "Manage berry firmness",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "berry-flavor",
+				"description": "Manage berry flavor",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "characteristic",
+				"description": "Manage characteristic",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "contest-effect",
+				"description": "Manage contest effect",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "contest-type",
+				"description": "Manage contest type",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "egg-group",
+				"description": "Manage egg group",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "encounter-condition",
+				"description": "Manage encounter condition",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "encounter-condition-value",
+				"description": "Manage encounter condition value",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "encounter-method",
+				"description": "Manage encounter method",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "evolution-chain",
+				"description": "Manage evolution chain",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "evolution-trigger",
+				"description": "Manage evolution trigger",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "gender",
+				"description": "Manage gender",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "generation",
+				"description": "Manage generation",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "growth-rate",
+				"description": "Manage growth rate",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "item",
+				"description": "An item is an object in the games which the player can pick up, keep in their bag, and use in some manner. They have...",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "item-attribute",
+				"description": "Manage item attribute",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "item-category",
+				"description": "Manage item category",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "item-fling-effect",
+				"description": "Manage item fling effect",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "item-pocket",
+				"description": "Manage item pocket",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "language",
+				"description": "Manage language",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "location",
+				"description": "Locations that can be visited within the games. Locations make up sizable portions of regions, like cities or routes.",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "location-area",
+				"description": "Manage location area",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+			},
+			{
+				"name": "machine",
+				"description": "Machines are the representation of items that teach moves to Pokémon. They vary from version to version, so it is...",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "move",
+				"description": "Moves are the skills of Pokémon in battle. In battle, a Pokémon uses one move each turn. Some moves (including...",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "move-ailment",
+				"description": "Manage move ailment",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "move-battle-style",
+				"description": "Manage move battle style",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "move-category",
+				"description": "Manage move category",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "move-damage-class",
+				"description": "Manage move damage class",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "move-learn-method",
+				"description": "Manage move learn method",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "move-target",
+				"description": "Manage move target",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "nature",
+				"description": "Manage nature",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "pal-park-area",
+				"description": "Manage pal park area",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "pokeathlon-stat",
+				"description": "Manage pokeathlon stat",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "pokedex",
+				"description": "Manage pokedex",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "pokemon",
+				"description": "Pokémon are the creatures that inhabit the world of the Pokémon games. They can be caught using Pokéballs and...",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "pokemon-color",
+				"description": "Manage pokemon color",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "pokemon-form",
+				"description": "Manage pokemon form",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "pokemon-habitat",
+				"description": "Manage pokemon habitat",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "pokemon-shape",
+				"description": "Manage pokemon shape",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "pokemon-species",
+				"description": "Manage pokemon species",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "region",
+				"description": "Manage region",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "stat",
+				"description": "Manage stat",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "super-contest-effect",
+				"description": "Manage super contest effect",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "type",
+				"description": "Manage type",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "version",
+				"description": "Manage version",
+				"endpoints": []string{"list", "retrieve",  },
+				"syncable": true,
+				"searchable": true,
+			},
+			{
+				"name": "version-group",
+				"description": "Manage version group",
+				"endpoints": []string{"list", "retrieve",  },
 				"syncable": true,
 				"searchable": true,
 			},
