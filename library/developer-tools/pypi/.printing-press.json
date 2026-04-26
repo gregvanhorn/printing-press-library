@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-04-26T15:00:15.208426Z",
+  "printing_press_version": "2.3.7",
+  "api_name": "pypi",
+  "cli_name": "pypi-pp-cli",
+  "spec_path": "/tmp/pypi-spec.yaml",
+  "spec_format": "openapi3",
+  "spec_checksum": "sha256:524c4387a02d1763def4b3660042b55bdce05363a0f264ec0c1b2927029c701d",
+  "mcp_binary": "pypi-pp-mcp",
+  "mcp_tool_count": 4,
+  "mcp_public_tool_count": 4,
+  "mcp_ready": "full",
+  "api_version": "1.0.0",
+  "auth_type": "none",
+  "novel_features": [
+    {
+      "name": "Package metadata lookup",
+      "command": "pypi json get-package-info",
+      "description": "Fetch PyPI package metadata for dependency research and package evaluation."
+    },
+    {
+      "name": "Package version lookup",
+      "command": "pypi json get-package-version-info",
+      "description": "Inspect a specific package release for reproducible dependency decisions."
+    },
+    {
+      "name": "New package feed",
+      "command": "rss newest-packages",
+      "description": "Watch newest PyPI packages through the RSS API for ecosystem discovery."
+    }
+  ]
+}
