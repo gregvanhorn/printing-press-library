@@ -253,6 +253,22 @@
       }
     },
     {
+      "name": "pokeapi",
+      "category": "media-and-entertainment",
+      "api": "pokeapi",
+      "description": "PokeAPI as an agent-ready Pokemon knowledge graph with endpoint coverage plus profile, evolution, matchup, moves, and team coverage workflows.",
+      "path": "library/media-and-entertainment/pokeapi",
+      "mcp": {
+        "binary": "pokeapi-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 97,
+        "public_tool_count": 97,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full"
+      }
+    },
+    {
       "name": "postman-explore",
       "category": "developer-tools",
       "api": "Postman Explore",
