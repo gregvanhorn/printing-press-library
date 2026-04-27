@@ -5,7 +5,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
@@ -66,7 +65,7 @@ Exit codes:
   company-goat-pp-cli funding ramp --since 2020
 `, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dryRunOK(flags) {
+			if dryRunOK(cmd, flags) {
 				return nil
 			}
 			if who == "" && t.Domain == "" && len(args) == 0 {
@@ -100,7 +99,7 @@ Exit codes:
 
 			filings, err := secCli.SearchAndFetchAll(ctx, stem, maxFilings)
 			if err != nil {
-				return fmt.Errorf("sec edgar: %w", err)
+				return classifyAPIError(fmt.Errorf("sec edgar: %w", err))
 			}
 			if sinceYear > 0 {
 				filings = filterByYear(filings, sinceYear)
@@ -135,7 +134,7 @@ func runFundingWho(cmd *cobra.Command, flags *rootFlags, secCli *sec.Client, who
 	// EFTS supports phrase search — use the person's name in quotes.
 	filings, err := secCli.SearchAndFetchAll(ctx, who, maxFilings*2)
 	if err != nil {
-		return fmt.Errorf("sec edgar: %w", err)
+		return classifyAPIError(fmt.Errorf("sec edgar: %w", err))
 	}
 	// Filter to filings actually naming this person in relatedPersons.
 	wantLower := strings.ToLower(who)
@@ -173,9 +172,7 @@ func runFundingWho(cmd *cobra.Command, flags *rootFlags, secCli *sec.Client, who
 	w := cmd.OutOrStdout()
 	asJSON := flags.asJSON || !isTerminal(w)
 	if asJSON {
-		enc := json.NewEncoder(w)
-		enc.SetIndent("", "  ")
-		return enc.Encode(out)
+		return flags.printJSON(cmd, out)
 	}
 	fmt.Fprintf(w, "Form D filings naming %q:\n\n", who)
 	for _, f := range out.Filings {
@@ -229,9 +226,7 @@ func renderFunding(cmd *cobra.Command, flags *rootFlags, r fundingResult) {
 	w := cmd.OutOrStdout()
 	asJSON := flags.asJSON || !isTerminal(w)
 	if asJSON {
-		enc := json.NewEncoder(w)
-		enc.SetIndent("", "  ")
-		_ = enc.Encode(r)
+		_ = flags.printJSON(cmd, r)
 		return
 	}
 	fmt.Fprintf(w, "Domain: %s\n", r.Domain)
@@ -299,7 +294,7 @@ Output bins by filing year and shows offering amount totals per year.`,
   company-goat-pp-cli funding-trend anthropic --since 2020 --json
 `, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dryRunOK(flags) {
+			if dryRunOK(cmd, flags) {
 				return nil
 			}
 			if t.Domain == "" && len(args) == 0 {
@@ -321,7 +316,7 @@ Output bins by filing year and shows offering amount totals per year.`,
 
 			filings, err := secCli.SearchAndFetchAll(ctx, stem, maxFilings)
 			if err != nil {
-				return fmt.Errorf("sec edgar: %w", err)
+				return classifyAPIError(fmt.Errorf("sec edgar: %w", err))
 			}
 			if sinceYear > 0 {
 				filings = filterByYear(filings, sinceYear)
@@ -365,9 +360,7 @@ Output bins by filing year and shows offering amount totals per year.`,
 			w := cmd.OutOrStdout()
 			asJSON := flags.asJSON || !isTerminal(w)
 			if asJSON {
-				enc := json.NewEncoder(w)
-				enc.SetIndent("", "  ")
-				return enc.Encode(map[string]any{
+				return flags.printJSON(cmd, map[string]any{
 					"domain":        domain,
 					"buckets":       out,
 					"total_filings": len(filings),

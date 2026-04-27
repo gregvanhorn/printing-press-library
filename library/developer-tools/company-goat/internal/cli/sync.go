@@ -6,6 +6,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strconv"
@@ -136,6 +137,11 @@ Exit codes & warnings:
 			}
 
 			started := time.Now()
+			jsonEvents := flags.asJSON
+			eventWriter := io.Writer(os.Stderr)
+			if jsonEvents {
+				eventWriter = cmd.OutOrStdout()
+			}
 			work := make(chan string, len(resources))
 			results := make(chan syncResult, len(resources))
 
@@ -145,7 +151,7 @@ Exit codes & warnings:
 				go func() {
 					defer wg.Done()
 					for resource := range work {
-						res := syncResource(c, db, resource, sinceTS, full, maxPages)
+						res := syncResource(c, db, resource, sinceTS, full, maxPages, eventWriter, jsonEvents)
 						results <- res
 					}
 				}()
@@ -189,16 +195,21 @@ Exit codes & warnings:
 
 			elapsed := time.Since(started)
 			totalResources := successCount + warnCount + errCount
-			if !humanFriendly {
+			if jsonEvents {
+				fmt.Fprintf(eventWriter, `{"event":"sync_summary","total_records":%d,"resources":%d,"success":%d,"warned":%d,"errored":%d,"duration_ms":%d}`+"\n",
+					totalSynced, totalResources, successCount, warnCount, errCount, elapsed.Milliseconds())
+			} else if !humanFriendly {
 				fmt.Fprintf(os.Stderr, `{"event":"sync_summary","total_records":%d,"resources":%d,"success":%d,"warned":%d,"errored":%d,"duration_ms":%d}`+"\n",
 					totalSynced, totalResources, successCount, warnCount, errCount, elapsed.Milliseconds())
 			}
-			if warnCount > 0 {
-				fmt.Fprintf(os.Stderr, "Sync complete: %d records across %d resources (%d warned, %.1fs)\n",
-					totalSynced, totalResources, warnCount, elapsed.Seconds())
-			} else {
-				fmt.Fprintf(os.Stderr, "Sync complete: %d records across %d resources (%.1fs)\n",
-					totalSynced, totalResources, elapsed.Seconds())
+			if !jsonEvents {
+				if warnCount > 0 {
+					fmt.Fprintf(os.Stderr, "Sync complete: %d records across %d resources (%d warned, %.1fs)\n",
+						totalSynced, totalResources, warnCount, elapsed.Seconds())
+				} else {
+					fmt.Fprintf(os.Stderr, "Sync complete: %d records across %d resources (%.1fs)\n",
+						totalSynced, totalResources, elapsed.Seconds())
+				}
 			}
 
 			if errCount > 0 {
@@ -227,10 +238,12 @@ Exit codes & warnings:
 func syncResource(c interface {
 	Get(string, map[string]string) (json.RawMessage, error)
 	RateLimit() float64
-}, db *store.Store, resource, sinceTS string, full bool, maxPages int) syncResult {
+}, db *store.Store, resource, sinceTS string, full bool, maxPages int, eventWriter io.Writer, jsonEvents bool) syncResult {
 	started := time.Now()
 
-	if !humanFriendly {
+	if jsonEvents {
+		fmt.Fprintf(eventWriter, `{"event":"sync_start","resource":"%s"}`+"\n", resource)
+	} else if !humanFriendly {
 		fmt.Fprintf(os.Stderr, `{"event":"sync_start","resource":"%s"}`+"\n", resource)
 	}
 
@@ -274,13 +287,18 @@ func syncResource(c interface {
 		data, err := c.Get(path, params)
 		if err != nil {
 			if w, ok := isSyncAccessWarning(err); ok {
-				if !humanFriendly {
+				if jsonEvents {
+					fmt.Fprintf(eventWriter, `{"event":"sync_warning","resource":"%s","status":%d,"reason":"%s","message":"%s"}`+"\n",
+						resource, w.Status, w.Reason, strings.ReplaceAll(w.Message, `"`, `\"`))
+				} else if !humanFriendly {
 					fmt.Fprintf(os.Stderr, `{"event":"sync_warning","resource":"%s","status":%d,"reason":"%s","message":"%s"}`+"\n",
 						resource, w.Status, w.Reason, strings.ReplaceAll(w.Message, `"`, `\"`))
 				}
 				return syncResult{Resource: resource, Count: totalCount, Warn: fmt.Errorf("skipped %s: %s", resource, w.Reason), Duration: time.Since(started)}
 			}
-			if !humanFriendly {
+			if jsonEvents {
+				fmt.Fprintf(eventWriter, `{"event":"sync_error","resource":"%s","error":"%s"}`+"\n", resource, strings.ReplaceAll(err.Error(), `"`, `\"`))
+			} else if !humanFriendly {
 				fmt.Fprintf(os.Stderr, `{"event":"sync_error","resource":"%s","error":"%s"}`+"\n", resource, strings.ReplaceAll(err.Error(), `"`, `\"`))
 			}
 			return syncResult{Resource: resource, Count: totalCount, Err: fmt.Errorf("fetching %s: %w", resource, err), Duration: time.Since(started)}
@@ -293,7 +311,9 @@ func syncResource(c interface {
 		if len(items) == 0 {
 			// Single object response - try to store as-is
 			if err := upsertSingleObject(db, resource, data); err != nil {
-				if !humanFriendly {
+				if jsonEvents {
+					fmt.Fprintf(eventWriter, `{"event":"sync_error","resource":"%s","error":"%s"}`+"\n", resource, strings.ReplaceAll(err.Error(), `"`, `\"`))
+				} else if !humanFriendly {
 					fmt.Fprintf(os.Stderr, `{"event":"sync_error","resource":"%s","error":"%s"}`+"\n", resource, strings.ReplaceAll(err.Error(), `"`, `\"`))
 				}
 				return syncResult{Resource: resource, Err: err, Duration: time.Since(started)}
@@ -304,7 +324,9 @@ func syncResource(c interface {
 
 		// Batch upsert all items from this page
 		if err := db.UpsertBatch(resource, items); err != nil {
-			if !humanFriendly {
+			if jsonEvents {
+				fmt.Fprintf(eventWriter, `{"event":"sync_error","resource":"%s","error":"%s"}`+"\n", resource, strings.ReplaceAll(err.Error(), `"`, `\"`))
+			} else if !humanFriendly {
 				fmt.Fprintf(os.Stderr, `{"event":"sync_error","resource":"%s","error":"%s"}`+"\n", resource, strings.ReplaceAll(err.Error(), `"`, `\"`))
 			}
 			return syncResult{Resource: resource, Count: totalCount, Err: fmt.Errorf("upserting batch for %s: %w", resource, err), Duration: time.Since(started)}
@@ -323,9 +345,9 @@ func syncResource(c interface {
 			}
 		} else {
 			if currentRate > 0 {
-				fmt.Fprintf(os.Stderr, `{"event":"sync_progress","resource":"%s","fetched":%d,"rate_rps":%.1f}`+"\n", resource, atomic.LoadInt64(&progressCount), currentRate)
+				fmt.Fprintf(eventWriter, `{"event":"sync_progress","resource":"%s","fetched":%d,"rate_rps":%.1f}`+"\n", resource, atomic.LoadInt64(&progressCount), currentRate)
 			} else {
-				fmt.Fprintf(os.Stderr, `{"event":"sync_progress","resource":"%s","fetched":%d}`+"\n", resource, atomic.LoadInt64(&progressCount))
+				fmt.Fprintf(eventWriter, `{"event":"sync_progress","resource":"%s","fetched":%d}`+"\n", resource, atomic.LoadInt64(&progressCount))
 			}
 		}
 
@@ -356,7 +378,9 @@ func syncResource(c interface {
 	// Final sync state: clear cursor (sync is complete), update count
 	_ = db.SaveSyncState(resource, "", totalCount)
 
-	if !humanFriendly {
+	if jsonEvents {
+		fmt.Fprintf(eventWriter, `{"event":"sync_complete","resource":"%s","total":%d,"duration_ms":%d}`+"\n", resource, totalCount, time.Since(started).Milliseconds())
+	} else if !humanFriendly {
 		fmt.Fprintf(os.Stderr, `{"event":"sync_complete","resource":"%s","total":%d,"duration_ms":%d}`+"\n", resource, totalCount, time.Since(started).Milliseconds())
 	}
 

@@ -6,7 +6,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -105,10 +104,7 @@ func renderCandidates(cmd *cobra.Command, flags *rootFlags, res *resolve.Resolut
 			PickCommands:   picks,
 			DomainOverride: fmt.Sprintf("%s %s --domain <pick-one-from-candidates>", root, cmd.Name()),
 		}
-		enc := json.NewEncoder(w)
-		enc.SetIndent("", "  ")
-		_ = enc.Encode(o)
-		return nil
+		return flags.printJSON(cmd, o)
 	}
 	fmt.Fprintf(w, "Multiple matches for %q. Pick one:\n\n", res.Query)
 	for i, c := range res.Candidates {
@@ -202,7 +198,7 @@ Exit codes:
   company-goat-pp-cli resolve --domain anthropic.com
 `, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dryRunOK(flags) {
+			if dryRunOK(cmd, flags) {
 				return nil
 			}
 			if domainFlag == "" && len(args) == 0 {
@@ -231,9 +227,7 @@ Exit codes:
 				"auto_resolved": res.AutoResolved,
 			}
 			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
-				enc := json.NewEncoder(cmd.OutOrStdout())
-				enc.SetIndent("", "  ")
-				return enc.Encode(out)
+				return flags.printJSON(cmd, out)
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "resolved %q → %s (via %s)\n", res.Query, domain, res.Source)
 			return nil

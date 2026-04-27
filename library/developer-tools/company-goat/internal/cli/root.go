@@ -214,9 +214,22 @@ func (f *rootFlags) newClient() (*client.Client, error) {
 }
 
 func (f *rootFlags) printJSON(w *cobra.Command, v any) error {
-	enc := json.NewEncoder(w.OutOrStdout())
-	enc.SetIndent("", "  ")
-	return enc.Encode(v)
+	data, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	if f.selectFields != "" {
+		data = filterFields(data, f.selectFields)
+	} else if f.compact {
+		data = compactFields(data)
+	}
+	var out bytes.Buffer
+	if err := json.Indent(&out, data, "", "  "); err != nil {
+		return err
+	}
+	out.WriteByte('\n')
+	_, err = w.OutOrStdout().Write(out.Bytes())
+	return err
 }
 
 func (f *rootFlags) printTable(w *cobra.Command, headers []string, rows [][]string) error {

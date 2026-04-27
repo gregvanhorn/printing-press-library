@@ -4,7 +4,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -54,7 +53,7 @@ Without GITHUB_TOKEN, rate-limited to 60 req/hr. Set GITHUB_TOKEN or run 'gh aut
   company-goat-pp-cli engineering --domain stripe.com
 `, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dryRunOK(flags) {
+			if dryRunOK(cmd, flags) {
 				return nil
 			}
 			if t.Domain == "" && len(args) == 0 {
@@ -144,9 +143,7 @@ func renderEngineering(cmd *cobra.Command, flags *rootFlags, r engineeringResult
 	w := cmd.OutOrStdout()
 	asJSON := flags.asJSON || !isTerminal(w)
 	if asJSON {
-		enc := json.NewEncoder(w)
-		enc.SetIndent("", "  ")
-		_ = enc.Encode(r)
+		_ = flags.printJSON(cmd, r)
 		return
 	}
 	fmt.Fprintf(w, "Domain: %s\n", r.Domain)

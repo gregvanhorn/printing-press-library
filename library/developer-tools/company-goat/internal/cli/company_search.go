@@ -8,7 +8,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -51,7 +50,7 @@ Note: the full local-store FTS5 search across previously-synced companies (any s
   company-goat-pp-cli search "pizza" --json
 `, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dryRunOK(flags) {
+			if dryRunOK(cmd, flags) {
 				return nil
 			}
 			if len(args) == 0 {
@@ -149,9 +148,7 @@ Note: the full local-store FTS5 search across previously-synced companies (any s
 			w := cmd.OutOrStdout()
 			asJSON := flags.asJSON || !isTerminal(w)
 			if asJSON {
-				enc := json.NewEncoder(w)
-				enc.SetIndent("", "  ")
-				return enc.Encode(map[string]any{
+				return flags.printJSON(cmd, map[string]any{
 					"query":            query,
 					"hits":             out,
 					"total":            len(hits),

@@ -98,25 +98,40 @@ func configErr(err error) error    { return &cliError{code: 10, err: err} }
 func rateLimitErr(err error) error { return &cliError{code: 7, err: err} }
 
 // dryRunOK reports whether the command should short-circuit without doing any
-// real work because --dry-run was set. The verify pipeline probes hand-written
-// commands with --dry-run; commands that put validation in cobra's `Args:` or
-// `MarkFlagRequired` cannot reach a dry-run guard inside RunE because cobra
-// runs those checks before RunE. The verify-friendly pattern for hand-written
-// commands is:
+// real work because --dry-run was set. It also prints a small preview so
+// agents can distinguish a successful dry run from an accidentally empty
+// command. The verify pipeline probes hand-written commands with --dry-run;
+// commands that put validation in cobra's `Args:` or `MarkFlagRequired` cannot
+// reach a dry-run guard inside RunE because cobra runs those checks before
+// RunE. The verify-friendly pattern for hand-written commands is:
 //
 //	RunE: func(cmd *cobra.Command, args []string) error {
 //	    if len(args) == 0 {
 //	        return cmd.Help()
 //	    }
-//	    if dryRunOK(flags) {
+//	    if dryRunOK(cmd, flags) {
 //	        return nil
 //	    }
 //	    // ... real work ...
 //	}
 //
 // See SKILL.md "Phase 3: Build The GOAT" for the full pattern.
-func dryRunOK(flags *rootFlags) bool {
-	return flags != nil && flags.dryRun
+func dryRunOK(cmd *cobra.Command, flags *rootFlags) bool {
+	if flags == nil || !flags.dryRun {
+		return false
+	}
+	out := map[string]any{
+		"dry_run":      true,
+		"command":      cmd.CommandPath(),
+		"remote_calls": []string{},
+		"note":         "dry run: no remote calls were made",
+	}
+	if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
+		_ = flags.printJSON(cmd, out)
+		return true
+	}
+	fmt.Fprintf(cmd.OutOrStdout(), "dry run: %s would make no remote calls\n", cmd.CommandPath())
+	return true
 }
 
 // accessWarning describes an API access-denial that sync converts into a

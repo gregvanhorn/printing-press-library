@@ -18,11 +18,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
+)
+
+const (
+	defaultSECRequestsPerSecond = 2.0
+	maxSECRetries               = 4
+	maxSECRetryWait             = 30 * time.Second
 )
 
 // Client talks to SEC EDGAR. Construct with NewClient; pass a contact email
@@ -31,6 +39,8 @@ import (
 type Client struct {
 	HTTP      *http.Client
 	UserAgent string
+	limiter   *adaptiveLimiter
+	sleep     func(context.Context, time.Duration) error
 }
 
 // NewClient returns a Client with sensible defaults.
@@ -51,6 +61,114 @@ func NewClient(contactEmail string) *Client {
 	return &Client{
 		HTTP:      &http.Client{Timeout: 15 * time.Second},
 		UserAgent: ua,
+		limiter:   newAdaptiveLimiter(defaultSECRequestsPerSecond),
+		sleep:     sleepContext,
+	}
+}
+
+// RateLimitError signals that SEC returned 429 after retries were exhausted.
+type RateLimitError struct {
+	URL        string
+	RetryAfter time.Duration
+	Body       string
+}
+
+func (e *RateLimitError) Error() string {
+	if e.RetryAfter > 0 {
+		return fmt.Sprintf("SEC EDGAR returned HTTP 429 for %s; retry after %s: %s", e.URL, e.RetryAfter, e.Body)
+	}
+	return fmt.Sprintf("SEC EDGAR returned HTTP 429 for %s: %s", e.URL, e.Body)
+}
+
+// adaptiveLimiter mirrors the generated client limiter: additive increase after
+// successful requests and multiplicative decrease on 429. SEC-specific defaults
+// stay conservative because one high-level command may fetch many XML filings.
+type adaptiveLimiter struct {
+	mu          sync.Mutex
+	rate        float64
+	floor       float64
+	ceiling     float64
+	successes   int
+	rampAfter   int
+	lastRequest time.Time
+}
+
+func newAdaptiveLimiter(ratePerSec float64) *adaptiveLimiter {
+	if ratePerSec <= 0 {
+		return nil
+	}
+	return &adaptiveLimiter{
+		rate:      ratePerSec,
+		floor:     ratePerSec,
+		rampAfter: 8,
+	}
+}
+
+func (l *adaptiveLimiter) Wait(ctx context.Context, sleep func(context.Context, time.Duration) error) error {
+	if l == nil {
+		return nil
+	}
+	l.mu.Lock()
+	delay := time.Duration(float64(time.Second) / l.rate)
+	elapsed := time.Since(l.lastRequest)
+	l.mu.Unlock()
+	if elapsed < delay {
+		if err := sleep(ctx, delay-elapsed); err != nil {
+			return err
+		}
+	}
+	l.mu.Lock()
+	l.lastRequest = time.Now()
+	l.mu.Unlock()
+	return nil
+}
+
+func (l *adaptiveLimiter) OnSuccess() {
+	if l == nil {
+		return
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.successes++
+	if l.successes < l.rampAfter {
+		return
+	}
+	newRate := l.rate * 1.25
+	if l.ceiling > 0 && newRate > l.ceiling*0.9 {
+		newRate = l.ceiling * 0.9
+	}
+	if newRate < l.floor {
+		newRate = l.floor
+	}
+	l.rate = newRate
+	l.successes = 0
+}
+
+func (l *adaptiveLimiter) OnRateLimit() {
+	if l == nil {
+		return
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.ceiling = l.rate
+	l.rate /= 2
+	if l.rate < 0.25 {
+		l.rate = 0.25
+	}
+	l.successes = 0
+}
+
+func sleepContext(ctx context.Context, d time.Duration) error {
+	if d <= 0 {
+		return nil
+	}
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return nil
 	}
 }
 
@@ -279,17 +397,31 @@ func (c *Client) SearchAndFetchAll(ctx context.Context, query string, maxFilings
 	if maxFilings <= 0 {
 		maxFilings = 10
 	}
-	results, err := c.SearchFormD(ctx, query, maxFilings)
+	searchHits := maxFilings * 5
+	if searchHits < 10 {
+		searchHits = 10
+	}
+	if searchHits > 100 {
+		searchHits = 100
+	}
+	results, err := c.SearchFormD(ctx, query, searchHits)
 	if err != nil {
 		return nil, err
 	}
 	out := make([]FormD, 0, len(results.Hits))
 	for _, hit := range results.Hits {
+		if len(out) >= maxFilings {
+			break
+		}
 		if len(hit.CIKs) == 0 {
 			continue
 		}
 		fd, err := c.FetchFormD(ctx, hit.CIKs[0], hit.Accession)
 		if err != nil {
+			var rateErr *RateLimitError
+			if errors.As(err, &rateErr) {
+				return nil, err
+			}
 			continue
 		}
 		fd.FilingDate = hit.FileDate
@@ -299,26 +431,106 @@ func (c *Client) SearchAndFetchAll(ctx context.Context, query string, maxFilings
 }
 
 func (c *Client) get(ctx context.Context, u string) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("User-Agent", c.UserAgent)
-	req.Header.Set("Accept", "application/json,text/xml,*/*")
+	var lastErr error
+	for attempt := 0; attempt <= maxSECRetries; attempt++ {
+		if c.sleep == nil {
+			c.sleep = sleepContext
+		}
+		if err := c.limiter.Wait(ctx, c.sleep); err != nil {
+			return nil, err
+		}
 
-	resp, err := c.HTTP.Do(req)
-	if err != nil {
-		return nil, err
+		req, err := http.NewRequestWithContext(ctx, "GET", u, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("User-Agent", c.UserAgent)
+		req.Header.Set("Accept", "application/json,text/xml,*/*")
+
+		resp, err := c.HTTP.Do(req)
+		if err != nil {
+			lastErr = err
+			if attempt < maxSECRetries {
+				if err := c.sleep(ctx, secBackoff(attempt)); err != nil {
+					return nil, err
+				}
+				continue
+			}
+			return nil, err
+		}
+
+		body, readErr := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if readErr != nil {
+			return nil, fmt.Errorf("read body: %w", readErr)
+		}
+		if resp.StatusCode < 400 {
+			c.limiter.OnSuccess()
+			return body, nil
+		}
+
+		bodySummary := summary(body)
+		if resp.StatusCode == http.StatusTooManyRequests {
+			c.limiter.OnRateLimit()
+			wait := secRetryAfter(resp)
+			lastErr = &RateLimitError{URL: u, RetryAfter: wait, Body: bodySummary}
+			if attempt < maxSECRetries {
+				if err := c.sleep(ctx, wait); err != nil {
+					return nil, err
+				}
+				continue
+			}
+			return nil, lastErr
+		}
+
+		lastErr = fmt.Errorf("SEC EDGAR returned HTTP %d for %s: %s", resp.StatusCode, u, bodySummary)
+		if resp.StatusCode >= 500 && attempt < maxSECRetries {
+			if err := c.sleep(ctx, secBackoff(attempt)); err != nil {
+				return nil, err
+			}
+			continue
+		}
+		return nil, lastErr
 	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("read body: %w", err)
+	if lastErr == nil {
+		lastErr = errors.New("sec edgar request failed")
 	}
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("sec edgar %d: %s", resp.StatusCode, summary(body))
+	return nil, lastErr
+}
+
+func secRetryAfter(resp *http.Response) time.Duration {
+	header := strings.TrimSpace(resp.Header.Get("Retry-After"))
+	if header == "" {
+		return secBackoff(0)
 	}
-	return body, nil
+	if seconds, err := strconv.Atoi(header); err == nil {
+		return capRetryWait(time.Duration(seconds) * time.Second)
+	}
+	if when, err := http.ParseTime(header); err == nil {
+		return capRetryWait(time.Until(when))
+	}
+	return secBackoff(0)
+}
+
+func secBackoff(attempt int) time.Duration {
+	if attempt < 0 {
+		attempt = 0
+	}
+	wait := time.Duration(math.Pow(2, float64(attempt))) * time.Second
+	// Small deterministic jitter keeps concurrent fanout workers from retrying
+	// on exactly the same boundary without making tests flaky.
+	wait += time.Duration((attempt+1)*137) * time.Millisecond
+	return capRetryWait(wait)
+}
+
+func capRetryWait(wait time.Duration) time.Duration {
+	if wait < 0 {
+		return 0
+	}
+	if wait > maxSECRetryWait {
+		return maxSECRetryWait
+	}
+	return wait
 }
 
 func summary(b []byte) string {

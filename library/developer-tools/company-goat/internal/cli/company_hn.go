@@ -4,7 +4,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -42,7 +41,7 @@ Use this to gauge launch story strength, find the canonical Show HN post for a p
   company-goat-pp-cli launches vercel --min-points 50
 `, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dryRunOK(flags) {
+			if dryRunOK(cmd, flags) {
 				return nil
 			}
 			if t.Domain == "" && len(args) == 0 {
@@ -97,9 +96,7 @@ Use this to gauge launch story strength, find the canonical Show HN post for a p
 			w := cmd.OutOrStdout()
 			asJSON := flags.asJSON || !isTerminal(w)
 			if asJSON {
-				enc := json.NewEncoder(w)
-				enc.SetIndent("", "  ")
-				return enc.Encode(out)
+				return flags.printJSON(cmd, out)
 			}
 			fmt.Fprintf(w, "Show HN posts for %q (top %d of %d total):\n\n", domain, len(entries), resp.NbHits)
 			if len(entries) == 0 {
@@ -139,7 +136,7 @@ With --json, returns the raw histogram as a sorted array of {month, count} pairs
   company-goat-pp-cli mentions anthropic --json
 `, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dryRunOK(flags) {
+			if dryRunOK(cmd, flags) {
 				return nil
 			}
 			if t.Domain == "" && len(args) == 0 {
@@ -187,9 +184,7 @@ With --json, returns the raw histogram as a sorted array of {month, count} pairs
 			w := cmd.OutOrStdout()
 			asJSON := flags.asJSON || !isTerminal(w)
 			if asJSON {
-				enc := json.NewEncoder(w)
-				enc.SetIndent("", "  ")
-				return enc.Encode(map[string]any{
+				return flags.printJSON(cmd, map[string]any{
 					"domain":         domain,
 					"query":          query,
 					"timeline":       out,

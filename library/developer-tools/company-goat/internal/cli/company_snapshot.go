@@ -5,7 +5,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -69,7 +68,7 @@ omitted (honesty contract).`,
   company-goat-pp-cli snapshot --domain ramp.com --skip mentions,wiki
 `, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dryRunOK(flags) {
+			if dryRunOK(cmd, flags) {
 				return nil
 			}
 			if t.Domain == "" && len(args) == 0 {
@@ -328,9 +327,7 @@ func renderSnapshot(cmd *cobra.Command, flags *rootFlags, snap CompanySnapshot) 
 	w := cmd.OutOrStdout()
 	asJSON := flags.asJSON || !isTerminal(w)
 	if asJSON {
-		enc := json.NewEncoder(w)
-		enc.SetIndent("", "  ")
-		_ = enc.Encode(snap)
+		_ = flags.printJSON(cmd, snap)
 		return
 	}
 	fmt.Fprintf(w, "Company snapshot: %s\n", snap.Domain)
@@ -433,7 +430,7 @@ func newCompareCmd(flags *rootFlags) *cobra.Command {
   company-goat-pp-cli compare stripe.com adyen.com --json
 `, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dryRunOK(flags) {
+			if dryRunOK(cmd, flags) {
 				return nil
 			}
 			if len(args) < 2 {
@@ -467,9 +464,7 @@ func newCompareCmd(flags *rootFlags) *cobra.Command {
 			w := cmd.OutOrStdout()
 			asJSON := flags.asJSON || !isTerminal(w)
 			if asJSON {
-				enc := json.NewEncoder(w)
-				enc.SetIndent("", "  ")
-				return enc.Encode(map[string]any{
+				return flags.printJSON(cmd, map[string]any{
 					"left":  snaps[0],
 					"right": snaps[1],
 				})
@@ -563,7 +558,7 @@ Checks:
   company-goat-pp-cli signal acme-corp --json
 `, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dryRunOK(flags) {
+			if dryRunOK(cmd, flags) {
 				return nil
 			}
 			if t.Domain == "" && len(args) == 0 {
@@ -600,9 +595,7 @@ Checks:
 			w := cmd.OutOrStdout()
 			asJSON := flags.asJSON || !isTerminal(w)
 			if asJSON {
-				enc := json.NewEncoder(w)
-				enc.SetIndent("", "  ")
-				return enc.Encode(out)
+				return flags.printJSON(cmd, out)
 			}
 			fmt.Fprintf(w, "Signal check for %s:\n\n", domain)
 			if len(signals) == 0 {

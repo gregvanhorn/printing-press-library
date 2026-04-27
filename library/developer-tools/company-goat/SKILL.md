@@ -149,7 +149,7 @@ Returns every Form D filing where this person is named — useful for mapping se
 ### Compare two competing startups
 
 ```bash
-company-goat-pp-cli compare ramp brex
+company-goat-pp-cli compare ramp.com brex.com
 ```
 
 Aligns snapshots side-by-side; agent-readable. Use for tradeoff analysis.
@@ -177,6 +177,8 @@ No required keys. Three optional environment variables expand coverage and rate 
 - `COMPANY_PP_CONTACT_EMAIL=you@example.com` — Sent in the SEC EDGAR User-Agent header to comply with EDGAR's fair-access policy. Recommended for any non-trivial use of `funding` / `funding-trend` / `snapshot`.
 - `GITHUB_TOKEN` — Raises GitHub API rate limit from 60/hr to 5000/hr. `gh auth token` works. Used by `engineering`, `snapshot`.
 - `COMPANIES_HOUSE_API_KEY` — Required for `legal --region uk`. Register free at developer.companieshouse.gov.uk and create a REST application.
+
+SEC EDGAR requests are paced and retried automatically. The CLI honors `Retry-After`, backs off on 429/5xx responses, and exits with code 7 if SEC continues throttling after retries.
 
 Run `company-goat-pp-cli doctor` to verify which of these are detected.
 

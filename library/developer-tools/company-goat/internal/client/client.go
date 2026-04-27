@@ -5,11 +5,11 @@ package client
 
 import (
 	"bytes"
-	"github.com/mvanhorn/printing-press-library/library/developer-tools/company-goat/internal/config"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/mvanhorn/printing-press-library/library/developer-tools/company-goat/internal/config"
 	"io"
 	"math"
 	"net/http"

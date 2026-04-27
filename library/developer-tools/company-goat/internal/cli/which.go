@@ -4,7 +4,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -29,7 +28,7 @@ type whichEntry struct {
 // query to one of the commands the skill says matter most.
 var whichIndex = []whichEntry{
 	{Command: "snapshot", Description: "Look up a company across SEC Form D, GitHub, Hacker News, Companies House, YC, Wikidata, and DNS in one command — rendered as a unified terminal summary in seconds.", Group: "Multi-source orchestration", WhyItMatters: "When you need to evaluate a startup quickly, this is the one command that tells you whether they raised, are shipping code, are talked about, and are legitimate — without 8 browser tabs."},
-	{Command: "funding", Description: "See structured SEC Form D filings for a US private company — offering amount, filing date, exemption claimed (Reg D 506(b) vs 506(c)), related entities, and state of incorporation.", Group: "Killer feature", WhyItMatters: "When an agent needs to verify a US startup's actual fundraising history, this is the single most reliable free signal. Avoid agents quoting Crunchbase Free's empty 'undisclosed' rows."},
+	{Command: "funding", Description: "See structured SEC Form D fundraising filings for a US private company — offering amount, filing date, exemption claimed (Reg D 506(b) vs 506(c)), related entities, and state of incorporation.", Group: "Killer feature", WhyItMatters: "When an agent needs to verify a US startup's actual fundraising history, this is the single most reliable free signal. Avoid agents quoting Crunchbase Free's empty 'undisclosed' rows."},
 	{Command: "signal", Description: "Surface suspicious cross-source patterns. Example: 'Form D says raised $5M in 2024 but GitHub org has 0 commits since 2022' or 'YC entry says Active but website domain expired'.", Group: "Multi-source orchestration", WhyItMatters: "When deciding whether to engage with a startup, this command flags zombie companies and stale fundraising stories without you having to open every tab."},
 	{Command: "funding-trend", Description: "Time series of Form D filings for a company across years — shows fundraising cadence and gaps. Useful for spotting 'they haven't raised since 2022' silently.", Group: "Killer feature", WhyItMatters: "Use this when an agent needs to summarize a company's fundraising arc, not just the latest round."},
 	{Command: "search", Description: "Full-text search across companies you've synced previously. Find by industry, founder name, location, description, or any text in the cached snapshots.", Group: "Local state that compounds", WhyItMatters: "An agent tasked with 'find the fintech I researched last month with the strong GitHub presence' has nowhere else to ask."},
@@ -70,7 +69,7 @@ func rankWhich(index []whichEntry, query string, limit int) []whichMatch {
 		}
 		return out
 	}
-	qTokens := strings.Fields(q)
+	qTokens := whichTokens(q)
 
 	scored := make([]whichMatch, 0, len(index))
 	for i, e := range index {
@@ -99,37 +98,61 @@ func rankWhich(index []whichEntry, query string, limit int) []whichMatch {
 func whichScoreEntry(e whichEntry, query string, qTokens []string) int {
 	score := 0
 	cmd := strings.ToLower(e.Command)
-	cmdTokens := strings.Fields(cmd)
 	desc := strings.ToLower(e.Description)
 	group := strings.ToLower(e.Group)
+	why := strings.ToLower(e.WhyItMatters)
+	cmdTokens := whichTokens(cmd)
+	descTokens := tokenSet(whichTokens(desc))
+	groupTokens := tokenSet(whichTokens(group))
+	whyTokens := tokenSet(whichTokens(why))
 
-	// Exact token match on the command path (any token).
+	if strings.Contains(cmd, query) {
+		score += 6
+	}
+	if strings.Contains(desc, query) {
+		score += 5
+	}
+	if strings.Contains(group, query) {
+		score += 3
+	}
+	if strings.Contains(why, query) {
+		score += 2
+	}
+
+	// Per-token matching lets "Form D fundraising" match entries whose
+	// relevant words are spread across description and why-it-matters prose.
 	for _, qt := range qTokens {
 		for _, ct := range cmdTokens {
 			if qt == ct {
-				score += 3
+				score += 4
 				break
 			}
 		}
-	}
-	// Substring match on the full command (covers hyphenated leaves).
-	if strings.Contains(cmd, query) {
-		score += 2
-	}
-	// Substring match on the description.
-	if strings.Contains(desc, query) {
-		score += 2
-	}
-	// Group tag match.
-	if group != "" {
-		for _, qt := range qTokens {
-			if strings.Contains(group, qt) {
-				score += 1
-				break
-			}
+		if descTokens[qt] {
+			score += 2
+		}
+		if groupTokens[qt] {
+			score++
+		}
+		if whyTokens[qt] {
+			score++
 		}
 	}
 	return score
+}
+
+func whichTokens(s string) []string {
+	return strings.FieldsFunc(strings.ToLower(s), func(r rune) bool {
+		return !(r >= 'a' && r <= 'z') && !(r >= '0' && r <= '9')
+	})
+}
+
+func tokenSet(tokens []string) map[string]bool {
+	set := make(map[string]bool, len(tokens))
+	for _, t := range tokens {
+		set[t] = true
+	}
+	return set
 }
 
 func newWhichCmd(flags *rootFlags) *cobra.Command {
@@ -150,7 +173,7 @@ Exit codes:
 			if len(whichIndex) == 0 {
 				return usageErr(fmt.Errorf("this CLI has no curated capability index; run '--help' to see every command"))
 			}
-			if dryRunOK(flags) {
+			if dryRunOK(cmd, flags) {
 				return nil
 			}
 			query := strings.Join(args, " ")
@@ -192,9 +215,7 @@ func renderWhich(cmd *cobra.Command, flags *rootFlags, matches []whichMatch) err
 		asJSON = true
 	}
 	if asJSON {
-		enc := json.NewEncoder(w)
-		enc.SetIndent("", "  ")
-		return enc.Encode(matches)
+		return flags.printJSON(cmd, matches)
 	}
 	fmt.Fprintf(w, "%-24s  %-8s  %s\n", "COMMAND", "SCORE", "DESCRIPTION")
 	for _, m := range matches {

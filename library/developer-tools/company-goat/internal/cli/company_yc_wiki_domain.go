@@ -4,7 +4,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -29,7 +28,7 @@ Source: yc-oss/api daily snapshot of YC's Algolia index.`,
   company-goat-pp-cli yc cruise --json
 `, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dryRunOK(flags) {
+			if dryRunOK(cmd, flags) {
 				return nil
 			}
 			if t.Domain == "" && len(args) == 0 {
@@ -65,9 +64,7 @@ Source: yc-oss/api daily snapshot of YC's Algolia index.`,
 				out["note"] = "no YC entry found for " + domain
 			}
 			if asJSON {
-				enc := json.NewEncoder(w)
-				enc.SetIndent("", "  ")
-				return enc.Encode(out)
+				return flags.printJSON(cmd, out)
 			}
 			fmt.Fprintf(w, "Domain: %s\n", domain)
 			if entry == nil {
@@ -109,7 +106,7 @@ Wikidata coverage of early-stage startups is sparse; established companies are w
   company-goat-pp-cli wiki anthropic --json
 `, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dryRunOK(flags) {
+			if dryRunOK(cmd, flags) {
 				return nil
 			}
 			if t.Domain == "" && len(args) == 0 {
@@ -136,9 +133,7 @@ Wikidata coverage of early-stage startups is sparse; established companies are w
 				out["note"] = "no Wikidata page found for " + domain
 			}
 			if asJSON {
-				enc := json.NewEncoder(w)
-				enc.SetIndent("", "  ")
-				return enc.Encode(out)
+				return flags.printJSON(cmd, out)
 			}
 			fmt.Fprintf(w, "Domain: %s\n", domain)
 			if entry == nil {
@@ -186,7 +181,7 @@ Useful for "is this a modern startup stack" signals — a Vercel/Cloudflare CNAM
   company-goat-pp-cli domain --domain anthropic.com --json
 `, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dryRunOK(flags) {
+			if dryRunOK(cmd, flags) {
 				return nil
 			}
 			if t.Domain == "" && len(args) == 0 {
@@ -206,9 +201,7 @@ Useful for "is this a modern startup stack" signals — a Vercel/Cloudflare CNAM
 			w := cmd.OutOrStdout()
 			asJSON := flags.asJSON || !isTerminal(w)
 			if asJSON {
-				enc := json.NewEncoder(w)
-				enc.SetIndent("", "  ")
-				return enc.Encode(info)
+				return flags.printJSON(cmd, info)
 			}
 			fmt.Fprintf(w, "Domain: %s\n", info.Domain)
 			if info.Registered != "" {

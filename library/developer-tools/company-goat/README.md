@@ -63,7 +63,7 @@ company-goat-pp-cli funding --domain stripe.com --json
 company-goat-pp-cli engineering --domain vercel.com --json
 
 # Side-by-side comparison; great for due diligence.
-company-goat-pp-cli compare ramp brex --json
+company-goat-pp-cli compare ramp.com brex.com --json
 
 # Cross-source consistency check — flags zombies and stale fundraising stories.
 company-goat-pp-cli signal --domain ramp.com
@@ -240,7 +240,7 @@ company-goat-pp-cli launches --domain vercel.com --json
 company-goat-pp-cli snapshot --domain ramp.com --json
 
 # Side-by-side comparison.
-company-goat-pp-cli compare ramp brex --json
+company-goat-pp-cli compare ramp.com brex.com --json
 
 # Cross-source signal check (zombie startups, stale fundraising).
 company-goat-pp-cli signal --domain ramp.com --json
@@ -276,6 +276,8 @@ Environment variables (all optional):
 | `COMPANIES_HOUSE_API_KEY` | `legal --region uk` | Required for UK legal entity lookup. Free at developer.companieshouse.gov.uk. |
 | `COMPANY_FEEDBACK_ENDPOINT` / `COMPANY_FEEDBACK_AUTO_SEND` | `feedback` | Opt-in upstream POST for collected feedback (off by default; entries stay local). |
 
+SEC EDGAR calls use conservative client-side pacing and adaptive retry behavior: the CLI honors `Retry-After`, backs off on 429/5xx responses, and lowers its per-process request rate after throttling.
+
 ## Troubleshooting
 
 Exit codes: `0` success, `2` ambiguous (rerun with `--pick N` or `--domain`), `3` not found, `4` no candidates resolved (pass `--domain`), `5` API error / no filings for resolved entity, `7` rate limited, `10` config error.
@@ -284,7 +286,7 @@ Exit codes: `0` success, `2` ambiguous (rerun with `--pick N` or `--domain`), `3
 |---------|-------|-----|
 | `funding stripe` returns "ambiguous" with candidates (exit 2) | Resolver found multiple plausible domains | Rerun with `--pick N` (1-indexed) or `--domain stripe.com` |
 | `funding` says "no Form D filings found" + a `coverage_note` | Form D is US-only and Reg-D-priced-rounds-only | Expected for non-US companies (Monzo, Klarna), pre-Series-A SAFE companies, or companies that just haven't filed yet |
-| SEC EDGAR returns 403 or rate-limits aggressively | EDGAR fair-access policy requires a contact email | `export COMPANY_PP_CONTACT_EMAIL=you@example.com` |
+| SEC EDGAR returns 403 or repeated 429s | EDGAR fair-access policy requires a contact email, and may throttle IP/User-Agent bursts | `export COMPANY_PP_CONTACT_EMAIL=you@example.com`; retry after the printed cooldown if exit code is 7 |
 | GitHub commands say "rate limit exceeded" | Unauthenticated GitHub allows 60 req/hr | `export GITHUB_TOKEN=$(gh auth token)` raises to 5000/hr |
 | `legal --region uk` prints "requires COMPANIES_HOUSE_API_KEY" | Companies House requires registration | Register free at developer.companieshouse.gov.uk, then `export COMPANIES_HOUSE_API_KEY=...` |
 | `snapshot stripe` returns "no candidates found" (exit 4) | Name resolution couldn't find a matching domain | Pass `--domain` explicitly: `snapshot --domain stripe.com` |

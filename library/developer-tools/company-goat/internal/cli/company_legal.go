@@ -5,7 +5,6 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -64,7 +63,7 @@ UK lookup includes officers; US lookup is just issuer name, state of incorporati
   company-goat-pp-cli legal stripe
 `, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if dryRunOK(flags) {
+			if dryRunOK(cmd, flags) {
 				return nil
 			}
 			if t.Domain == "" && len(args) == 0 {
@@ -97,6 +96,10 @@ UK lookup includes officers; US lookup is just issuer name, state of incorporati
 						YearOfInc:  f.YearOfInc,
 						Source:     "SEC EDGAR Form D (most recent filing)",
 					}
+				} else if err != nil && region == "us" {
+					return classifyAPIError(fmt.Errorf("sec edgar: %w", err))
+				} else if err != nil && region == "auto" {
+					result.Note = "US SEC lookup failed: " + err.Error()
 				}
 			}
 
@@ -175,9 +178,7 @@ func renderLegal(cmd *cobra.Command, flags *rootFlags, r legalResult) {
 	w := cmd.OutOrStdout()
 	asJSON := flags.asJSON || !isTerminal(w)
 	if asJSON {
-		enc := json.NewEncoder(w)
-		enc.SetIndent("", "  ")
-		_ = enc.Encode(r)
+		_ = flags.printJSON(cmd, r)
 		return
 	}
 	fmt.Fprintf(w, "Domain: %s  Region: %s\n", r.Domain, r.Region)
