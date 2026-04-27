@@ -20,7 +20,7 @@ Do not activate this CLI for requests that require creating, updating, deleting,
 
 **repositories** — Repository metadata and details
 
-- `docker-hub-pp-cli repositories` — Get repository details
+- `docker-hub-pp-cli repositories get-repository` — Get repository details
 
 **search** — Search across all Docker Hub repositories
 
