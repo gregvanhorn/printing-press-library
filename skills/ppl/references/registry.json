@@ -46,21 +46,20 @@
       "name": "cal-com",
       "category": "productivity",
       "api": "Cal.com",
-      "description": "Manage bookings, event types, schedules, and availability via the Cal.com API",
+      "description": "Every Cal.com feature, plus offline agendas, composed booking flows, and analytics no other Cal.com tool ships.",
       "path": "library/productivity/cal-com",
       "mcp": {
         "binary": "cal-com-pp-mcp",
         "transport": "stdio",
         "tool_count": 285,
-        "public_tool_count": 0,
-        "auth_type": "api_key",
+        "auth_type": "bearer_token",
         "env_vars": [
           "CAL_COM_TOKEN"
         ],
         "mcp_ready": "full",
-        "manifest_checksum": "sha256:dd568fada6bf4f8ba272b1075d6c1a6f0899c2deb15f4af954bf914f14a0e280",
         "spec_format": "openapi3",
-        "manifest_url": "library/productivity/cal-com/tools-manifest.json"
+        "manifest_url": "library/productivity/cal-com/tools-manifest.json",
+        "manifest_checksum": "sha256:eec1da022af24682f1dd1cce35c0fabad43bd58a08344fedd758f776d212e2fd"
       }
     },
     {
