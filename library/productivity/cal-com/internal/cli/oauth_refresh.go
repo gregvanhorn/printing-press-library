@@ -9,9 +9,8 @@ import (
 
 func newOauthRefreshCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "refresh",
-		Short:  "Manage refresh",
-		Hidden: true,
+		Use:   "refresh",
+		Short: "Manage refresh",
 	}
 
 	cmd.AddCommand(newOauthRefreshOauthFlowTokensCmd(flags))

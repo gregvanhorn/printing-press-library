@@ -30,6 +30,19 @@ func newOrganizationsTeamsOrganizationsConferencingGetOauthUrlCmd(flags *rootFla
 			if !cmd.Flags().Changed("on-error-return-to") && !flags.dryRun {
 				return fmt.Errorf("required flag \"%s\" not set", "on-error-return-to")
 			}
+			if cmd.Flags().Changed("app") {
+				allowedApp := []string{"zoom", "msteams"}
+				validApp := false
+				for _, v := range allowedApp {
+					if flagApp == v {
+						validApp = true
+						break
+					}
+				}
+				if !validApp {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "app", flagApp, allowedApp)
+				}
+			}
 			c, err := flags.newClient()
 			if err != nil {
 				return err
@@ -59,14 +72,15 @@ func newOrganizationsTeamsOrganizationsConferencingGetOauthUrlCmd(flags *rootFla
 				_ = json.Unmarshal(data, &countItems)
 				printProvenance(cmd, len(countItems), prov)
 			}
-			// For JSON output, wrap with provenance envelope before passing through flags
+			// For JSON output, wrap with provenance envelope before passing through flags.
+			// --select wins over --compact when both are set; --compact only runs when
+			// no explicit fields were requested.
 			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
 				if wrapErr != nil {
@@ -90,7 +104,7 @@ func newOrganizationsTeamsOrganizationsConferencingGetOauthUrlCmd(flags *rootFla
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagApp, "app", "zoom", "Conferencing application type")
+	cmd.Flags().StringVar(&flagApp, "app", "zoom", "Conferencing application type (one of: zoom, msteams)")
 	cmd.Flags().StringVar(&flagReturnTo, "return-to", "", "Return to")
 	cmd.Flags().StringVar(&flagOnErrorReturnTo, "on-error-return-to", "", "On error return to")
 

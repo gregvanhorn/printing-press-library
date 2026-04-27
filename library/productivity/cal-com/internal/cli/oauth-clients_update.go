@@ -79,7 +79,11 @@ func newOauthClientsUpdateCmd(flags *rootFlags) *cobra.Command {
 					body["name"] = bodyName
 				}
 				if bodyRedirectUris != "" {
-					body["redirectUris"] = bodyRedirectUris
+					var parsedRedirectUris any
+					if err := json.Unmarshal([]byte(bodyRedirectUris), &parsedRedirectUris); err != nil {
+						return fmt.Errorf("parsing --redirect-uris JSON: %w", err)
+					}
+					body["redirectUris"] = parsedRedirectUris
 				}
 			}
 			data, statusCode, err := c.Patch(path, body)
@@ -112,13 +116,15 @@ func newOauthClientsUpdateCmd(flags *rootFlags) *cobra.Command {
 				if flags.quiet {
 					return nil
 				}
-				// Apply --compact and --select to the API response before wrapping
+				// Apply --compact and --select to the API response before wrapping.
+				// --select wins when both are set: explicit field choice trumps the
+				// generic high-gravity allow-list. Otherwise --compact still applies
+				// when --agent is on but the user did not name fields.
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				envelope := map[string]any{
 					"action":   "patch",

@@ -9,9 +9,8 @@ import (
 
 func newOrganizationsSchedulesCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "schedules",
-		Short:  "Manage schedules",
-		Hidden: true,
+		Use:   "schedules",
+		Short: "Manage schedules",
 	}
 
 	cmd.AddCommand(newOrganizationsSchedulesOrganizationsGetOrganizationCmd(flags))

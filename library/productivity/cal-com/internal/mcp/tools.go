@@ -9,79 +9,47 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
 	"github.com/mvanhorn/printing-press-library/library/productivity/cal-com/internal/client"
+	"github.com/mvanhorn/printing-press-library/library/productivity/cal-com/internal/cliutil"
 	"github.com/mvanhorn/printing-press-library/library/productivity/cal-com/internal/config"
 	"github.com/mvanhorn/printing-press-library/library/productivity/cal-com/internal/store"
 	mcplib "github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 )
 
-// looksLikeAuthError checks if an error message body contains auth-related keywords.
-func looksLikeAuthError(msg string) bool {
-	lower := strings.ToLower(msg)
-	patterns := []string{
-		`\bkey\b`,
-		`\btoken\b`,
-		`\bunauthorized\b`,
-		`\bapi_key\b`,
-		`missing.{0,20}key`,
-		`required.{0,20}key`,
-		`\bforbidden\b`,
-		`\bauthenticat`,
-		`\bcredential`,
-	}
-	for _, p := range patterns {
-		if matched, _ := regexp.MatchString(p, lower); matched {
-			return true
-		}
-	}
-	return false
-}
-
-// sanitizeErrorBody truncates and strips credential-shaped strings from error output.
-func sanitizeErrorBody(msg string) string {
-	if len(msg) > 200 {
-		msg = msg[:200] + "..."
-	}
-	credPatterns := regexp.MustCompile(`(?i)(sk-[a-zA-Z0-9]{8,}|sk_live_[a-zA-Z0-9]+|Bearer\s+[a-zA-Z0-9._\-]+|key=[a-zA-Z0-9._\-]+)`)
-	msg = credPatterns.ReplaceAllString(msg, "[REDACTED]")
-	return msg
-}
-
 // RegisterTools registers all API operations as MCP tools.
 func RegisterTools(s *server.MCPServer) {
 	s.AddTool(
 		mcplib.NewTool("api-keys_keys-refresh",
-			mcplib.WithDescription("Refresh API Key"),
+			mcplib.WithDescription("Refresh API Key Returns RefreshApiKeyOutput."),
 		),
 		makeAPIHandler("POST", "/v2/api-keys/refresh", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("auth_oauth2-get-client",
-			mcplib.WithDescription("Get OAuth2 client"),
+			mcplib.WithDescription("Get OAuth2 client Returns Oauth2ClientResponseDto."),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 		),
 		makeAPIHandler("GET", "/v2/auth/oauth2/clients/{clientId}", []string{"clientId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("auth_oauth2-token",
-			mcplib.WithDescription("Exchange authorization code or refresh token for tokens"),
+			mcplib.WithDescription("Exchange authorization code or refresh token for tokens Returns Oauth2TokensDto."),
 		),
 		makeAPIHandler("POST", "/v2/auth/oauth2/token", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_create",
-			mcplib.WithDescription("Create a booking"),
+			mcplib.WithDescription("Create a booking Returns CreateBookingOutput20240813."),
 		),
 		makeAPIHandler("POST", "/v2/bookings", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_get",
-			mcplib.WithDescription("Get all bookings"),
+			mcplib.WithDescription("Get all bookings Returns array of GetItem."),
 			mcplib.WithString("status", mcplib.Description("Filter bookings by status. If you want to filter by multiple statuses, separate them with a comma.")),
 			mcplib.WithString("attendeeEmail", mcplib.Description("Filter bookings by the attendee's email address.")),
 			mcplib.WithString("attendeeName", mcplib.Description("Filter bookings by the attendee's name.")),
@@ -107,35 +75,35 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_get-bookinguid",
-			mcplib.WithDescription("Get a booking"),
+			mcplib.WithDescription("Get a booking Returns GetBookingOutput20240813."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 		),
 		makeAPIHandler("GET", "/v2/bookings/{bookingUid}", []string{"bookingUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_get-by-seat-uid",
-			mcplib.WithDescription("Get a booking by seat UID"),
+			mcplib.WithDescription("Get a booking by seat UID Returns GetBookingOutput20240813."),
 			mcplib.WithString("seatUid", mcplib.Required(), mcplib.Description("Seat uid")),
 		),
 		makeAPIHandler("GET", "/v2/bookings/by-seat/{seatUid}", []string{"seatUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_attendees_booking-add",
-			mcplib.WithDescription("Add an attendee to a booking"),
+			mcplib.WithDescription("Add an attendee to a booking Returns AddAttendeeOutput20240813."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 		),
 		makeAPIHandler("POST", "/v2/bookings/{bookingUid}/attendees", []string{"bookingUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_attendees_booking-get-booking",
-			mcplib.WithDescription("Get all attendees for a booking"),
+			mcplib.WithDescription("Get all attendees for a booking Returns array of BookingAttendeeWithId20240813."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 		),
 		makeAPIHandler("GET", "/v2/bookings/{bookingUid}/attendees", []string{"bookingUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_attendees_booking-get-booking-bookings",
-			mcplib.WithDescription("Get a specific attendee for a booking"),
+			mcplib.WithDescription("Get a specific attendee for a booking Returns GetBookingAttendeeOutput20240813."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 			mcplib.WithString("attendeeId", mcplib.Required(), mcplib.Description("Attendee id")),
 		),
@@ -143,70 +111,70 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_calendar-links_bookings-get",
-			mcplib.WithDescription("Get 'Add to Calendar' links for a booking"),
+			mcplib.WithDescription("Get 'Add to Calendar' links for a booking Returns array of CalendarLink."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 		),
 		makeAPIHandler("GET", "/v2/bookings/{bookingUid}/calendar-links", []string{"bookingUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_cancel_bookings-booking",
-			mcplib.WithDescription("Cancel a booking"),
+			mcplib.WithDescription("Cancel a booking Returns CancelBookingOutput20240813."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 		),
 		makeAPIHandler("POST", "/v2/bookings/{bookingUid}/cancel", []string{"bookingUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_conferencing-sessions_bookings-get-video-sessions",
-			mcplib.WithDescription("Get Video Meeting Sessions. Only supported for Cal Video"),
+			mcplib.WithDescription("Get Video Meeting Sessions. Only supported for Cal Video Returns array of CalMeetingSession."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 		),
 		makeAPIHandler("GET", "/v2/bookings/{bookingUid}/conferencing-sessions", []string{"bookingUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_confirm_bookings-booking",
-			mcplib.WithDescription("Confirm a booking"),
+			mcplib.WithDescription("Confirm a booking Returns GetBookingOutput20240813."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 		),
 		makeAPIHandler("POST", "/v2/bookings/{bookingUid}/confirm", []string{"bookingUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_decline_bookings-booking",
-			mcplib.WithDescription("Decline a booking"),
+			mcplib.WithDescription("Decline a booking Returns GetBookingOutput20240813."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 		),
 		makeAPIHandler("POST", "/v2/bookings/{bookingUid}/decline", []string{"bookingUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_guests_booking-add",
-			mcplib.WithDescription("Add guests to an existing booking"),
+			mcplib.WithDescription("Add guests to an existing booking Returns AddGuestsOutput20240813."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 		),
 		makeAPIHandler("POST", "/v2/bookings/{bookingUid}/guests", []string{"bookingUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_location_booking-update-booking",
-			mcplib.WithDescription("Update booking location for an existing booking"),
+			mcplib.WithDescription("Update booking location for an existing booking Returns UpdateBookingLocationOutput20240813."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 		),
 		makeAPIHandler("PATCH", "/v2/bookings/{bookingUid}/location", []string{"bookingUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_mark-absent_bookings-mark-no-show",
-			mcplib.WithDescription("Mark a booking absence"),
+			mcplib.WithDescription("Mark a booking absence Returns MarkAbsentBookingOutput20240813."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 		),
 		makeAPIHandler("POST", "/v2/bookings/{bookingUid}/mark-absent", []string{"bookingUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_reassign_bookings-booking",
-			mcplib.WithDescription("Reassign a booking to auto-selected host"),
+			mcplib.WithDescription("Reassign a booking to auto-selected host Returns ReassignBookingOutput20240813."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 		),
 		makeAPIHandler("POST", "/v2/bookings/{bookingUid}/reassign", []string{"bookingUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_reassign_bookings-booking-to-user",
-			mcplib.WithDescription("Reassign a booking to a specific host"),
+			mcplib.WithDescription("Reassign a booking to a specific host Returns ReassignBookingOutput20240813."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 		),
@@ -214,14 +182,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_recordings_bookings-get-booking",
-			mcplib.WithDescription("Get all the recordings for the booking"),
+			mcplib.WithDescription("Get all the recordings for the booking Returns array of RecordingItem."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 		),
 		makeAPIHandler("GET", "/v2/bookings/{bookingUid}/recordings", []string{"bookingUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_references_bookings-get-booking",
-			mcplib.WithDescription("Get booking references"),
+			mcplib.WithDescription("Get booking references Returns array of BookingReference."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 			mcplib.WithString("type", mcplib.Description("Filter booking references by type")),
 		),
@@ -229,21 +197,21 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_reschedule_bookings-booking",
-			mcplib.WithDescription("Reschedule a booking"),
+			mcplib.WithDescription("Reschedule a booking Returns RescheduleBookingOutput20240813."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 		),
 		makeAPIHandler("POST", "/v2/bookings/{bookingUid}/reschedule", []string{"bookingUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("bookings_transcripts_bookings-get-booking",
-			mcplib.WithDescription("Get Cal Video real time transcript download links for the booking"),
+			mcplib.WithDescription("Get Cal Video real time transcript download links for the booking Returns array of string."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 		),
 		makeAPIHandler("GET", "/v2/bookings/{bookingUid}/transcripts", []string{"bookingUid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_cal-unified-create-connection-event",
-			mcplib.WithDescription("Create event on a connection"),
+			mcplib.WithDescription("Create event on a connection Returns GetUnifiedCalendarEventOutput."),
 			mcplib.WithString("connectionId", mcplib.Required(), mcplib.Description("Connection id")),
 			mcplib.WithString("calendarId", mcplib.Description("Calendar id")),
 		),
@@ -251,7 +219,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_cal-unified-delete-connection-event",
-			mcplib.WithDescription("Delete event for a connection"),
+			mcplib.WithDescription("Delete event for a connection Destructive operation."),
 			mcplib.WithString("connectionId", mcplib.Required(), mcplib.Description("Connection id")),
 			mcplib.WithString("eventId", mcplib.Required(), mcplib.Description("Event id")),
 			mcplib.WithString("calendarId", mcplib.Description("Calendar id")),
@@ -260,7 +228,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_cal-unified-get-connection-event",
-			mcplib.WithDescription("Get event for a connection"),
+			mcplib.WithDescription("Get event for a connection Returns GetUnifiedCalendarEventOutput."),
 			mcplib.WithString("connectionId", mcplib.Required(), mcplib.Description("Connection id")),
 			mcplib.WithString("eventId", mcplib.Required(), mcplib.Description("Event id")),
 			mcplib.WithString("calendarId", mcplib.Description("Calendar id")),
@@ -269,7 +237,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_cal-unified-get-connection-free-busy",
-			mcplib.WithDescription("Get free/busy for a connection"),
+			mcplib.WithDescription("Get free/busy for a connection Returns array of BusyTimesOutput."),
 			mcplib.WithString("connectionId", mcplib.Required(), mcplib.Description("Connection id")),
 			mcplib.WithString("from", mcplib.Required(), mcplib.Description("Start of the date range (ISO 8601 date or date-time)")),
 			mcplib.WithString("to", mcplib.Required(), mcplib.Description("End of the date range (ISO 8601 date or date-time)")),
@@ -279,7 +247,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_cal-unified-list-connection-events",
-			mcplib.WithDescription("List events for a connection"),
+			mcplib.WithDescription("List events for a connection Returns array of UnifiedCalendarEventOutput."),
 			mcplib.WithString("connectionId", mcplib.Required(), mcplib.Description("Calendar connection ID from GET /connections")),
 			mcplib.WithString("from", mcplib.Required(), mcplib.Description("Start of the date range (ISO 8601 date or date-time)")),
 			mcplib.WithString("to", mcplib.Required(), mcplib.Description("End of the date range (ISO 8601 date or date-time)")),
@@ -290,13 +258,13 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_cal-unified-list-connections",
-			mcplib.WithDescription("List calendar connections"),
+			mcplib.WithDescription("List calendar connections Returns ListConnectionsOutput."),
 		),
 		makeAPIHandler("GET", "/v2/calendars/connections", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_cal-unified-update-connection-event",
-			mcplib.WithDescription("Update event for a connection"),
+			mcplib.WithDescription("Update event for a connection Returns GetUnifiedCalendarEventOutput."),
 			mcplib.WithString("connectionId", mcplib.Required(), mcplib.Description("Connection id")),
 			mcplib.WithString("eventId", mcplib.Required(), mcplib.Description("Event id")),
 			mcplib.WithString("calendarId", mcplib.Description("Calendar id")),
@@ -305,25 +273,25 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_check-ics-feed",
-			mcplib.WithDescription("Check an ICS feed"),
+			mcplib.WithDescription("Check an ICS feed Returns CheckIcsFeedResponse."),
 		),
 		makeAPIHandler("GET", "/v2/calendars/ics-feed/check", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_create-ics-feed",
-			mcplib.WithDescription("Save an ICS feed"),
+			mcplib.WithDescription("Save an ICS feed Returns CreateIcsFeedOutputResponseDto."),
 		),
 		makeAPIHandler("POST", "/v2/calendars/ics-feed/save", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_get",
-			mcplib.WithDescription("Get all calendars"),
+			mcplib.WithDescription("Get all calendars Returns ConnectedCalendarsOutput."),
 		),
 		makeAPIHandler("GET", "/v2/calendars", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_get-busy-times",
-			mcplib.WithDescription("Get busy times"),
+			mcplib.WithDescription("Get busy times Returns array of BusyTimesOutput."),
 			mcplib.WithString("loggedInUsersTz", mcplib.Description("Deprecated: Use timeZone instead. The timezone of the user represented as a string")),
 			mcplib.WithString("timeZone", mcplib.Description("The timezone for the busy times query represented as a string")),
 			mcplib.WithString("dateFrom", mcplib.Description("The starting date for the busy times query")),
@@ -335,14 +303,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_check_calendars",
-			mcplib.WithDescription("Check a calendar connection"),
+			mcplib.WithDescription("Check a calendar connection Returns CalendarsResponse."),
 			mcplib.WithString("calendar", mcplib.Description("Calendar")),
 		),
 		makeAPIHandler("GET", "/v2/calendars/{calendar}/check", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_connect_calendars-redirect",
-			mcplib.WithDescription("Get OAuth connect URL"),
+			mcplib.WithDescription("Get OAuth connect URL Returns CalendarsRedirectResponse."),
 			mcplib.WithString("calendar", mcplib.Description("Calendar")),
 			mcplib.WithString("isDryRun", mcplib.Required(), mcplib.Description("Is dry run")),
 			mcplib.WithString("redir", mcplib.Description("Redirect URL after successful calendar authorization.")),
@@ -358,14 +326,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_disconnect_calendars-delete-calendar-credentials",
-			mcplib.WithDescription("Disconnect a calendar"),
+			mcplib.WithDescription("Disconnect a calendar Returns DeletedCalendarCredentialsOutputResponseDto."),
 			mcplib.WithString("calendar", mcplib.Description("Calendar")),
 		),
 		makeAPIHandler("POST", "/v2/calendars/{calendar}/disconnect", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_event_cal-unified-calendars-get-calendar-details",
-			mcplib.WithDescription("Get meeting details from calendar"),
+			mcplib.WithDescription("Get meeting details from calendar Returns GetUnifiedCalendarEventOutput."),
 			mcplib.WithString("calendar", mcplib.Description("Calendar")),
 			mcplib.WithString("eventUid", mcplib.Required(), mcplib.Description("The Google Calendar event ID. You can retrieve this by getting booking references from the following endpoints: -...")),
 		),
@@ -373,7 +341,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_event_cal-unified-calendars-update-calendar",
-			mcplib.WithDescription("Update meeting details in calendar"),
+			mcplib.WithDescription("Update meeting details in calendar Returns GetUnifiedCalendarEventOutput."),
 			mcplib.WithString("calendar", mcplib.Description("Calendar")),
 			mcplib.WithString("eventUid", mcplib.Required(), mcplib.Description("The Google Calendar event ID. You can retrieve this by getting booking references from the following endpoints: -...")),
 		),
@@ -381,14 +349,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_events_cal-unified-calendars-create-calendar",
-			mcplib.WithDescription("Create a calendar event"),
+			mcplib.WithDescription("Create a calendar event Returns GetUnifiedCalendarEventOutput."),
 			mcplib.WithString("calendar", mcplib.Description("Calendar")),
 		),
 		makeAPIHandler("POST", "/v2/calendars/{calendar}/events", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_events_cal-unified-calendars-delete-calendar",
-			mcplib.WithDescription("Delete a calendar event"),
+			mcplib.WithDescription("Delete a calendar event Destructive operation."),
 			mcplib.WithString("calendar", mcplib.Description("Calendar")),
 			mcplib.WithString("eventUid", mcplib.Required(), mcplib.Description("The calendar provider's event ID (e.g. Google Calendar event ID)")),
 		),
@@ -396,7 +364,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_events_cal-unified-calendars-get-calendar-details",
-			mcplib.WithDescription("Get meeting details from calendar"),
+			mcplib.WithDescription("Get meeting details from calendar Returns GetUnifiedCalendarEventOutput."),
 			mcplib.WithString("calendar", mcplib.Description("Calendar")),
 			mcplib.WithString("eventUid", mcplib.Required(), mcplib.Description("The Google Calendar event ID. You can retrieve this by getting booking references from the following endpoints: -...")),
 		),
@@ -404,7 +372,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_events_cal-unified-calendars-list-calendar",
-			mcplib.WithDescription("List calendar events"),
+			mcplib.WithDescription("List calendar events Returns array of UnifiedCalendarEventOutput."),
 			mcplib.WithString("calendar", mcplib.Description("Calendar")),
 			mcplib.WithString("from", mcplib.Required(), mcplib.Description("Start of the date range (ISO 8601 date or date-time)")),
 			mcplib.WithString("to", mcplib.Required(), mcplib.Description("End of the date range (ISO 8601 date or date-time)")),
@@ -415,7 +383,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_events_cal-unified-calendars-update-calendar",
-			mcplib.WithDescription("Update meeting details in calendar"),
+			mcplib.WithDescription("Update meeting details in calendar Returns GetUnifiedCalendarEventOutput."),
 			mcplib.WithString("calendar", mcplib.Description("Calendar")),
 			mcplib.WithString("eventUid", mcplib.Required(), mcplib.Description("The Google Calendar event ID. You can retrieve this by getting booking references from the following endpoints: -...")),
 		),
@@ -423,7 +391,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("calendars_freebusy_cal-unified-calendars-get-free-busy",
-			mcplib.WithDescription("Get free/busy times"),
+			mcplib.WithDescription("Get free/busy times Returns array of BusyTimesOutput."),
 			mcplib.WithString("calendar", mcplib.Description("Calendar")),
 			mcplib.WithString("from", mcplib.Required(), mcplib.Description("Start of the date range (ISO 8601 date or date-time)")),
 			mcplib.WithString("to", mcplib.Required(), mcplib.Description("End of the date range (ISO 8601 date or date-time)")),
@@ -442,40 +410,40 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("conferencing_get-default",
-			mcplib.WithDescription("Get your default conferencing application"),
+			mcplib.WithDescription("Get your default conferencing application Returns GetDefaultConferencingAppOutputResponseDto."),
 		),
 		makeAPIHandler("GET", "/v2/conferencing/default", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("conferencing_list-installed-apps",
-			mcplib.WithDescription("List your conferencing applications"),
+			mcplib.WithDescription("List your conferencing applications Returns array of ConferencingAppsOutputDto."),
 		),
 		makeAPIHandler("GET", "/v2/conferencing", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("conferencing_connect_conferencing",
-			mcplib.WithDescription("Connect your conferencing application"),
+			mcplib.WithDescription("Connect your conferencing application Returns ConferencingAppOutputResponseDto."),
 			mcplib.WithString("app", mcplib.Description("Conferencing application type")),
 		),
 		makeAPIHandler("POST", "/v2/conferencing/{app}/connect", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("conferencing_default_conferencing",
-			mcplib.WithDescription("Set your default conferencing application"),
+			mcplib.WithDescription("Set your default conferencing application Returns SetDefaultConferencingAppOutputResponseDto."),
 			mcplib.WithString("app", mcplib.Description("Conferencing application type")),
 		),
 		makeAPIHandler("POST", "/v2/conferencing/{app}/default", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("conferencing_disconnect_conferencing",
-			mcplib.WithDescription("Disconnect your conferencing application"),
+			mcplib.WithDescription("Disconnect your conferencing application Returns DisconnectConferencingAppOutputResponseDto. Destructive."),
 			mcplib.WithString("app", mcplib.Description("Conferencing application type")),
 		),
 		makeAPIHandler("DELETE", "/v2/conferencing/{app}/disconnect", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("conferencing_oauth_conferencing-redirect",
-			mcplib.WithDescription("Get OAuth conferencing app auth URL"),
+			mcplib.WithDescription("Get OAuth conferencing app auth URL Returns GetConferencingAppsOauthUrlResponseDto."),
 			mcplib.WithString("app", mcplib.Description("Conferencing application type")),
 			mcplib.WithString("returnTo", mcplib.Required(), mcplib.Description("Return to")),
 			mcplib.WithString("onErrorReturnTo", mcplib.Required(), mcplib.Description("On error return to")),
@@ -493,26 +461,26 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("destination-calendars_update",
-			mcplib.WithDescription("Update destination calendars"),
+			mcplib.WithDescription("Update destination calendars Returns DestinationCalendarsOutputResponseDto."),
 		),
 		makeAPIHandler("PUT", "/v2/destination-calendars", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("event-types_create",
-			mcplib.WithDescription("Create an event type"),
+			mcplib.WithDescription("Create an event type Returns CreateEventTypeOutput20240614."),
 		),
 		makeAPIHandler("POST", "/v2/event-types", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("event-types_delete",
-			mcplib.WithDescription("Delete an event type"),
+			mcplib.WithDescription("Delete an event type Returns DeleteEventTypeOutput20240614. Destructive."),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 		),
 		makeAPIHandler("DELETE", "/v2/event-types/{eventTypeId}", []string{"eventTypeId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("event-types_get",
-			mcplib.WithDescription("Get all event types"),
+			mcplib.WithDescription("Get all event types Returns array of EventTypeOutput20240614."),
 			mcplib.WithString("username", mcplib.Description("The username of the user to get event types for. If only username provided will get all event types.")),
 			mcplib.WithString("eventSlug", mcplib.Description("Slug of event type to return. Notably, if eventSlug is provided then username must be provided too, because multiple...")),
 			mcplib.WithString("usernames", mcplib.Description("Get dynamic event type for multiple usernames separated by comma. e.g `usernames=alice,bob`")),
@@ -524,28 +492,28 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("event-types_get-by-id",
-			mcplib.WithDescription("Get an event type"),
+			mcplib.WithDescription("Get an event type Returns GetEventTypeOutput20240614."),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 		),
 		makeAPIHandler("GET", "/v2/event-types/{eventTypeId}", []string{"eventTypeId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("event-types_update",
-			mcplib.WithDescription("Update an event type"),
+			mcplib.WithDescription("Update an event type Returns UpdateEventTypeOutput20240614."),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 		),
 		makeAPIHandler("PATCH", "/v2/event-types/{eventTypeId}", []string{"eventTypeId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("event-types_private-links_event-types-create",
-			mcplib.WithDescription("Create a private link for an event type"),
+			mcplib.WithDescription("Create a private link for an event type Returns CreatePrivateLinkOutput."),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 		),
 		makeAPIHandler("POST", "/v2/event-types/{eventTypeId}/private-links", []string{"eventTypeId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("event-types_private-links_event-types-delete",
-			mcplib.WithDescription("Delete a private link for an event type"),
+			mcplib.WithDescription("Delete a private link for an event type Returns DeletePrivateLinkOutput. Destructive."),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("linkId", mcplib.Required(), mcplib.Description("Link id")),
 		),
@@ -553,14 +521,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("event-types_private-links_event-types-get",
-			mcplib.WithDescription("Get all private links for an event type"),
+			mcplib.WithDescription("Get all private links for an event type Returns array of EventTypesGetItem."),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 		),
 		makeAPIHandler("GET", "/v2/event-types/{eventTypeId}/private-links", []string{"eventTypeId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("event-types_private-links_event-types-update",
-			mcplib.WithDescription("Update a private link for an event type"),
+			mcplib.WithDescription("Update a private link for an event type Returns UpdatePrivateLinkOutput."),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("linkId", mcplib.Required(), mcplib.Description("Link id")),
 		),
@@ -568,21 +536,21 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("event-types_webhooks_event-type-create-event-type",
-			mcplib.WithDescription("Create a webhook"),
+			mcplib.WithDescription("Create a webhook Returns EventTypeWebhookOutputResponseDto."),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 		),
 		makeAPIHandler("POST", "/v2/event-types/{eventTypeId}/webhooks", []string{"eventTypeId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("event-types_webhooks_event-type-delete-all-event-type",
-			mcplib.WithDescription("Delete all webhooks"),
+			mcplib.WithDescription("Delete all webhooks Returns DeleteManyWebhooksOutputResponseDto. Destructive."),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 		),
 		makeAPIHandler("DELETE", "/v2/event-types/{eventTypeId}/webhooks", []string{"eventTypeId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("event-types_webhooks_event-type-delete-event-type",
-			mcplib.WithDescription("Delete a webhook"),
+			mcplib.WithDescription("Delete a webhook Returns EventTypeWebhookOutputResponseDto. Destructive."),
 			mcplib.WithString("webhookId", mcplib.Required(), mcplib.Description("Webhook id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 		),
@@ -590,7 +558,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("event-types_webhooks_event-type-get-event-type",
-			mcplib.WithDescription("Get all webhooks"),
+			mcplib.WithDescription("Get all webhooks Returns array of EventTypeWebhookOutputDto."),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -599,7 +567,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("event-types_webhooks_event-type-get-event-type-eventtypes",
-			mcplib.WithDescription("Get a webhook"),
+			mcplib.WithDescription("Get a webhook Returns EventTypeWebhookOutputResponseDto."),
 			mcplib.WithString("webhookId", mcplib.Required(), mcplib.Description("Webhook id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 		),
@@ -607,7 +575,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("event-types_webhooks_event-type-update-event-type",
-			mcplib.WithDescription("Update a webhook"),
+			mcplib.WithDescription("Update a webhook Returns EventTypeWebhookOutputResponseDto."),
 			mcplib.WithString("webhookId", mcplib.Required(), mcplib.Description("Webhook id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 		),
@@ -615,66 +583,66 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("me_get",
-			mcplib.WithDescription("Get my profile"),
+			mcplib.WithDescription("Get my profile Returns GetMeOutput."),
 		),
 		makeAPIHandler("GET", "/v2/me", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("me_update",
-			mcplib.WithDescription("Update my profile"),
+			mcplib.WithDescription("Update my profile Returns UpdateMeOutput."),
 		),
 		makeAPIHandler("PATCH", "/v2/me", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth_refresh_oauth-flow-tokens",
-			mcplib.WithDescription("Refresh managed user tokens"),
+			mcplib.WithDescription("Refresh managed user tokens Returns KeysResponseDto."),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 		),
 		makeAPIHandler("POST", "/v2/oauth/{clientId}/refresh", []string{"clientId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_create",
-			mcplib.WithDescription("Create an OAuth client"),
+			mcplib.WithDescription("Create an OAuth client Returns CreateOauthClientResponseDto."),
 		),
 		makeAPIHandler("POST", "/v2/oauth-clients", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_delete",
-			mcplib.WithDescription("Delete an OAuth client"),
+			mcplib.WithDescription("Delete an OAuth client Returns GetOauthClientResponseDto. Destructive."),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 		),
 		makeAPIHandler("DELETE", "/v2/oauth-clients/{clientId}", []string{"clientId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_get",
-			mcplib.WithDescription("Get all OAuth clients"),
+			mcplib.WithDescription("Get all OAuth clients Returns array of PlatformOauthClientDto."),
 		),
 		makeAPIHandler("GET", "/v2/oauth-clients", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_get-by-id",
-			mcplib.WithDescription("Get an OAuth client"),
+			mcplib.WithDescription("Get an OAuth client Returns GetOauthClientResponseDto."),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 		),
 		makeAPIHandler("GET", "/v2/oauth-clients/{clientId}", []string{"clientId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_update",
-			mcplib.WithDescription("Update an OAuth client"),
+			mcplib.WithDescription("Update an OAuth client Returns GetOauthClientResponseDto."),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 		),
 		makeAPIHandler("PATCH", "/v2/oauth-clients/{clientId}", []string{"clientId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_users_oauth-client-create",
-			mcplib.WithDescription("Create a managed user"),
+			mcplib.WithDescription("Create a managed user Returns CreateManagedUserOutput."),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 		),
 		makeAPIHandler("POST", "/v2/oauth-clients/{clientId}/users", []string{"clientId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_users_oauth-client-delete",
-			mcplib.WithDescription("Delete a managed user"),
+			mcplib.WithDescription("Delete a managed user Returns GetManagedUserOutput. Destructive."),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 		),
@@ -682,7 +650,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_users_oauth-client-force-refresh",
-			mcplib.WithDescription("Force refresh tokens"),
+			mcplib.WithDescription("Force refresh tokens Returns KeysResponseDto."),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 		),
@@ -690,7 +658,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_users_oauth-client-get-by-id",
-			mcplib.WithDescription("Get a managed user"),
+			mcplib.WithDescription("Get a managed user Returns GetManagedUserOutput."),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 		),
@@ -698,7 +666,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_users_oauth-client-get-managed",
-			mcplib.WithDescription("Get all managed users"),
+			mcplib.WithDescription("Get all managed users Returns array of ManagedUserOutput."),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 			mcplib.WithString("limit", mcplib.Description("The number of items to return")),
 			mcplib.WithString("offset", mcplib.Description("The number of items to skip")),
@@ -708,7 +676,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_users_oauth-client-update",
-			mcplib.WithDescription("Update a managed user"),
+			mcplib.WithDescription("Update a managed user Returns GetManagedUserOutput."),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 		),
@@ -716,21 +684,21 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_webhooks_oauth-client-create-oauth-client",
-			mcplib.WithDescription("Create a webhook"),
+			mcplib.WithDescription("Create a webhook Returns OauthClientWebhookOutputResponseDto."),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 		),
 		makeAPIHandler("POST", "/v2/oauth-clients/{clientId}/webhooks", []string{"clientId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_webhooks_oauth-client-delete-all-oauth-client",
-			mcplib.WithDescription("Delete all webhooks"),
+			mcplib.WithDescription("Delete all webhooks Returns DeleteManyWebhooksOutputResponseDto. Destructive."),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 		),
 		makeAPIHandler("DELETE", "/v2/oauth-clients/{clientId}/webhooks", []string{"clientId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_webhooks_oauth-client-delete-oauth-client",
-			mcplib.WithDescription("Delete a webhook"),
+			mcplib.WithDescription("Delete a webhook Returns OauthClientWebhookOutputResponseDto. Destructive."),
 			mcplib.WithString("webhookId", mcplib.Required(), mcplib.Description("Webhook id")),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 		),
@@ -738,7 +706,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_webhooks_oauth-client-get-oauth-client",
-			mcplib.WithDescription("Get all webhooks"),
+			mcplib.WithDescription("Get all webhooks Returns array of OauthClientWebhookOutputDto."),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -747,7 +715,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_webhooks_oauth-client-get-oauth-client-oauthclients",
-			mcplib.WithDescription("Get a webhook"),
+			mcplib.WithDescription("Get a webhook Returns OauthClientWebhookOutputResponseDto."),
 			mcplib.WithString("webhookId", mcplib.Required(), mcplib.Description("Webhook id")),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 		),
@@ -755,7 +723,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("oauth-clients_webhooks_oauth-client-update-oauth-client",
-			mcplib.WithDescription("Update a webhook"),
+			mcplib.WithDescription("Update a webhook Returns OauthClientWebhookOutputResponseDto."),
 			mcplib.WithString("webhookId", mcplib.Required(), mcplib.Description("Webhook id")),
 			mcplib.WithString("clientId", mcplib.Required(), mcplib.Description("Client id")),
 		),
@@ -763,14 +731,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_attributes_organizations-create-organization",
-			mcplib.WithDescription("Create an attribute"),
+			mcplib.WithDescription("Create an attribute Returns CreateOrganizationAttributesOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
 		makeAPIHandler("POST", "/v2/organizations/{orgId}/attributes", []string{"orgId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_attributes_organizations-delete-organization",
-			mcplib.WithDescription("Delete an attribute"),
+			mcplib.WithDescription("Delete an attribute Returns DeleteOrganizationAttributesOutput. Destructive."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("attributeId", mcplib.Required(), mcplib.Description("Attribute id")),
 		),
@@ -778,7 +746,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_attributes_organizations-get-organization",
-			mcplib.WithDescription("Get all attributes"),
+			mcplib.WithDescription("Get all attributes Returns array of Attribute."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -787,7 +755,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_attributes_organizations-get-organization-organizations",
-			mcplib.WithDescription("Get an attribute"),
+			mcplib.WithDescription("Get an attribute Returns GetSingleAttributeOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("attributeId", mcplib.Required(), mcplib.Description("Attribute id")),
 		),
@@ -795,7 +763,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_attributes_organizations-options-assign-organization-option-to-user",
-			mcplib.WithDescription("Assign an attribute to a user"),
+			mcplib.WithDescription("Assign an attribute to a user Returns AssignOptionUserOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 		),
@@ -803,7 +771,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_attributes_organizations-options-create-organization-option",
-			mcplib.WithDescription("Create an attribute option"),
+			mcplib.WithDescription("Create an attribute option Returns CreateAttributeOptionOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("attributeId", mcplib.Required(), mcplib.Description("Attribute id")),
 		),
@@ -811,7 +779,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_attributes_organizations-options-delete-organization-option",
-			mcplib.WithDescription("Delete an attribute option"),
+			mcplib.WithDescription("Delete an attribute option Returns DeleteAttributeOptionOutput. Destructive."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("attributeId", mcplib.Required(), mcplib.Description("Attribute id")),
 			mcplib.WithString("optionId", mcplib.Required(), mcplib.Description("Option id")),
@@ -820,7 +788,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_attributes_organizations-options-get-organization-assigned-options",
-			mcplib.WithDescription("Get all assigned attribute options by attribute ID"),
+			mcplib.WithDescription("Get all assigned attribute options by attribute ID Returns array of AssignedOptionOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("attributeId", mcplib.Required(), mcplib.Description("Attribute id")),
 			mcplib.WithString("skip", mcplib.Description("Number of responses to skip")),
@@ -832,7 +800,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_attributes_organizations-options-get-organization-assigned-options-by-slug",
-			mcplib.WithDescription("Get all assigned attribute options by attribute slug"),
+			mcplib.WithDescription("Get all assigned attribute options by attribute slug Returns array of AssignedOptionOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("attributeSlug", mcplib.Required(), mcplib.Description("Attribute slug")),
 			mcplib.WithString("skip", mcplib.Description("Number of responses to skip")),
@@ -844,7 +812,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_attributes_organizations-options-get-organization-options",
-			mcplib.WithDescription("Get all attribute options"),
+			mcplib.WithDescription("Get all attribute options Returns array of OptionOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("attributeId", mcplib.Required(), mcplib.Description("Attribute id")),
 		),
@@ -852,7 +820,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_attributes_organizations-options-get-organization-options-for-user",
-			mcplib.WithDescription("Get all attribute options for a user"),
+			mcplib.WithDescription("Get all attribute options for a user Returns array of GetOptionUserOutputData."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 		),
@@ -860,7 +828,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_attributes_organizations-options-unassign-organization-option-from-user",
-			mcplib.WithDescription("Unassign an attribute from a user"),
+			mcplib.WithDescription("Unassign an attribute from a user Returns UnassignOptionUserOutput. Destructive."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 			mcplib.WithString("attributeOptionId", mcplib.Required(), mcplib.Description("Attribute option id")),
@@ -869,7 +837,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_attributes_organizations-options-update-organization-option",
-			mcplib.WithDescription("Update an attribute option"),
+			mcplib.WithDescription("Update an attribute option Returns UpdateAttributeOptionOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("attributeId", mcplib.Required(), mcplib.Description("Attribute id")),
 			mcplib.WithString("optionId", mcplib.Required(), mcplib.Description("Option id")),
@@ -878,7 +846,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_attributes_organizations-update-organization",
-			mcplib.WithDescription("Update an attribute"),
+			mcplib.WithDescription("Update an attribute Returns UpdateOrganizationAttributesOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("attributeId", mcplib.Required(), mcplib.Description("Attribute id")),
 		),
@@ -886,7 +854,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_bookings_organizations-get-all-org-team",
-			mcplib.WithDescription("Get organization bookings"),
+			mcplib.WithDescription("Get organization bookings Returns array of OrganizationsGetAllOrgTeamItem."),
 			mcplib.WithString("status", mcplib.Description("Filter bookings by status. If you want to filter by multiple statuses, separate them with a comma.")),
 			mcplib.WithString("attendeeEmail", mcplib.Description("Filter bookings by the attendee's email address.")),
 			mcplib.WithString("attendeeName", mcplib.Description("Filter bookings by the attendee's name.")),
@@ -914,14 +882,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_delegation-credentials_organizations-create",
-			mcplib.WithDescription("Save delegation credentials for your organization"),
+			mcplib.WithDescription("Save delegation credentials for your organization Returns CreateDelegationCredentialOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
 		makeAPIHandler("POST", "/v2/organizations/{orgId}/delegation-credentials", []string{"orgId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_delegation-credentials_organizations-update",
-			mcplib.WithDescription("Update delegation credentials of your organization"),
+			mcplib.WithDescription("Update delegation credentials of your organization Returns UpdateDelegationCredentialOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("credentialId", mcplib.Required(), mcplib.Description("Credential id")),
 		),
@@ -929,14 +897,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_memberships_organizations-create",
-			mcplib.WithDescription("Create a membership"),
+			mcplib.WithDescription("Create a membership Returns CreateOrgMembershipOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
 		makeAPIHandler("POST", "/v2/organizations/{orgId}/memberships", []string{"orgId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_memberships_organizations-delete",
-			mcplib.WithDescription("Delete a membership"),
+			mcplib.WithDescription("Delete a membership Returns DeleteOrgMembership. Destructive."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("membershipId", mcplib.Required(), mcplib.Description("Membership id")),
 		),
@@ -944,7 +912,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_memberships_organizations-get-all",
-			mcplib.WithDescription("Get all memberships"),
+			mcplib.WithDescription("Get all memberships Returns GetAllOrgMemberships."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -953,7 +921,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_memberships_organizations-get-org",
-			mcplib.WithDescription("Get a membership"),
+			mcplib.WithDescription("Get a membership Returns GetOrgMembership."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("membershipId", mcplib.Required(), mcplib.Description("Membership id")),
 		),
@@ -961,7 +929,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_memberships_organizations-update",
-			mcplib.WithDescription("Update a membership"),
+			mcplib.WithDescription("Update a membership Returns UpdateOrgMembership."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("membershipId", mcplib.Required(), mcplib.Description("Membership id")),
 		),
@@ -969,7 +937,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_ooo_organizations-users-ooocontroller-get-organization-users",
-			mcplib.WithDescription("Get all out-of-office entries for organization users"),
+			mcplib.WithDescription("Get all out-of-office entries for organization users Returns array of UserOooOutputDto."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -981,14 +949,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_organizations_create",
-			mcplib.WithDescription("Create an organization within an organization"),
+			mcplib.WithDescription("Create an organization within an organization Returns CreateManagedOrganizationOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
 		makeAPIHandler("POST", "/v2/organizations/{orgId}/organizations", []string{"orgId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_organizations_delete",
-			mcplib.WithDescription("Delete an organization within an organization"),
+			mcplib.WithDescription("Delete an organization within an organization Returns GetManagedOrganizationOutput. Destructive."),
 			mcplib.WithString("managedOrganizationId", mcplib.Required(), mcplib.Description("Managed organization id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -996,7 +964,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_organizations_get",
-			mcplib.WithDescription("Get all organizations within an organization"),
+			mcplib.WithDescription("Get all organizations within an organization Returns array of ManagedOrganizationOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -1008,7 +976,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_organizations_get-organizations",
-			mcplib.WithDescription("Get an organization within an organization"),
+			mcplib.WithDescription("Get an organization within an organization Returns GetManagedOrganizationOutput."),
 			mcplib.WithString("managedOrganizationId", mcplib.Required(), mcplib.Description("Managed organization id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1016,7 +984,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_organizations_update",
-			mcplib.WithDescription("Update an organization within an organization"),
+			mcplib.WithDescription("Update an organization within an organization Returns GetManagedOrganizationOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("managedOrganizationId", mcplib.Required(), mcplib.Description("Managed organization id")),
 		),
@@ -1024,14 +992,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_roles_organizations-create",
-			mcplib.WithDescription("Create a new organization role"),
+			mcplib.WithDescription("Create a new organization role Returns CreateOrgRoleOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
 		makeAPIHandler("POST", "/v2/organizations/{orgId}/roles", []string{"orgId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_roles_organizations-delete",
-			mcplib.WithDescription("Delete an organization role"),
+			mcplib.WithDescription("Delete an organization role Returns DeleteOrgRoleOutput. Destructive."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
 		),
@@ -1039,7 +1007,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_roles_organizations-get",
-			mcplib.WithDescription("Get a specific organization role"),
+			mcplib.WithDescription("Get a specific organization role Returns GetOrgRoleOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
 		),
@@ -1047,7 +1015,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_roles_organizations-get-all",
-			mcplib.WithDescription("Get all organization roles"),
+			mcplib.WithDescription("Get all organization roles Returns array of OrgRoleOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -1056,7 +1024,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_roles_organizations-permissions-add-permissions",
-			mcplib.WithDescription("Add permissions to an organization role (single or batch)"),
+			mcplib.WithDescription("Add permissions to an organization role (single or batch) Returns array of string."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
 		),
@@ -1064,7 +1032,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_roles_organizations-permissions-list-permissions",
-			mcplib.WithDescription("List permissions for an organization role"),
+			mcplib.WithDescription("List permissions for an organization role Returns array of string."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
 		),
@@ -1072,7 +1040,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_roles_organizations-permissions-remove-permission",
-			mcplib.WithDescription("Remove a permission from an organization role"),
+			mcplib.WithDescription("Remove a permission from an organization role Destructive operation."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
 			mcplib.WithString("permission", mcplib.Required(), mcplib.Description("Permission")),
@@ -1081,7 +1049,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_roles_organizations-permissions-remove-permissions",
-			mcplib.WithDescription("Remove multiple permissions from an organization role"),
+			mcplib.WithDescription("Remove multiple permissions from an organization role Destructive operation."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
 			mcplib.WithString("permissions", mcplib.Description("Permissions to remove (format: resource.action). Supports comma-separated values as well as repeated query params.")),
@@ -1090,7 +1058,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_roles_organizations-permissions-set-permissions",
-			mcplib.WithDescription("Replace all permissions for an organization role"),
+			mcplib.WithDescription("Replace all permissions for an organization role Returns array of string."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
 		),
@@ -1098,7 +1066,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_roles_organizations-update",
-			mcplib.WithDescription("Update an organization role"),
+			mcplib.WithDescription("Update an organization role Returns UpdateOrgRoleOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
 		),
@@ -1106,7 +1074,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_routing-forms_organizations-get-organization",
-			mcplib.WithDescription("Get organization routing forms"),
+			mcplib.WithDescription("Get organization routing forms Returns array of RoutingFormOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("skip", mcplib.Description("Number of responses to skip")),
 			mcplib.WithString("take", mcplib.Description("Number of responses to take")),
@@ -1123,7 +1091,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_routing-forms_organizations-responses-create-response",
-			mcplib.WithDescription("Create routing form response and get available slots"),
+			mcplib.WithDescription("Create routing form response and get available slots Returns CreateRoutingFormResponseOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("routingFormId", mcplib.Required(), mcplib.Description("Routing form id")),
 			mcplib.WithString("start", mcplib.Required(), mcplib.Description("Time starting from which available slots should be checked. Must be in UTC timezone as ISO 8601 datestring. You can...")),
@@ -1138,7 +1106,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_routing-forms_organizations-responses-get-responses",
-			mcplib.WithDescription("Get routing form responses"),
+			mcplib.WithDescription("Get routing form responses Returns array of RoutingFormResponseOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("routingFormId", mcplib.Required(), mcplib.Description("Routing form id")),
 			mcplib.WithString("skip", mcplib.Description("Number of responses to skip")),
@@ -1155,7 +1123,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_routing-forms_organizations-responses-update-response",
-			mcplib.WithDescription("Update routing form response"),
+			mcplib.WithDescription("Update routing form response Returns UpdateRoutingFormResponseOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("routingFormId", mcplib.Required(), mcplib.Description("Routing form id")),
 			mcplib.WithString("responseId", mcplib.Required(), mcplib.Description("Response id")),
@@ -1164,7 +1132,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_schedules_organizations-get-organization",
-			mcplib.WithDescription("Get all schedules"),
+			mcplib.WithDescription("Get all schedules Returns array of ScheduleOutput20240611."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -1173,7 +1141,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_org-verified-resources-get-verified-email-by-id",
-			mcplib.WithDescription("Get verified email of an org team by id"),
+			mcplib.WithDescription("Get verified email of an org team by id Returns TeamVerifiedEmailOutput."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("Id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1182,7 +1150,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_org-verified-resources-get-verified-emails",
-			mcplib.WithDescription("Get list of verified emails of an org team"),
+			mcplib.WithDescription("Get list of verified emails of an org team Returns array of TeamVerifiedEmailOutputData."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -1192,7 +1160,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_org-verified-resources-get-verified-phone-by-id",
-			mcplib.WithDescription("Get verified phone number of an org team by id"),
+			mcplib.WithDescription("Get verified phone number of an org team by id Returns TeamVerifiedPhoneOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("Id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1201,7 +1169,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_org-verified-resources-get-verified-phone-numbers",
-			mcplib.WithDescription("Get list of verified phone numbers of an org team"),
+			mcplib.WithDescription("Get list of verified phone numbers of an org team Returns array of TeamVerifiedPhoneOutputData."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -1211,7 +1179,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_org-verified-resources-request-email-verification-code",
-			mcplib.WithDescription("Request email verification code"),
+			mcplib.WithDescription("Request email verification code Returns RequestEmailVerificationOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1219,7 +1187,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_org-verified-resources-request-phone-verification-code",
-			mcplib.WithDescription("Request phone number verification code"),
+			mcplib.WithDescription("Request phone number verification code Returns RequestPhoneVerificationOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1227,7 +1195,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_org-verified-resources-verify-email",
-			mcplib.WithDescription("Verify an email for an org team"),
+			mcplib.WithDescription("Verify an email for an org team Returns TeamVerifiedEmailOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1235,7 +1203,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_org-verified-resources-verify-phone-number",
-			mcplib.WithDescription("Verify a phone number for an org team"),
+			mcplib.WithDescription("Verify a phone number for an org team Returns TeamVerifiedPhoneOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1243,7 +1211,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organization-workflows-create-event-type-workflow",
-			mcplib.WithDescription("Create organization team workflow for event-types"),
+			mcplib.WithDescription("Create organization team workflow for event-types Returns array of EventTypeWorkflowOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1251,7 +1219,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organization-workflows-create-form-workflow",
-			mcplib.WithDescription("Create organization team workflow for routing-forms"),
+			mcplib.WithDescription("Create organization team workflow for routing-forms Returns array of RoutingFormWorkflowOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1259,7 +1227,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organization-workflows-delete-routing-form-workflow",
-			mcplib.WithDescription("Delete organization team routing-form workflow"),
+			mcplib.WithDescription("Delete organization team routing-form workflow Destructive operation."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("workflowId", mcplib.Required(), mcplib.Description("Workflow id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1268,7 +1236,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organization-workflows-delete-workflow",
-			mcplib.WithDescription("Delete organization team workflow"),
+			mcplib.WithDescription("Delete organization team workflow Destructive operation."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("workflowId", mcplib.Required(), mcplib.Description("Workflow id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1277,7 +1245,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organization-workflows-get-routing-form-workflow-by-id",
-			mcplib.WithDescription("Get organization team workflow"),
+			mcplib.WithDescription("Get organization team workflow Returns array of RoutingFormWorkflowOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("workflowId", mcplib.Required(), mcplib.Description("Workflow id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1286,7 +1254,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organization-workflows-get-routing-form-workflows",
-			mcplib.WithDescription("Get organization team workflows"),
+			mcplib.WithDescription("Get organization team workflows Returns array of RoutingFormWorkflowOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
@@ -1296,7 +1264,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organization-workflows-get-workflow-by-id",
-			mcplib.WithDescription("Get organization team workflow"),
+			mcplib.WithDescription("Get organization team workflow Returns array of EventTypeWorkflowOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("workflowId", mcplib.Required(), mcplib.Description("Workflow id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1305,7 +1273,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organization-workflows-get-workflows",
-			mcplib.WithDescription("Get organization team workflows"),
+			mcplib.WithDescription("Get organization team workflows Returns array of EventTypeWorkflowOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
@@ -1315,7 +1283,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organization-workflows-update-routing-form-workflow",
-			mcplib.WithDescription("Update organization routing form team workflow"),
+			mcplib.WithDescription("Update organization routing form team workflow Returns array of RoutingFormWorkflowOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("workflowId", mcplib.Required(), mcplib.Description("Workflow id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1324,7 +1292,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organization-workflows-update-workflow",
-			mcplib.WithDescription("Update organization team workflow"),
+			mcplib.WithDescription("Update organization team workflow Returns array of EventTypeWorkflowOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("workflowId", mcplib.Required(), mcplib.Description("Workflow id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1333,7 +1301,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-bookings-get-all-org-bookings",
-			mcplib.WithDescription("Get organization team bookings"),
+			mcplib.WithDescription("Get organization team bookings Returns array of OrganizationsBookingsGetAllOrgBookingsItem."),
 			mcplib.WithString("status", mcplib.Description("Filter bookings by status. If you want to filter by multiple statuses, separate them with a comma.")),
 			mcplib.WithString("attendeeEmail", mcplib.Description("Filter bookings by the attendee's email address.")),
 			mcplib.WithString("attendeeName", mcplib.Description("Filter bookings by the attendee's name.")),
@@ -1354,7 +1322,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-bookings-get-booking-references",
-			mcplib.WithDescription("Get booking references"),
+			mcplib.WithDescription("Get booking references Returns array of BookingReference."),
 			mcplib.WithString("bookingUid", mcplib.Required(), mcplib.Description("Booking uid")),
 			mcplib.WithString("type", mcplib.Description("Filter booking references by type")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
@@ -1364,7 +1332,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-conferencing-connect-app",
-			mcplib.WithDescription("Connect your conferencing application to a team"),
+			mcplib.WithDescription("Connect your conferencing application to a team Returns ConferencingAppOutputResponseDto."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("app", mcplib.Description("Conferencing application type")),
@@ -1373,7 +1341,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-conferencing-disconnect-app",
-			mcplib.WithDescription("Disconnect team conferencing application"),
+			mcplib.WithDescription("Disconnect team conferencing application Returns DisconnectConferencingAppOutputResponseDto. Destructive."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("app", mcplib.Description("Conferencing application type")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1382,7 +1350,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-conferencing-get-default-app",
-			mcplib.WithDescription("Get team default conferencing application"),
+			mcplib.WithDescription("Get team default conferencing application Returns GetDefaultConferencingAppOutputResponseDto."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1390,7 +1358,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-conferencing-get-oauth-url",
-			mcplib.WithDescription("Get OAuth conferencing app's auth URL for a team"),
+			mcplib.WithDescription("Get OAuth conferencing app's auth URL for a team Returns GetConferencingAppsOauthUrlResponseDto."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("app", mcplib.Description("Conferencing application type")),
@@ -1401,7 +1369,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-conferencing-list-conferencing-apps",
-			mcplib.WithDescription("List team conferencing applications"),
+			mcplib.WithDescription("List team conferencing applications Returns array of ConferencingAppsOutputDto."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1420,7 +1388,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-conferencing-set-default-app",
-			mcplib.WithDescription("Set team default conferencing application"),
+			mcplib.WithDescription("Set team default conferencing application Returns SetDefaultConferencingAppOutputResponseDto."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("app", mcplib.Description("Conferencing application type")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1429,14 +1397,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-create",
-			mcplib.WithDescription("Create a team"),
+			mcplib.WithDescription("Create a team Returns OrgTeamOutputResponseDto."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
 		makeAPIHandler("POST", "/v2/organizations/{orgId}/teams", []string{"orgId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-delete",
-			mcplib.WithDescription("Delete a team"),
+			mcplib.WithDescription("Delete a team Returns OrgTeamOutputResponseDto. Destructive."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
@@ -1444,7 +1412,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-event-types-create-event-type",
-			mcplib.WithDescription("Create an event type"),
+			mcplib.WithDescription("Create an event type Returns CreateTeamEventTypeOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1452,7 +1420,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-event-types-create-phone-call",
-			mcplib.WithDescription("Create a phone call"),
+			mcplib.WithDescription("Create a phone call Returns CreatePhoneCallOutput."),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
@@ -1461,7 +1429,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-event-types-delete-event-type",
-			mcplib.WithDescription("Delete a team event type"),
+			mcplib.WithDescription("Delete a team event type Returns DeleteTeamEventTypeOutput. Destructive."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1470,7 +1438,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-event-types-get-event-type",
-			mcplib.WithDescription("Get an event type"),
+			mcplib.WithDescription("Get an event type Returns GetTeamEventTypeOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1479,7 +1447,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-event-types-get-event-types",
-			mcplib.WithDescription("Get all team event types"),
+			mcplib.WithDescription("Get all team event types Returns array of TeamEventTypeOutput20240614."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -1489,7 +1457,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-event-types-get-event-types-organizations",
-			mcplib.WithDescription("Get team event types"),
+			mcplib.WithDescription("Get team event types Returns array of TeamEventTypeOutput20240614."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("eventSlug", mcplib.Description("Slug of team event type to return.")),
 			mcplib.WithString("hostsLimit", mcplib.Description("Specifies the maximum number of hosts to include in the response. This limit helps optimize performance. If not...")),
@@ -1500,7 +1468,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-event-types-private-links-create-private-link",
-			mcplib.WithDescription("Create a private link for a team event type"),
+			mcplib.WithDescription("Create a private link for a team event type Returns CreatePrivateLinkOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1509,7 +1477,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-event-types-private-links-delete-private-link",
-			mcplib.WithDescription("Delete a private link for a team event type"),
+			mcplib.WithDescription("Delete a private link for a team event type Returns DeletePrivateLinkOutput. Destructive."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("linkId", mcplib.Required(), mcplib.Description("Link id")),
@@ -1519,7 +1487,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-event-types-private-links-get-private-links",
-			mcplib.WithDescription("Get all private links for a team event type"),
+			mcplib.WithDescription("Get all private links for a team event type Returns array of OrganizationsEventTypesPrivateLinksGetPrivateLinksItem."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1528,7 +1496,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-event-types-private-links-update-private-link",
-			mcplib.WithDescription("Update a private link for a team event type"),
+			mcplib.WithDescription("Update a private link for a team event type Returns UpdatePrivateLinkOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("linkId", mcplib.Required(), mcplib.Description("Link id")),
@@ -1538,7 +1506,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-event-types-update-event-type",
-			mcplib.WithDescription("Update a team event type"),
+			mcplib.WithDescription("Update a team event type Returns UpdateTeamEventTypeOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1547,7 +1515,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-get",
-			mcplib.WithDescription("Get a team"),
+			mcplib.WithDescription("Get a team Returns OrgTeamOutputResponseDto."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1555,7 +1523,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-get-all",
-			mcplib.WithDescription("Get all teams"),
+			mcplib.WithDescription("Get all teams Returns array of OrgTeamOutputDto."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -1564,7 +1532,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-get-my",
-			mcplib.WithDescription("Get teams membership for user"),
+			mcplib.WithDescription("Get teams membership for user Returns array of OrgTeamOutputDto."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -1573,7 +1541,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-invite-create-invite",
-			mcplib.WithDescription("Create team invite link"),
+			mcplib.WithDescription("Create team invite link Returns CreateInviteOutputDto."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
@@ -1581,7 +1549,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-memberships-create-org-membership",
-			mcplib.WithDescription("Create a membership"),
+			mcplib.WithDescription("Create a membership Returns OrgTeamMembershipOutputResponseDto."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
@@ -1589,7 +1557,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-memberships-delete-org-membership",
-			mcplib.WithDescription("Delete a membership"),
+			mcplib.WithDescription("Delete a membership Returns OrgTeamMembershipOutputResponseDto. Destructive."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("membershipId", mcplib.Required(), mcplib.Description("Membership id")),
@@ -1598,7 +1566,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-memberships-get-all-org-memberships",
-			mcplib.WithDescription("Get all memberships"),
+			mcplib.WithDescription("Get all memberships Returns array of TeamMembershipOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
@@ -1608,7 +1576,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-memberships-get-org-membership",
-			mcplib.WithDescription("Get a membership"),
+			mcplib.WithDescription("Get a membership Returns OrgTeamMembershipOutputResponseDto."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("membershipId", mcplib.Required(), mcplib.Description("Membership id")),
@@ -1617,7 +1585,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-memberships-update-org-membership",
-			mcplib.WithDescription("Update a membership"),
+			mcplib.WithDescription("Update a membership Returns OrgTeamMembershipOutputResponseDto."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("membershipId", mcplib.Required(), mcplib.Description("Membership id")),
@@ -1626,7 +1594,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-roles-create-role",
-			mcplib.WithDescription("Create a new organization team role"),
+			mcplib.WithDescription("Create a new organization team role Returns CreateTeamRoleOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
@@ -1634,7 +1602,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-roles-delete-role",
-			mcplib.WithDescription("Delete an organization team role"),
+			mcplib.WithDescription("Delete an organization team role Returns DeleteTeamRoleOutput. Destructive."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
@@ -1643,7 +1611,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-roles-get-all-roles",
-			mcplib.WithDescription("Get all organization team roles"),
+			mcplib.WithDescription("Get all organization team roles Returns array of TeamRoleOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
@@ -1653,7 +1621,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-roles-get-role",
-			mcplib.WithDescription("Get a specific organization team role"),
+			mcplib.WithDescription("Get a specific organization team role Returns GetTeamRoleOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
@@ -1662,7 +1630,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-roles-permissions-add-permissions",
-			mcplib.WithDescription("Add permissions to an organization team role (single or batch)"),
+			mcplib.WithDescription("Add permissions to an organization team role (single or batch) Returns array of string."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
@@ -1671,7 +1639,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-roles-permissions-list-permissions",
-			mcplib.WithDescription("List permissions for an organization team role"),
+			mcplib.WithDescription("List permissions for an organization team role Returns array of string."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
@@ -1680,7 +1648,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-roles-permissions-remove-permission",
-			mcplib.WithDescription("Remove a permission from an organization team role"),
+			mcplib.WithDescription("Remove a permission from an organization team role Destructive operation."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
@@ -1690,7 +1658,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-roles-permissions-remove-permissions",
-			mcplib.WithDescription("Remove multiple permissions from an organization team role"),
+			mcplib.WithDescription("Remove multiple permissions from an organization team role Destructive operation."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
@@ -1700,7 +1668,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-roles-permissions-set-permissions",
-			mcplib.WithDescription("Replace all permissions for an organization team role"),
+			mcplib.WithDescription("Replace all permissions for an organization team role Returns array of string."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
@@ -1709,7 +1677,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-roles-update-role",
-			mcplib.WithDescription("Update an organization team role"),
+			mcplib.WithDescription("Update an organization team role Returns UpdateTeamRoleOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("roleId", mcplib.Required(), mcplib.Description("Role id")),
@@ -1718,7 +1686,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-routing-forms-get-routing-forms",
-			mcplib.WithDescription("Get team routing forms"),
+			mcplib.WithDescription("Get team routing forms Returns array of RoutingFormOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("skip", mcplib.Description("Number of responses to skip")),
@@ -1735,7 +1703,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-routing-forms-responses-create-routing-form-response",
-			mcplib.WithDescription("Create routing form response and get available slots"),
+			mcplib.WithDescription("Create routing form response and get available slots Returns CreateRoutingFormResponseOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("routingFormId", mcplib.Required(), mcplib.Description("Routing form id")),
@@ -1751,7 +1719,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-routing-forms-responses-get-routing-form-responses",
-			mcplib.WithDescription("Get organization team routing form responses"),
+			mcplib.WithDescription("Get organization team routing form responses Returns array of RoutingFormResponseOutput."),
 			mcplib.WithString("routingFormId", mcplib.Required(), mcplib.Description("Routing form id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
@@ -1769,7 +1737,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-routing-forms-responses-update-routing-form-response",
-			mcplib.WithDescription("Update routing form response"),
+			mcplib.WithDescription("Update routing form response Returns UpdateRoutingFormResponseOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("routingFormId", mcplib.Required(), mcplib.Description("Routing form id")),
 			mcplib.WithString("responseId", mcplib.Required(), mcplib.Description("Response id")),
@@ -1779,7 +1747,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-schedules-get-schedules",
-			mcplib.WithDescription("Get all team member schedules"),
+			mcplib.WithDescription("Get all team member schedules Returns array of ScheduleOutput20240611."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
@@ -1790,7 +1758,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-schedules-get-user-schedules",
-			mcplib.WithDescription("Get schedules of a team member"),
+			mcplib.WithDescription("Get schedules of a team member Returns array of ScheduleOutput20240611."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
@@ -1800,7 +1768,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-stripe-check-stripe-connection",
-			mcplib.WithDescription("Check team Stripe connection"),
+			mcplib.WithDescription("Check team Stripe connection Returns StripCredentialsCheckOutputResponseDto."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1808,7 +1776,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-stripe-get-stripe-connect-url",
-			mcplib.WithDescription("Get Stripe connect URL for a team"),
+			mcplib.WithDescription("Get Stripe connect URL for a team Returns StripConnectOutputResponseDto."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("returnTo", mcplib.Required(), mcplib.Description("Return to")),
@@ -1818,7 +1786,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-stripe-save",
-			mcplib.WithDescription("Save Stripe credentials"),
+			mcplib.WithDescription("Save Stripe credentials Returns StripCredentialsSaveOutputResponseDto."),
 			mcplib.WithString("state", mcplib.Required(), mcplib.Description("State")),
 			mcplib.WithString("code", mcplib.Required(), mcplib.Description("Code")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
@@ -1828,7 +1796,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_teams_organizations-update",
-			mcplib.WithDescription("Update a team"),
+			mcplib.WithDescription("Update a team Returns OrgTeamOutputResponseDto."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
@@ -1864,14 +1832,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_users_organizations-create-organization",
-			mcplib.WithDescription("Create a user"),
+			mcplib.WithDescription("Create a user Returns GetOrganizationUserOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
 		makeAPIHandler("POST", "/v2/organizations/{orgId}/users", []string{"orgId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_users_organizations-delete-organization",
-			mcplib.WithDescription("Delete a user"),
+			mcplib.WithDescription("Delete a user Returns GetOrganizationUserOutput. Destructive."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 		),
@@ -1879,7 +1847,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_users_organizations-get-organizations",
-			mcplib.WithDescription("Get all users"),
+			mcplib.WithDescription("Get all users Returns array of GetOrgUsersWithProfileOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("take", mcplib.Description("The number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("The number of items to skip")),
@@ -1892,7 +1860,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_users_organizations-ooocontroller-create-organization-ooo",
-			mcplib.WithDescription("Create an out-of-office entry for a user"),
+			mcplib.WithDescription("Create an out-of-office entry for a user Returns UserOooOutputResponseDto."),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1900,7 +1868,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_users_organizations-ooocontroller-delete-organization-ooo",
-			mcplib.WithDescription("Delete an out-of-office entry for a user"),
+			mcplib.WithDescription("Delete an out-of-office entry for a user Returns UserOooOutputResponseDto. Destructive."),
 			mcplib.WithString("oooId", mcplib.Required(), mcplib.Description("Ooo id")),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1909,7 +1877,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_users_organizations-ooocontroller-get-organization-ooo",
-			mcplib.WithDescription("Get all out-of-office entries for a user"),
+			mcplib.WithDescription("Get all out-of-office entries for a user Returns array of UserOooOutputDto."),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -1921,7 +1889,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_users_organizations-ooocontroller-update-organization-ooo",
-			mcplib.WithDescription("Update an out-of-office entry for a user"),
+			mcplib.WithDescription("Update an out-of-office entry for a user Returns UserOooOutputResponseDto."),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 			mcplib.WithString("oooId", mcplib.Required(), mcplib.Description("Ooo id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1930,7 +1898,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_users_organizations-schedules-create-schedule",
-			mcplib.WithDescription("Create a schedule"),
+			mcplib.WithDescription("Create a schedule Returns CreateScheduleOutput20240611."),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1938,7 +1906,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_users_organizations-schedules-delete-schedule",
-			mcplib.WithDescription("Delete a schedule"),
+			mcplib.WithDescription("Delete a schedule Returns DeleteScheduleOutput20240611. Destructive."),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 			mcplib.WithString("scheduleId", mcplib.Required(), mcplib.Description("Schedule id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1947,7 +1915,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_users_organizations-schedules-get-schedule",
-			mcplib.WithDescription("Get a schedule"),
+			mcplib.WithDescription("Get a schedule Returns GetScheduleOutput20240611."),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 			mcplib.WithString("scheduleId", mcplib.Required(), mcplib.Description("Schedule id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1956,7 +1924,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_users_organizations-schedules-get-schedules",
-			mcplib.WithDescription("Get all schedules"),
+			mcplib.WithDescription("Get all schedules Returns array of ScheduleOutput20240611."),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1964,7 +1932,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_users_organizations-schedules-update-schedule",
-			mcplib.WithDescription("Update a schedule"),
+			mcplib.WithDescription("Update a schedule Returns UpdateScheduleOutput20240611."),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 			mcplib.WithString("scheduleId", mcplib.Required(), mcplib.Description("Schedule id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
@@ -1973,7 +1941,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_users_organizations-update-organization",
-			mcplib.WithDescription("Update a user"),
+			mcplib.WithDescription("Update a user Returns GetOrganizationUserOutput."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("userId", mcplib.Required(), mcplib.Description("User id")),
 		),
@@ -1981,14 +1949,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_webhooks_organizations-create-organization",
-			mcplib.WithDescription("Create a webhook"),
+			mcplib.WithDescription("Create a webhook Returns TeamWebhookOutputResponseDto."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
 		makeAPIHandler("POST", "/v2/organizations/{orgId}/webhooks", []string{"orgId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_webhooks_organizations-delete",
-			mcplib.WithDescription("Delete a webhook"),
+			mcplib.WithDescription("Delete a webhook Returns TeamWebhookOutputResponseDto. Destructive."),
 			mcplib.WithString("webhookId", mcplib.Required(), mcplib.Description("Webhook id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -1996,7 +1964,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_webhooks_organizations-get-all-organization",
-			mcplib.WithDescription("Get all webhooks"),
+			mcplib.WithDescription("Get all webhooks Returns array of TeamWebhookOutputDto."),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -2005,7 +1973,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_webhooks_organizations-get-organization",
-			mcplib.WithDescription("Get a webhook"),
+			mcplib.WithDescription("Get a webhook Returns TeamWebhookOutputResponseDto."),
 			mcplib.WithString("webhookId", mcplib.Required(), mcplib.Description("Webhook id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -2013,7 +1981,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("organizations_webhooks_organizations-update-org",
-			mcplib.WithDescription("Update a webhook"),
+			mcplib.WithDescription("Update a webhook Returns TeamWebhookOutputResponseDto."),
 			mcplib.WithString("webhookId", mcplib.Required(), mcplib.Description("Webhook id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 		),
@@ -2021,7 +1989,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("routing-forms_calculate-slots_routing-forms-based-on-routing-form-response",
-			mcplib.WithDescription("Calculate slots based on routing form response"),
+			mcplib.WithDescription("Calculate slots based on routing form response Returns ResponseSlotsOutput."),
 			mcplib.WithString("start", mcplib.Required(), mcplib.Description("Time starting from which available slots should be checked. Must be in UTC timezone as ISO 8601 datestring. You can...")),
 			mcplib.WithString("end", mcplib.Required(), mcplib.Description("Time until which available slots should be checked. Must be in UTC timezone as ISO 8601 datestring. You can pass...")),
 			mcplib.WithString("timeZone", mcplib.Description("Time zone in which the available slots should be returned. Defaults to UTC.")),
@@ -2034,52 +2002,52 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("schedules_create",
-			mcplib.WithDescription("Create a schedule"),
+			mcplib.WithDescription("Create a schedule Returns CreateScheduleOutput20240611."),
 		),
 		makeAPIHandler("POST", "/v2/schedules", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("schedules_delete",
-			mcplib.WithDescription("Delete a schedule"),
+			mcplib.WithDescription("Delete a schedule Returns DeleteScheduleOutput20240611. Destructive."),
 			mcplib.WithString("scheduleId", mcplib.Required(), mcplib.Description("Schedule id")),
 		),
 		makeAPIHandler("DELETE", "/v2/schedules/{scheduleId}", []string{"scheduleId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("schedules_get",
-			mcplib.WithDescription("Get all schedules"),
+			mcplib.WithDescription("Get all schedules Returns array of ScheduleOutput20240611."),
 		),
 		makeAPIHandler("GET", "/v2/schedules", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("schedules_get-default",
-			mcplib.WithDescription("Get default schedule"),
+			mcplib.WithDescription("Get default schedule Returns GetDefaultScheduleOutput20240611."),
 		),
 		makeAPIHandler("GET", "/v2/schedules/default", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("schedules_get-scheduleid",
-			mcplib.WithDescription("Get a schedule"),
+			mcplib.WithDescription("Get a schedule Returns GetScheduleOutput20240611."),
 			mcplib.WithString("scheduleId", mcplib.Required(), mcplib.Description("Schedule id")),
 		),
 		makeAPIHandler("GET", "/v2/schedules/{scheduleId}", []string{"scheduleId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("schedules_update",
-			mcplib.WithDescription("Update a schedule"),
+			mcplib.WithDescription("Update a schedule Returns UpdateScheduleOutput20240611."),
 			mcplib.WithString("scheduleId", mcplib.Required(), mcplib.Description("Schedule id")),
 		),
 		makeAPIHandler("PATCH", "/v2/schedules/{scheduleId}", []string{"scheduleId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("selected-calendars_add",
-			mcplib.WithDescription("Add a selected calendar"),
+			mcplib.WithDescription("Add a selected calendar Returns SelectedCalendarOutputResponseDto."),
 		),
 		makeAPIHandler("POST", "/v2/selected-calendars", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("selected-calendars_delete",
-			mcplib.WithDescription("Delete a selected calendar"),
+			mcplib.WithDescription("Delete a selected calendar Returns SelectedCalendarOutputResponseDto. Destructive."),
 			mcplib.WithString("integration", mcplib.Required(), mcplib.Description("Integration")),
 			mcplib.WithString("externalId", mcplib.Required(), mcplib.Description("External id")),
 			mcplib.WithString("credentialId", mcplib.Required(), mcplib.Description("Credential id")),
@@ -2089,7 +2057,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("slots_delete-reserved",
-			mcplib.WithDescription("Delete a reserved slot"),
+			mcplib.WithDescription("Delete a reserved slot Returns DeleteReservedResponse. Destructive."),
 			mcplib.WithString("uid", mcplib.Required(), mcplib.Description("Uid")),
 		),
 		makeAPIHandler("DELETE", "/v2/slots/reservations/{uid}", []string{"uid"}),
@@ -2114,39 +2082,39 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("slots_get-reserved",
-			mcplib.WithDescription("Get reserved slot"),
+			mcplib.WithDescription("Get reserved slot Returns GetReservedSlotOutput20240904."),
 			mcplib.WithString("uid", mcplib.Required(), mcplib.Description("Uid")),
 		),
 		makeAPIHandler("GET", "/v2/slots/reservations/{uid}", []string{"uid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("slots_reserve",
-			mcplib.WithDescription("Reserve a slot"),
+			mcplib.WithDescription("Reserve a slot Returns ReserveSlotOutputResponse20240904."),
 		),
 		makeAPIHandler("POST", "/v2/slots/reservations", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("slots_update-reserved",
-			mcplib.WithDescription("Update a reserved slot"),
+			mcplib.WithDescription("Update a reserved slot Returns ReserveSlotOutputResponse20240904."),
 			mcplib.WithString("uid", mcplib.Required(), mcplib.Description("Uid")),
 		),
 		makeAPIHandler("PATCH", "/v2/slots/reservations/{uid}", []string{"uid"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("stripe_check",
-			mcplib.WithDescription("Check Stripe connection"),
+			mcplib.WithDescription("Check Stripe connection Returns StripCredentialsCheckOutputResponseDto."),
 		),
 		makeAPIHandler("GET", "/v2/stripe/check", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("stripe_redirect",
-			mcplib.WithDescription("Get Stripe connect URL"),
+			mcplib.WithDescription("Get Stripe connect URL Returns StripConnectOutputResponseDto."),
 		),
 		makeAPIHandler("GET", "/v2/stripe/connect", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("stripe_save",
-			mcplib.WithDescription("Save Stripe credentials"),
+			mcplib.WithDescription("Save Stripe credentials Returns StripCredentialsSaveOutputResponseDto."),
 			mcplib.WithString("state", mcplib.Required(), mcplib.Description("State")),
 			mcplib.WithString("code", mcplib.Required(), mcplib.Description("Code")),
 		),
@@ -2154,40 +2122,40 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_create",
-			mcplib.WithDescription("Create a team"),
+			mcplib.WithDescription("Create a team Returns CreateTeamOutput."),
 		),
 		makeAPIHandler("POST", "/v2/teams", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_delete",
-			mcplib.WithDescription("Delete a team"),
+			mcplib.WithDescription("Delete a team Returns OrgTeamOutputResponseDto. Destructive."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
 		makeAPIHandler("DELETE", "/v2/teams/{teamId}", []string{"teamId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_get",
-			mcplib.WithDescription("Get teams"),
+			mcplib.WithDescription("Get teams Returns array of TeamOutputDto."),
 		),
 		makeAPIHandler("GET", "/v2/teams", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_get-teamid",
-			mcplib.WithDescription("Get a team"),
+			mcplib.WithDescription("Get a team Returns GetTeamOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
 		makeAPIHandler("GET", "/v2/teams/{teamId}", []string{"teamId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_update",
-			mcplib.WithDescription("Update a team"),
+			mcplib.WithDescription("Update a team Returns UpdateTeamOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
 		makeAPIHandler("PATCH", "/v2/teams/{teamId}", []string{"teamId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_bookings_teams-get-all-team",
-			mcplib.WithDescription("Get team bookings"),
+			mcplib.WithDescription("Get team bookings Returns array of TeamsGetAllTeamItem."),
 			mcplib.WithString("status", mcplib.Description("Filter bookings by status. If you want to filter by multiple statuses, separate them with a comma.")),
 			mcplib.WithString("attendeeEmail", mcplib.Description("Filter bookings by the attendee's email address.")),
 			mcplib.WithString("attendeeName", mcplib.Description("Filter bookings by the attendee's name.")),
@@ -2207,7 +2175,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_event-types_teams-create-phone-call",
-			mcplib.WithDescription("Create a phone call"),
+			mcplib.WithDescription("Create a phone call Returns CreatePhoneCallOutput."),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("orgId", mcplib.Required(), mcplib.Description("Org id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
@@ -2216,14 +2184,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_event-types_teams-create-team",
-			mcplib.WithDescription("Create an event type"),
+			mcplib.WithDescription("Create an event type Returns CreateTeamEventTypeOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
 		makeAPIHandler("POST", "/v2/teams/{teamId}/event-types", []string{"teamId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_event-types_teams-delete-team",
-			mcplib.WithDescription("Delete a team event type"),
+			mcplib.WithDescription("Delete a team event type Returns DeleteTeamEventTypeOutput. Destructive."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 		),
@@ -2231,7 +2199,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_event-types_teams-get-team",
-			mcplib.WithDescription("Get team event types"),
+			mcplib.WithDescription("Get team event types Returns array of TeamEventTypeOutput20240614."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("eventSlug", mcplib.Description("Slug of team event type to return.")),
 			mcplib.WithString("hostsLimit", mcplib.Description("Specifies the maximum number of hosts to include in the response. This limit helps optimize performance. If not...")),
@@ -2241,7 +2209,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_event-types_teams-get-team-teams",
-			mcplib.WithDescription("Get an event type"),
+			mcplib.WithDescription("Get an event type Returns GetTeamEventTypeOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 		),
@@ -2249,7 +2217,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_event-types_teams-update-team",
-			mcplib.WithDescription("Update a team event type"),
+			mcplib.WithDescription("Update a team event type Returns UpdateTeamEventTypeOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 		),
@@ -2257,7 +2225,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_event-types_teams-webhooks-create-team-webhook",
-			mcplib.WithDescription("Create a webhook for a team event type"),
+			mcplib.WithDescription("Create a webhook for a team event type Returns EventTypeWebhookOutputResponseDto."),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
@@ -2265,7 +2233,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_event-types_teams-webhooks-delete-all-team-webhooks",
-			mcplib.WithDescription("Delete all webhooks for a team event type"),
+			mcplib.WithDescription("Delete all webhooks for a team event type Returns DeleteManyWebhooksOutputResponseDto. Destructive."),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
@@ -2273,7 +2241,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_event-types_teams-webhooks-delete-team-webhook",
-			mcplib.WithDescription("Delete a webhook for a team event type"),
+			mcplib.WithDescription("Delete a webhook for a team event type Returns EventTypeWebhookOutputResponseDto. Destructive."),
 			mcplib.WithString("webhookId", mcplib.Required(), mcplib.Description("Webhook id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
@@ -2282,7 +2250,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_event-types_teams-webhooks-get-team-webhook",
-			mcplib.WithDescription("Get a webhook for a team event type"),
+			mcplib.WithDescription("Get a webhook for a team event type Returns EventTypeWebhookOutputResponseDto."),
 			mcplib.WithString("webhookId", mcplib.Required(), mcplib.Description("Webhook id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
@@ -2291,7 +2259,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_event-types_teams-webhooks-get-team-webhooks",
-			mcplib.WithDescription("Get all webhooks for a team event type"),
+			mcplib.WithDescription("Get all webhooks for a team event type Returns array of EventTypeWebhookOutputDto."),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -2301,7 +2269,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_event-types_teams-webhooks-update-team-webhook",
-			mcplib.WithDescription("Update a webhook for a team event type"),
+			mcplib.WithDescription("Update a webhook for a team event type Returns EventTypeWebhookOutputResponseDto."),
 			mcplib.WithString("webhookId", mcplib.Required(), mcplib.Description("Webhook id")),
 			mcplib.WithString("eventTypeId", mcplib.Required(), mcplib.Description("Event type id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
@@ -2310,21 +2278,21 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_invite_teams-create",
-			mcplib.WithDescription("Create team invite link"),
+			mcplib.WithDescription("Create team invite link Returns CreateInviteOutputDto."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
 		makeAPIHandler("POST", "/v2/teams/{teamId}/invite", []string{"teamId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_memberships_teams-create-team",
-			mcplib.WithDescription("Create a membership"),
+			mcplib.WithDescription("Create a membership Returns CreateTeamMembershipOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
 		makeAPIHandler("POST", "/v2/teams/{teamId}/memberships", []string{"teamId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_memberships_teams-delete-team",
-			mcplib.WithDescription("Delete a membership"),
+			mcplib.WithDescription("Delete a membership Returns DeleteTeamMembershipOutput. Destructive."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("membershipId", mcplib.Required(), mcplib.Description("Membership id")),
 		),
@@ -2332,7 +2300,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_memberships_teams-get-team",
-			mcplib.WithDescription("Get all memberships"),
+			mcplib.WithDescription("Get all memberships Returns GetTeamMembershipsOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -2342,7 +2310,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_memberships_teams-get-team-teams",
-			mcplib.WithDescription("Get a membership"),
+			mcplib.WithDescription("Get a membership Returns GetTeamMembershipOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("membershipId", mcplib.Required(), mcplib.Description("Membership id")),
 		),
@@ -2350,7 +2318,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_memberships_teams-update-team",
-			mcplib.WithDescription("Update membership"),
+			mcplib.WithDescription("Update membership Returns UpdateTeamMembershipOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("membershipId", mcplib.Required(), mcplib.Description("Membership id")),
 		),
@@ -2358,7 +2326,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_schedules_teams-get-team",
-			mcplib.WithDescription("Get all team member schedules"),
+			mcplib.WithDescription("Get all team member schedules Returns array of ScheduleOutput20240611."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -2367,7 +2335,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_verified-resources_teams-get-verified-email-by-id",
-			mcplib.WithDescription("Get verified email of a team by id"),
+			mcplib.WithDescription("Get verified email of a team by id Returns TeamVerifiedEmailOutput."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("Id")),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
@@ -2375,7 +2343,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_verified-resources_teams-get-verified-emails",
-			mcplib.WithDescription("Get list of verified emails of a team"),
+			mcplib.WithDescription("Get list of verified emails of a team Returns array of TeamVerifiedEmailOutputData."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -2384,7 +2352,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_verified-resources_teams-get-verified-phone-by-id",
-			mcplib.WithDescription("Get verified phone number of a team by id"),
+			mcplib.WithDescription("Get verified phone number of a team by id Returns TeamVerifiedPhoneOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("Id")),
 		),
@@ -2392,7 +2360,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_verified-resources_teams-get-verified-phone-numbers",
-			mcplib.WithDescription("Get list of verified phone numbers of a team"),
+			mcplib.WithDescription("Get list of verified phone numbers of a team Returns array of TeamVerifiedPhoneOutputData."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
@@ -2401,42 +2369,42 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_verified-resources_teams-request-email-verification-code",
-			mcplib.WithDescription("Request email verification code"),
+			mcplib.WithDescription("Request email verification code Returns RequestEmailVerificationOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
 		makeAPIHandler("POST", "/v2/teams/{teamId}/verified-resources/emails/verification-code/request", []string{"teamId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_verified-resources_teams-request-phone-verification-code",
-			mcplib.WithDescription("Request phone number verification code"),
+			mcplib.WithDescription("Request phone number verification code Returns RequestPhoneVerificationOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
 		makeAPIHandler("POST", "/v2/teams/{teamId}/verified-resources/phones/verification-code/request", []string{"teamId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_verified-resources_teams-verify-email",
-			mcplib.WithDescription("Verify an email for a team"),
+			mcplib.WithDescription("Verify an email for a team Returns TeamVerifiedEmailOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
 		makeAPIHandler("POST", "/v2/teams/{teamId}/verified-resources/emails/verification-code/verify", []string{"teamId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("teams_verified-resources_teams-verify-phone-number",
-			mcplib.WithDescription("Verify a phone number for an org team"),
+			mcplib.WithDescription("Verify a phone number for an org team Returns TeamVerifiedPhoneOutput."),
 			mcplib.WithString("teamId", mcplib.Required(), mcplib.Description("Team id")),
 		),
 		makeAPIHandler("POST", "/v2/teams/{teamId}/verified-resources/phones/verification-code/verify", []string{"teamId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("verified-resources_user-get-verified-email-by-id",
-			mcplib.WithDescription("Get verified email by id"),
+			mcplib.WithDescription("Get verified email by id Returns UserVerifiedEmailOutput."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("Id")),
 		),
 		makeAPIHandler("GET", "/v2/verified-resources/emails/{id}", []string{"id"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("verified-resources_user-get-verified-emails",
-			mcplib.WithDescription("Get list of verified emails"),
+			mcplib.WithDescription("Get list of verified emails Returns array of UserVerifiedEmailOutputData."),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
 		),
@@ -2444,14 +2412,14 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("verified-resources_user-get-verified-phone-by-id",
-			mcplib.WithDescription("Get verified phone number by id"),
+			mcplib.WithDescription("Get verified phone number by id Returns UserVerifiedPhoneOutput."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("Id")),
 		),
 		makeAPIHandler("GET", "/v2/verified-resources/phones/{id}", []string{"id"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("verified-resources_user-get-verified-phone-numbers",
-			mcplib.WithDescription("Get list of verified phone numbers"),
+			mcplib.WithDescription("Get list of verified phone numbers Returns array of UserVerifiedPhoneOutputData."),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
 		),
@@ -2459,44 +2427,44 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("verified-resources_user-request-email-verification-code",
-			mcplib.WithDescription("Request email verification code"),
+			mcplib.WithDescription("Request email verification code Returns RequestEmailVerificationOutput."),
 		),
 		makeAPIHandler("POST", "/v2/verified-resources/emails/verification-code/request", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("verified-resources_user-request-phone-verification-code",
-			mcplib.WithDescription("Request phone number verification code"),
+			mcplib.WithDescription("Request phone number verification code Returns RequestPhoneVerificationOutput."),
 		),
 		makeAPIHandler("POST", "/v2/verified-resources/phones/verification-code/request", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("verified-resources_user-verify-email",
-			mcplib.WithDescription("Verify an email"),
+			mcplib.WithDescription("Verify an email Returns UserVerifiedEmailOutput."),
 		),
 		makeAPIHandler("POST", "/v2/verified-resources/emails/verification-code/verify", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("verified-resources_user-verify-phone-number",
-			mcplib.WithDescription("Verify a phone number"),
+			mcplib.WithDescription("Verify a phone number Returns UserVerifiedPhoneOutput."),
 		),
 		makeAPIHandler("POST", "/v2/verified-resources/phones/verification-code/verify", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("webhooks_create",
-			mcplib.WithDescription("Create a webhook"),
+			mcplib.WithDescription("Create a webhook Returns UserWebhookOutputResponseDto."),
 		),
 		makeAPIHandler("POST", "/v2/webhooks", []string{}),
 	)
 	s.AddTool(
 		mcplib.NewTool("webhooks_delete",
-			mcplib.WithDescription("Delete a webhook"),
+			mcplib.WithDescription("Delete a webhook Returns UserWebhookOutputResponseDto. Destructive."),
 			mcplib.WithString("webhookId", mcplib.Required(), mcplib.Description("Webhook id")),
 		),
 		makeAPIHandler("DELETE", "/v2/webhooks/{webhookId}", []string{"webhookId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("webhooks_get",
-			mcplib.WithDescription("Get all webhooks"),
+			mcplib.WithDescription("Get all webhooks Returns array of UserWebhookOutputDto."),
 			mcplib.WithString("take", mcplib.Description("Maximum number of items to return")),
 			mcplib.WithString("skip", mcplib.Description("Number of items to skip")),
 		),
@@ -2504,44 +2472,53 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("webhooks_get-webhookid",
-			mcplib.WithDescription("Get a webhook"),
+			mcplib.WithDescription("Get a webhook Returns UserWebhookOutputResponseDto."),
 			mcplib.WithString("webhookId", mcplib.Required(), mcplib.Description("Webhook id")),
 		),
 		makeAPIHandler("GET", "/v2/webhooks/{webhookId}", []string{"webhookId"}),
 	)
 	s.AddTool(
 		mcplib.NewTool("webhooks_update",
-			mcplib.WithDescription("Update a webhook"),
+			mcplib.WithDescription("Update a webhook Returns UserWebhookOutputResponseDto."),
 			mcplib.WithString("webhookId", mcplib.Required(), mcplib.Description("Webhook id")),
 		),
 		makeAPIHandler("PATCH", "/v2/webhooks/{webhookId}", []string{"webhookId"}),
 	)
-	// Sync tool
+	// Sync tool — populates local database for offline search and sql queries
 	s.AddTool(
 		mcplib.NewTool("sync",
-			mcplib.WithDescription("Sync API data to local SQLite for offline search and analysis"),
-			mcplib.WithString("resources", mcplib.Description("Comma-separated resource types to sync")),
-			mcplib.WithString("since", mcplib.Description("Incremental sync since duration (7d, 24h, 1w)")),
+			mcplib.WithDescription("Sync API data to local SQLite database. Run this before using search or sql tools. Supports incremental sync."),
+			mcplib.WithString("resources", mcplib.Description("Comma-separated resource types to sync (omit for all)")),
+			mcplib.WithString("since", mcplib.Description("Incremental sync since duration (e.g. 7d, 24h, 1w)")),
 			mcplib.WithBoolean("full", mcplib.Description("Full resync ignoring checkpoints")),
 		),
 		handleSync,
 	)
-	// Search tool
+	// Search tool — faster than iterating list endpoints for finding specific items
 	s.AddTool(
 		mcplib.NewTool("search",
-			mcplib.WithDescription("Full-text search across synced data"),
-			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Search query")),
+			mcplib.WithDescription("Full-text search across all synced data. Faster than paginating list endpoints. Requires sync first."),
+			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Search query (supports FTS5 syntax: AND, OR, NOT, quotes for phrases)")),
 			mcplib.WithNumber("limit", mcplib.Description("Max results (default 25)")),
 		),
 		handleSearch,
 	)
-	// SQL tool
+	// SQL tool — ad-hoc analysis on synced data without API calls
 	s.AddTool(
 		mcplib.NewTool("sql",
-			mcplib.WithDescription("Run read-only SQL query against local database"),
-			mcplib.WithString("query", mcplib.Required(), mcplib.Description("SQL query (SELECT only)")),
+			mcplib.WithDescription("Run read-only SQL against local database. Use for ad-hoc analysis, aggregations, and joins across synced resources. Requires sync first."),
+			mcplib.WithString("query", mcplib.Required(), mcplib.Description("SQL query (SELECT only). Tables match resource names.")),
 		),
 		handleSQL,
+	)
+
+	// Context tool — front-loaded domain knowledge for agents.
+	// Call this first to understand the API taxonomy, query patterns, and capabilities.
+	s.AddTool(
+		mcplib.NewTool("context",
+			mcplib.WithDescription("Get API domain context: resource taxonomy, auth requirements, query tips, and unique capabilities. Call this first."),
+		),
+		handleContext,
 	)
 }
 
@@ -2553,17 +2530,22 @@ func makeAPIHandler(method, pathTemplate string, positionalParams []string) serv
 			return mcplib.NewToolResultError(err.Error()), nil
 		}
 
+		// mcp-go v0.47+ made CallToolParams.Arguments an `any` to support
+		// non-map payloads; GetArguments() returns the map[string]any shape
+		// we rely on here (or an empty map when the payload is something else).
+		args := req.GetArguments()
+
 		// Build path by substituting positional params
 		path := pathTemplate
 		for _, p := range positionalParams {
-			if v, ok := req.Params.Arguments[p]; ok {
+			if v, ok := args[p]; ok {
 				path = strings.Replace(path, "{"+p+"}", fmt.Sprintf("%v", v), 1)
 			}
 		}
 
 		// Collect non-positional params as query params
 		params := make(map[string]string)
-		for k, v := range req.Params.Arguments {
+		for k, v := range args {
 			isPositional := false
 			for _, p := range positionalParams {
 				if k == p {
@@ -2581,13 +2563,13 @@ func makeAPIHandler(method, pathTemplate string, positionalParams []string) serv
 		case "GET":
 			data, err = c.Get(path, params)
 		case "POST":
-			body, _ := json.Marshal(req.Params.Arguments)
+			body, _ := json.Marshal(args)
 			data, _, err = c.Post(path, body)
 		case "PUT":
-			body, _ := json.Marshal(req.Params.Arguments)
+			body, _ := json.Marshal(args)
 			data, _, err = c.Put(path, body)
 		case "PATCH":
-			body, _ := json.Marshal(req.Params.Arguments)
+			body, _ := json.Marshal(args)
 			data, _, err = c.Patch(path, body)
 		case "DELETE":
 			data, _, err = c.Delete(path)
@@ -2600,18 +2582,18 @@ func makeAPIHandler(method, pathTemplate string, positionalParams []string) serv
 			switch {
 			case strings.Contains(msg, "HTTP 409"):
 				return mcplib.NewToolResultText("already exists (no-op)"), nil
-			case strings.Contains(msg, "HTTP 400") && looksLikeAuthError(msg):
-				return mcplib.NewToolResultError("authentication error: " + sanitizeErrorBody(msg) +
+			case strings.Contains(msg, "HTTP 400") && cliutil.LooksLikeAuthError(msg):
+				return mcplib.NewToolResultError("authentication error: " + cliutil.SanitizeErrorBody(msg) +
 					"\nhint: the API rejected the request — this usually means auth is missing or invalid." +
 					"\n      Set your API key: export CAL_COM_TOKEN=<your-key>" +
 					"\n      Run 'cal-com-pp-cli doctor' to check auth status."), nil
 			case strings.Contains(msg, "HTTP 401"):
-				return mcplib.NewToolResultError("authentication failed: " + sanitizeErrorBody(msg) +
+				return mcplib.NewToolResultError("authentication failed: " + cliutil.SanitizeErrorBody(msg) +
 					"\nhint: check your token." +
 					"\n      Set it with: export CAL_COM_TOKEN=<your-key>" +
 					"\n      Run 'cal-com-pp-cli doctor' to check auth status."), nil
 			case strings.Contains(msg, "HTTP 403"):
-				return mcplib.NewToolResultError("permission denied: " + sanitizeErrorBody(msg) +
+				return mcplib.NewToolResultError("permission denied: " + cliutil.SanitizeErrorBody(msg) +
 					"\nhint: your credentials are valid but lack access to this resource." +
 					"\n      Set it with: export CAL_COM_TOKEN=<your-key>" +
 					"\n      Run 'cal-com-pp-cli doctor' to check auth status."), nil
@@ -2669,13 +2651,14 @@ func handleSync(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallTo
 }
 
 func handleSearch(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
-	query, ok := req.Params.Arguments["query"].(string)
+	args := req.GetArguments()
+	query, ok := args["query"].(string)
 	if !ok || query == "" {
 		return mcplib.NewToolResultError("query is required"), nil
 	}
 
 	limit := 25
-	if v, ok := req.Params.Arguments["limit"].(float64); ok && v > 0 {
+	if v, ok := args["limit"].(float64); ok && v > 0 {
 		limit = int(v)
 	}
 
@@ -2695,7 +2678,8 @@ func handleSearch(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.Call
 }
 
 func handleSQL(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
-	query, ok := req.Params.Arguments["query"].(string)
+	args := req.GetArguments()
+	query, ok := args["query"].(string)
 	if !ok || query == "" {
 		return mcplib.NewToolResultError("query is required"), nil
 	}
@@ -2737,5 +2721,180 @@ func handleSQL(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToo
 	}
 
 	data, _ := json.MarshalIndent(results, "", "  ")
+	return mcplib.NewToolResultText(string(data)), nil
+}
+
+func handleContext(_ context.Context, _ mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
+	ctx := map[string]any{
+		"api":         "cal-com",
+		"description": "Cal.com v2 API — scheduling infrastructure. Authenticate with a Bearer token (API key from Settings > Developer >...",
+		"archetype":   "generic",
+		"tool_count":  285,
+		"auth": map[string]any{
+			"type":     "bearer_token",
+			"env_vars": []string{"CAL_COM_TOKEN"},
+		},
+		"resources": []map[string]any{
+			{
+				"name":        "api-keys",
+				"description": "Manage api keys",
+				"endpoints":   []string{"keys-refresh"},
+			},
+			{
+				"name":        "auth",
+				"description": "Manage auth",
+				"endpoints":   []string{"oauth2-get-client", "oauth2-token"},
+				"searchable":  true,
+			},
+			{
+				"name":        "bookings",
+				"description": "Manage bookings",
+				"endpoints":   []string{"create", "get", "get-bookinguid", "get-by-seat-uid"},
+				"syncable":    true,
+				"searchable":  true,
+			},
+			{
+				"name":        "calendars",
+				"description": "Manage calendars",
+				"endpoints":   []string{"cal-unified-create-connection-event", "cal-unified-delete-connection-event", "cal-unified-get-connection-event", "cal-unified-get-connection-free-busy", "cal-unified-list-connection-events", "cal-unified-list-connections", "cal-unified-update-connection-event", "check-ics-feed", "create-ics-feed", "get", "get-busy-times"},
+				"syncable":    true,
+				"searchable":  true,
+			},
+			{
+				"name":        "conferencing",
+				"description": "Manage conferencing",
+				"endpoints":   []string{"get-default", "list-installed-apps"},
+				"syncable":    true,
+			},
+			{
+				"name":        "destination-calendars",
+				"description": "Manage destination calendars",
+				"endpoints":   []string{"update"},
+				"searchable":  true,
+			},
+			{
+				"name":        "event-types",
+				"description": "Manage event types",
+				"endpoints":   []string{"create", "delete", "get", "get-by-id", "update"},
+				"syncable":    true,
+				"searchable":  true,
+			},
+			{
+				"name":        "me",
+				"description": "Manage me",
+				"endpoints":   []string{"get", "update"},
+				"syncable":    true,
+				"searchable":  true,
+			},
+			{
+				"name":        "oauth",
+				"description": "Manage oauth",
+				"endpoints":   []string{},
+				"searchable":  true,
+			},
+			{
+				"name":        "oauth-clients",
+				"description": "Manage oauth clients",
+				"endpoints":   []string{"create", "delete", "get", "get-by-id", "update"},
+				"syncable":    true,
+				"searchable":  true,
+			},
+			{
+				"name":        "organizations",
+				"description": "Manage organizations",
+				"endpoints":   []string{},
+				"searchable":  true,
+			},
+			{
+				"name":        "routing-forms",
+				"description": "Manage routing forms",
+				"endpoints":   []string{},
+				"searchable":  true,
+			},
+			{
+				"name":        "schedules",
+				"description": "Manage schedules",
+				"endpoints":   []string{"create", "delete", "get", "get-default", "get-scheduleid", "update"},
+				"syncable":    true,
+				"searchable":  true,
+			},
+			{
+				"name":        "selected-calendars",
+				"description": "Manage selected calendars",
+				"endpoints":   []string{"add", "delete"},
+				"searchable":  true,
+			},
+			{
+				"name":        "slots",
+				"description": "Manage slots",
+				"endpoints":   []string{"delete-reserved", "get-available", "get-reserved", "reserve", "update-reserved"},
+				"searchable":  true,
+			},
+			{
+				"name":        "stripe",
+				"description": "Manage stripe",
+				"endpoints":   []string{"check", "redirect", "save"},
+				"syncable":    true,
+				"searchable":  true,
+			},
+			{
+				"name":        "teams",
+				"description": "Manage teams",
+				"endpoints":   []string{"create", "delete", "get", "get-teamid", "update"},
+				"syncable":    true,
+				"searchable":  true,
+			},
+			{
+				"name":        "verified-resources",
+				"description": "Manage verified resources",
+				"endpoints":   []string{"user-get-verified-email-by-id", "user-get-verified-emails", "user-get-verified-phone-by-id", "user-get-verified-phone-numbers", "user-request-email-verification-code", "user-request-phone-verification-code", "user-verify-email", "user-verify-phone-number"},
+				"syncable":    true,
+				"searchable":  true,
+			},
+			{
+				"name":        "webhooks",
+				"description": "Manage webhooks",
+				"endpoints":   []string{"create", "delete", "get", "get-webhookid", "update"},
+				"syncable":    true,
+				"searchable":  true,
+			},
+		},
+		"query_tips": []string{
+			"Pagination uses cursor-based paging. Pass offset parameter for subsequent pages.",
+			"Control page size with the limit parameter (default 100).",
+			"Use the sql tool for ad-hoc analysis on synced data. Run sync first to populate the local database.",
+			"Use the search tool for full-text search across all synced resources. Faster than iterating list endpoints.",
+			"Prefer sql/search over repeated API calls when the data is already synced.",
+		},
+		"unique_capabilities": []map[string]string{
+			{"name": "One-shot booking", "command": "book", "description": "Find a slot and book it in a single command — no slot/reserve/create/confirm chain.", "rationale": "Composes four API calls (slots available → reserve → create → confirm) into one safe operation with --dry-run...."},
+			{"name": "Today's agenda", "command": "today", "description": "Today's bookings with status, attendees, and meeting links — read from the local store, no API call needed.", "rationale": "Joins bookings, event types, and attendee data locally. The API has no agenda endpoint; without a store you must..."},
+			{"name": "Week view", "command": "week", "description": "7-day calendar view of upcoming bookings, with conflict highlighting and per-day rollup counts.", "rationale": "Rendered from the local store; conflict detection cross-references external calendar busy times."},
+			{"name": "Cross-event-type slot search", "command": "slots find", "description": "Find first available slot across multiple event types in one call, ranked by start time.", "rationale": "Cal.com's /slots endpoint takes a single event-type ID. We fan out, merge, and dedup so the agent can ask 'which of..."},
+			{"name": "Booking analytics", "command": "analytics", "description": "Booking volume, density, no-show rate, and cancellation rate across a window, grouped by event type / attendee /...", "rationale": "The API has no analytics endpoints. The local store enables aggregations that no individual API call exposes...."},
+			{"name": "Conflict detection", "command": "conflicts", "description": "Detects overlaps between active Cal.com bookings and external calendar busy-times.", "rationale": "Joining bookings (Cal.com) with calendar busy-times (external) requires data from two sources held together. The..."},
+			{"name": "Availability gap finder", "command": "gaps", "description": "Finds open windows in your schedule that are available but unbooked, filtered by minimum block size.", "rationale": "Correlates schedule availability with booking history in the local store. The API has no analogous filter."},
+			{"name": "Team workload balance", "command": "workload", "description": "Booking distribution across team members over a window — surfaces overloaded vs underutilized hosts.", "rationale": "Joins bookings against team membership locally. The API has no team-workload endpoint."},
+			{"name": "Webhook coverage", "command": "webhooks coverage", "description": "Audits registered webhook triggers against the canonical set and reports lifecycle events with no subscriber.", "rationale": "Comparison of registered vs canonical triggers requires both a static catalog and the registered list. No vendor..."},
+			{"name": "Stale event types", "command": "event-types stale", "description": "Event types with zero bookings in the last N days — candidates for removal.", "rationale": "Cross-references local bookings against the local event-type list. The API offers no analogous filter."},
+			{"name": "Pending review", "command": "bookings pending", "description": "Pending-confirmation bookings sorted by age, with default 24h max-age cutoff.", "rationale": "API only filters by status; we add age-aware sort and `--max-age` so agents can prioritize the oldest pending first."},
+			{"name": "Webhook trigger catalog", "command": "webhooks triggers", "description": "Static reference of every valid Cal.com webhook trigger constant, grouped by lifecycle stage.", "rationale": "Cal.com publishes triggers in docs but no API endpoint enumerates them. Curated reference shipped in-CLI saves..."},
+		},
+		"playbook": []map[string]string{
+			{"topic": "One-shot booking", "insight": "Composes four API calls (slots available → reserve → create → confirm) into one safe operation with --dry-run. Every existing Cal.com tool exposes raw endpoint mirrors and forces the agent to chain them."},
+			{"topic": "Today's agenda", "insight": "Joins bookings, event types, and attendee data locally. The API has no agenda endpoint; without a store you must fetch and compose every time."},
+			{"topic": "Week view", "insight": "Rendered from the local store; conflict detection cross-references external calendar busy times."},
+			{"topic": "Cross-event-type slot search", "insight": "Cal.com's /slots endpoint takes a single event-type ID. We fan out, merge, and dedup so the agent can ask 'which of these event types has the earliest opening?'"},
+			{"topic": "Booking analytics", "insight": "The API has no analytics endpoints. The local store enables aggregations that no individual API call exposes. Cal.com Insights is paid-tier only."},
+			{"topic": "Conflict detection", "insight": "Joining bookings (Cal.com) with calendar busy-times (external) requires data from two sources held together. The store has both."},
+			{"topic": "Availability gap finder", "insight": "Correlates schedule availability with booking history in the local store. The API has no analogous filter."},
+			{"topic": "Team workload balance", "insight": "Joins bookings against team membership locally. The API has no team-workload endpoint."},
+			{"topic": "Webhook coverage", "insight": "Comparison of registered vs canonical triggers requires both a static catalog and the registered list. No vendor tool ships this."},
+			{"topic": "Stale event types", "insight": "Cross-references local bookings against the local event-type list. The API offers no analogous filter."},
+			{"topic": "Pending review", "insight": "API only filters by status; we add age-aware sort and `--max-age` so agents can prioritize the oldest pending first."},
+			{"topic": "Webhook trigger catalog", "insight": "Cal.com publishes triggers in docs but no API endpoint enumerates them. Curated reference shipped in-CLI saves agents from guessing strings."},
+		},
+	}
+	data, _ := json.MarshalIndent(ctx, "", "  ")
 	return mcplib.NewToolResultText(string(data)), nil
 }

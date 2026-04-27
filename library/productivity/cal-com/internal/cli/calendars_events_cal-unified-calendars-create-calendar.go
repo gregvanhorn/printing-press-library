@@ -24,6 +24,19 @@ func newCalendarsEventsCalUnifiedCalendarsCreateCalendarCmd(flags *rootFlags) *c
 		Short:   "Create a calendar event",
 		Example: "  cal-com-pp-cli calendars events cal-unified-calendars-create-calendar --title example-resource",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if cmd.Flags().Changed("calendar") {
+				allowedCalendar := []string{"google", "office365", "apple"}
+				validCalendar := false
+				for _, v := range allowedCalendar {
+					if flagCalendar == v {
+						validCalendar = true
+						break
+					}
+				}
+				if !validCalendar {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "calendar", flagCalendar, allowedCalendar)
+				}
+			}
 			if !stdinBody {
 				if !cmd.Flags().Changed("title") && !flags.dryRun {
 					return fmt.Errorf("required flag \"%s\" not set", "title")
@@ -86,13 +99,15 @@ func newCalendarsEventsCalUnifiedCalendarsCreateCalendarCmd(flags *rootFlags) *c
 				if flags.quiet {
 					return nil
 				}
-				// Apply --compact and --select to the API response before wrapping
+				// Apply --compact and --select to the API response before wrapping.
+				// --select wins when both are set: explicit field choice trumps the
+				// generic high-gravity allow-list. Otherwise --compact still applies
+				// when --agent is on but the user did not name fields.
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				envelope := map[string]any{
 					"action":   "post",
@@ -121,7 +136,7 @@ func newCalendarsEventsCalUnifiedCalendarsCreateCalendarCmd(flags *rootFlags) *c
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagCalendar, "calendar", "google", "Calendar")
+	cmd.Flags().StringVar(&flagCalendar, "calendar", "google", "Calendar (one of: google, office365, apple)")
 	cmd.Flags().StringVar(&bodyDescription, "description", "", "Description of the event")
 	cmd.Flags().StringVar(&bodyTitle, "title", "", "Title of the calendar event")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")

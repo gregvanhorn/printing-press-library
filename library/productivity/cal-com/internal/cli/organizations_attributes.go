@@ -9,9 +9,8 @@ import (
 
 func newOrganizationsAttributesCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "attributes",
-		Short:  "Manage attributes",
-		Hidden: true,
+		Use:   "attributes",
+		Short: "Manage attributes",
 	}
 
 	cmd.AddCommand(newOrganizationsAttributesOrganizationsCreateOrganizationCmd(flags))

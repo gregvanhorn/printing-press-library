@@ -23,6 +23,19 @@ func newBookingsReferencesBookingsGetBookingCmd(flags *rootFlags) *cobra.Command
 			if len(args) == 0 {
 				return cmd.Help()
 			}
+			if cmd.Flags().Changed("type") {
+				allowedType := []string{"google_calendar", "office365_calendar", "daily_video", "google_video", "office365_video", "zoom_video"}
+				validType := false
+				for _, v := range allowedType {
+					if flagType == v {
+						validType = true
+						break
+					}
+				}
+				if !validType {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "type", flagType, allowedType)
+				}
+			}
 			c, err := flags.newClient()
 			if err != nil {
 				return err
@@ -44,14 +57,15 @@ func newBookingsReferencesBookingsGetBookingCmd(flags *rootFlags) *cobra.Command
 				_ = json.Unmarshal(data, &countItems)
 				printProvenance(cmd, len(countItems), prov)
 			}
-			// For JSON output, wrap with provenance envelope before passing through flags
+			// For JSON output, wrap with provenance envelope before passing through flags.
+			// --select wins over --compact when both are set; --compact only runs when
+			// no explicit fields were requested.
 			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
 				if wrapErr != nil {
@@ -75,7 +89,7 @@ func newBookingsReferencesBookingsGetBookingCmd(flags *rootFlags) *cobra.Command
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagType, "type", "", "Filter booking references by type")
+	cmd.Flags().StringVar(&flagType, "type", "", "Filter booking references by type (one of: google_calendar, office365_calendar, daily_video, google_video, office365_video, zoom_video)")
 
 	return cmd
 }

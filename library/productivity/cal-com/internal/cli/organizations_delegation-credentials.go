@@ -9,9 +9,8 @@ import (
 
 func newOrganizationsDelegationCredentialsCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "delegation-credentials",
-		Short:  "Manage delegation credentials",
-		Hidden: true,
+		Use:   "delegation-credentials",
+		Short: "Manage delegation credentials",
 	}
 
 	cmd.AddCommand(newOrganizationsDelegationCredentialsOrganizationsCreateCmd(flags))

@@ -68,6 +68,13 @@ func localProvenance(db *store.Store, resourceType, reason string) DataProvenanc
 	return prov
 }
 
+func attachFreshness(prov DataProvenance, flags *rootFlags) DataProvenance {
+	if flags != nil {
+		prov.Freshness = flags.freshnessMeta
+	}
+	return prov
+}
+
 // resolveRead dispatches a GET request to either the live API or local store
 // based on the --data-source flag. Returns the response data and provenance metadata.
 //
@@ -81,32 +88,32 @@ func localProvenance(db *store.Store, resourceType, reason string) DataProvenanc
 func resolveRead(c *client.Client, flags *rootFlags, resourceType string, isList bool, path string, params map[string]string) (json.RawMessage, DataProvenance, error) {
 	switch flags.dataSource {
 	case "local":
-		return resolveLocal(resourceType, isList, path, params, "user_requested")
+		data, prov, err := resolveLocal(resourceType, isList, path, params, "user_requested")
+		return data, attachFreshness(prov, flags), err
 
 	case "live":
 		data, err := c.Get(path, params)
 		if err != nil {
 			return nil, DataProvenance{}, err
 		}
-		writeThroughCache(resourceType, data)
-		return data, DataProvenance{Source: "live"}, nil
+		return data, attachFreshness(DataProvenance{Source: "live"}, flags), nil
 
 	default: // "auto"
 		data, err := c.Get(path, params)
 		if err == nil {
 			writeThroughCache(resourceType, data)
-			return data, DataProvenance{Source: "live"}, nil
+			return data, attachFreshness(DataProvenance{Source: "live"}, flags), nil
 		}
 		if !isNetworkError(err) {
 			// HTTP 4xx/5xx errors propagate — not a fallback case
 			return nil, DataProvenance{}, err
 		}
 		// Network error — try local fallback
-		localData, prov, localErr := resolveLocal(resourceType, isList, path, params, "api_unreachable")
-		if localErr != nil {
+		fallbackData, fallbackProv, fallbackErr := resolveLocal(resourceType, isList, path, params, "api_unreachable")
+		if fallbackErr != nil {
 			return nil, DataProvenance{}, fmt.Errorf("API unreachable and no local data. Run 'cal-com-pp-cli sync' to enable offline access.\n\nOriginal error: %w", err)
 		}
-		return localData, prov, nil
+		return fallbackData, attachFreshness(fallbackProv, flags), nil
 	}
 }
 
@@ -115,43 +122,50 @@ func resolveRead(c *client.Client, flags *rootFlags, resourceType string, isList
 func resolvePaginatedRead(c *client.Client, flags *rootFlags, resourceType string, path string, params map[string]string, fetchAll bool, cursorParam, nextCursorPath, hasMoreField string) (json.RawMessage, DataProvenance, error) {
 	switch flags.dataSource {
 	case "local":
-		return resolveLocal(resourceType, true, path, params, "user_requested")
+		data, prov, err := resolveLocal(resourceType, true, path, params, "user_requested")
+		return data, attachFreshness(prov, flags), err
 
 	case "live":
 		data, err := paginatedGet(c, path, params, fetchAll, cursorParam, nextCursorPath, hasMoreField)
 		if err != nil {
 			return nil, DataProvenance{}, err
 		}
-		writeThroughCache(resourceType, data)
-		return data, DataProvenance{Source: "live"}, nil
+		return data, attachFreshness(DataProvenance{Source: "live"}, flags), nil
 
 	default: // "auto"
 		data, err := paginatedGet(c, path, params, fetchAll, cursorParam, nextCursorPath, hasMoreField)
 		if err == nil {
 			writeThroughCache(resourceType, data)
-			return data, DataProvenance{Source: "live"}, nil
+			return data, attachFreshness(DataProvenance{Source: "live"}, flags), nil
 		}
 		if !isNetworkError(err) {
 			return nil, DataProvenance{}, err
 		}
-		localData, prov, localErr := resolveLocal(resourceType, true, path, params, "api_unreachable")
-		if localErr != nil {
+		fallbackData, fallbackProv, fallbackErr := resolveLocal(resourceType, true, path, params, "api_unreachable")
+		if fallbackErr != nil {
 			return nil, DataProvenance{}, fmt.Errorf("API unreachable and no local data. Run 'cal-com-pp-cli sync' to enable offline access.\n\nOriginal error: %w", err)
 		}
-		return localData, prov, nil
+		return fallbackData, attachFreshness(fallbackProv, flags), nil
 	}
 }
 
-// writeThroughCache upserts live API results into the local SQLite store.
+// writeThroughCache upserts live API results into the local SQLite store so
+// FTS search covers everything the user has looked up — not just explicit syncs.
+// Best-effort: failures are silently ignored (the live result already succeeded).
 func writeThroughCache(resourceType string, data json.RawMessage) {
 	db, err := store.Open(defaultDBPath("cal-com-pp-cli"))
 	if err != nil {
 		return
 	}
 	defer db.Close()
+
+	// Collect items to upsert from various response shapes
 	var items []json.RawMessage
+
+	// Try direct array first
 	if json.Unmarshal(data, &items) != nil || len(items) == 0 {
 		items = nil
+		// Try object — check for common envelope patterns (results, data, items)
 		var envelope map[string]json.RawMessage
 		if json.Unmarshal(data, &envelope) == nil {
 			for _, key := range []string{"results", "data", "items"} {
@@ -163,21 +177,26 @@ func writeThroughCache(resourceType string, data json.RawMessage) {
 					}
 				}
 			}
+			// Single object with an id field (e.g., detail response)
 			if items == nil {
 				if idRaw, ok := envelope["id"]; ok {
-					_ = db.Upsert(resourceType, strings.Trim(string(idRaw), "\""), data)
+					id := strings.Trim(string(idRaw), "\"")
+					_ = db.Upsert(resourceType, id, data)
 					return
 				}
 			}
 		}
 	}
+
+	// Upsert each item individually
 	for _, item := range items {
 		var obj map[string]json.RawMessage
 		if json.Unmarshal(item, &obj) != nil {
 			continue
 		}
 		if idRaw, ok := obj["id"]; ok {
-			_ = db.Upsert(resourceType, strings.Trim(string(idRaw), "\""), item)
+			id := strings.Trim(string(idRaw), "\"")
+			_ = db.Upsert(resourceType, id, item)
 		}
 	}
 }

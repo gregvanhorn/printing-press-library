@@ -28,16 +28,17 @@ type AddGuestsOutput_2024_08_13 struct {
 }
 
 type AddressFieldInput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	Label            string `json:"label"`
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type AddressFieldOutput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	IsDefault        string `json:"isDefault"`
@@ -45,7 +46,6 @@ type AddressFieldOutput_2024_06_14 struct {
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type ApiKeyOutput struct {
@@ -78,12 +78,12 @@ type AssignedOptionOutput struct {
 }
 
 type Attribute struct {
+	Ttype                string  `json:"Ttype"`
 	Enabled              bool    `json:"enabled"`
 	Id                   string  `json:"id"`
 	Name                 string  `json:"name"`
 	Slug                 string  `json:"slug"`
 	TeamId               float64 `json:"teamId"`
-	Type                 string  `json:"type"`
 	UsersCanEditRelation bool    `json:"usersCanEditRelation"`
 }
 
@@ -108,9 +108,9 @@ type BaseBookingLimitsDuration_2024_06_14 struct {
 }
 
 type BaseConfirmationPolicy_2024_06_14 struct {
+	Ttype                            string `json:"Ttype"`
 	BlockUnconfirmedBookingsInBooker bool   `json:"blockUnconfirmedBookingsInBooker"`
 	NoticeThreshold                  string `json:"noticeThreshold"`
-	Type                             string `json:"type"`
 }
 
 type BookerActiveBookingsLimitOutput_2024_06_14 struct {
@@ -171,39 +171,39 @@ type BookingHost struct {
 }
 
 type BookingInputAddressLocation_2024_08_13 struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type BookingInputAttendeeAddressLocation_2024_08_13 struct {
+	Ttype   string `json:"Ttype"`
 	Address string `json:"address"`
-	Type    string `json:"type"`
 }
 
 type BookingInputAttendeeDefinedLocation_2024_08_13 struct {
+	Ttype    string `json:"Ttype"`
 	Location string `json:"location"`
-	Type     string `json:"type"`
 }
 
 type BookingInputAttendeePhoneLocation_2024_08_13 struct {
+	Ttype string `json:"Ttype"`
 	Phone string `json:"phone"`
-	Type  string `json:"type"`
 }
 
 type BookingInputIntegrationLocation_2024_08_13 struct {
+	Ttype       string `json:"Ttype"`
 	Integration string `json:"integration"`
-	Type        string `json:"type"`
 }
 
 type BookingInputLinkLocation_2024_08_13 struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type BookingInputOrganizersDefaultAppLocation_2024_08_13 struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type BookingInputPhoneLocation_2024_08_13 struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type BookingOutput_2024_08_13 struct {
@@ -238,10 +238,10 @@ type BookingOutput_2024_08_13 struct {
 }
 
 type BookingReference struct {
+	Ttype                 string  `json:"Ttype"`
 	DestinationCalendarId string  `json:"destinationCalendarId"`
 	EventUid              string  `json:"eventUid"`
 	Id                    float64 `json:"id"`
-	Type                  string  `json:"type"`
 }
 
 type BookingReferencesOutput_2024_08_13 struct {
@@ -250,27 +250,27 @@ type BookingReferencesOutput_2024_08_13 struct {
 }
 
 type BooleanFieldInput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	Label            string `json:"label"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type BooleanFieldOutput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	IsDefault        string `json:"isDefault"`
 	Label            string `json:"label"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type BusinessDaysWindow_2024_06_14 struct {
+	Ttype   string  `json:"Ttype"`
 	Rolling bool    `json:"rolling"`
-	Type    string  `json:"type"`
 	Value   float64 `json:"value"`
 }
 
@@ -321,14 +321,14 @@ type Calendar struct {
 }
 
 type CalendarConnectionItem struct {
+	Ttype        string `json:"Ttype"`
 	ConnectionId string `json:"connectionId"`
 	Email        string `json:"email"`
-	Type         string `json:"type"`
 }
 
 type CalendarDaysWindow_2024_06_14 struct {
+	Ttype   string  `json:"Ttype"`
 	Rolling bool    `json:"rolling"`
-	Type    string  `json:"type"`
 	Value   float64 `json:"value"`
 }
 
@@ -348,35 +348,35 @@ type CalendarEventHost struct {
 }
 
 type CalendarEventMoreLocation struct {
+	Ttype string `json:"Ttype"`
 	Label string `json:"label"`
-	Type  string `json:"type"`
 	Url   string `json:"url"`
 }
 
 type CalendarEventPhoneLocation struct {
+	Ttype      string `json:"Ttype"`
 	AccessCode string `json:"accessCode"`
 	Label      string `json:"label"`
 	Password   string `json:"password"`
 	Pin        string `json:"pin"`
 	RegionCode string `json:"regionCode"`
-	Type       string `json:"type"`
 	Url        string `json:"url"`
 }
 
 type CalendarEventSipLocation struct {
+	Ttype    string `json:"Ttype"`
 	Label    string `json:"label"`
 	Password string `json:"password"`
 	Pin      string `json:"pin"`
-	Type     string `json:"type"`
 	Url      string `json:"url"`
 }
 
 type CalendarEventVideoLocation struct {
+	Ttype       string `json:"Ttype"`
 	AccessCode  string `json:"accessCode"`
 	Label       string `json:"label"`
 	MeetingCode string `json:"meetingCode"`
 	Password    string `json:"password"`
-	Type        string `json:"type"`
 	Url         string `json:"url"`
 }
 
@@ -406,16 +406,17 @@ type CancelSeatedBookingInput_2024_08_13 struct {
 }
 
 type CheckboxGroupFieldInput_2024_06_14 struct {
+	Ttype            string          `json:"Ttype"`
 	DisableOnPrefill bool            `json:"disableOnPrefill"`
 	Hidden           bool            `json:"hidden"`
 	Label            string          `json:"label"`
 	Options          json.RawMessage `json:"options"`
 	Required         bool            `json:"required"`
 	Slug             string          `json:"slug"`
-	Type             string          `json:"type"`
 }
 
 type CheckboxGroupFieldOutput_2024_06_14 struct {
+	Ttype            string          `json:"Ttype"`
 	DisableOnPrefill bool            `json:"disableOnPrefill"`
 	Hidden           bool            `json:"hidden"`
 	IsDefault        string          `json:"isDefault"`
@@ -423,7 +424,6 @@ type CheckboxGroupFieldOutput_2024_06_14 struct {
 	Options          json.RawMessage `json:"options"`
 	Required         bool            `json:"required"`
 	Slug             string          `json:"slug"`
-	Type             string          `json:"type"`
 }
 
 type ConferencingAppOutputResponseDto struct {
@@ -432,9 +432,9 @@ type ConferencingAppOutputResponseDto struct {
 }
 
 type ConferencingAppsOutputDto struct {
+	Ttype   string  `json:"Ttype"`
 	Id      float64 `json:"id"`
 	Invalid bool    `json:"invalid"`
-	Type    string  `json:"type"`
 	UserId  float64 `json:"userId"`
 }
 
@@ -593,11 +593,11 @@ type CreateIcsFeedInputDto struct {
 }
 
 type CreateIcsFeedOutput struct {
+	Ttype   string  `json:"Ttype"`
 	AppId   string  `json:"appId"`
 	Id      float64 `json:"id"`
 	Invalid bool    `json:"invalid"`
 	TeamId  int     `json:"teamId"`
-	Type    string  `json:"type"`
 	UserId  int     `json:"userId"`
 }
 
@@ -742,11 +742,11 @@ type CreateOrgTeamMembershipDto struct {
 }
 
 type CreateOrganizationAttributeInput struct {
+	Ttype   string          `json:"Ttype"`
 	Enabled bool            `json:"enabled"`
 	Name    string          `json:"name"`
 	Options json.RawMessage `json:"options"`
 	Slug    string          `json:"slug"`
-	Type    string          `json:"type"`
 }
 
 type CreateOrganizationAttributeOptionInput struct {
@@ -1153,11 +1153,11 @@ type DeleteTeamRoleOutput struct {
 }
 
 type DeletedCalendarCredentialsOutputDto struct {
+	Ttype   string  `json:"Ttype"`
 	AppId   string  `json:"appId"`
 	Id      float64 `json:"id"`
 	Invalid bool    `json:"invalid"`
 	TeamId  float64 `json:"teamId"`
-	Type    string  `json:"type"`
 	UserId  float64 `json:"userId"`
 }
 
@@ -1232,15 +1232,16 @@ type DisconnectConferencingAppOutputResponseDto struct {
 }
 
 type EmailDefaultFieldInput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	Label            string `json:"label"`
 	Placeholder      string `json:"placeholder"`
 	Required         string `json:"required"`
-	Type             string `json:"type"`
 }
 
 type EmailDefaultFieldOutput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	IsDefault        string `json:"isDefault"`
@@ -1248,7 +1249,6 @@ type EmailDefaultFieldOutput_2024_06_14 struct {
 	Placeholder      string `json:"placeholder"`
 	Required         string `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type EmailSettings_2024_06_14 struct {
@@ -1360,6 +1360,7 @@ type EventTypeWorkflowActivationOutputDto struct {
 }
 
 type EventTypeWorkflowOutput struct {
+	Ttype      string          `json:"Ttype"`
 	Activation string          `json:"activation"`
 	CreatedAt  string          `json:"createdAt"`
 	Id         float64         `json:"id"`
@@ -1367,7 +1368,6 @@ type EventTypeWorkflowOutput struct {
 	Steps      json.RawMessage `json:"steps"`
 	TeamId     float64         `json:"teamId"`
 	Trigger    string          `json:"trigger"`
-	Type       string          `json:"type"`
 	UpdatedAt  string          `json:"updatedAt"`
 	UserId     float64         `json:"userId"`
 }
@@ -1387,12 +1387,12 @@ type EventTypeWorkflowStepOutputDto struct {
 }
 
 type EventTypeWorkflowTriggerDto struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type EventTypeWorkflowTriggerOutputDto struct {
+	Ttype  string `json:"Ttype"`
 	Offset string `json:"offset"`
-	Type   string `json:"type"`
 }
 
 type GetAllAttributeAssignedOptionOutput struct {
@@ -1779,6 +1779,7 @@ type GuestsDefaultFieldInput_2024_06_14 struct {
 }
 
 type GuestsDefaultFieldOutput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	IsDefault        string `json:"isDefault"`
@@ -1786,7 +1787,6 @@ type GuestsDefaultFieldOutput_2024_06_14 struct {
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type Host struct {
@@ -1801,45 +1801,46 @@ type HtmlWorkflowMessageDto struct {
 }
 
 type InputAddressLocation_2024_06_14 struct {
+	Ttype   string `json:"Ttype"`
 	Address string `json:"address"`
 	Public  bool   `json:"public"`
-	Type    string `json:"type"`
 }
 
 type InputAttendeeAddressLocation_2024_06_14 struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type InputAttendeeDefinedLocation_2024_06_14 struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type InputAttendeePhoneLocation_2024_06_14 struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type InputIntegrationLocation_2024_06_14 struct {
+	Ttype       string `json:"Ttype"`
 	Integration string `json:"integration"`
-	Type        string `json:"type"`
 }
 
 type InputLinkLocation_2024_06_14 struct {
+	Ttype  string `json:"Ttype"`
 	Link   string `json:"link"`
 	Public bool   `json:"public"`
-	Type   string `json:"type"`
 }
 
 type InputOrganizersDefaultApp_2024_06_14 struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type InputPhoneLocation_2024_06_14 struct {
+	Ttype  string `json:"Ttype"`
 	Phone  string `json:"phone"`
 	Public bool   `json:"public"`
-	Type   string `json:"type"`
 }
 
 type Integration struct {
+	Ttype          string          `json:"Ttype"`
 	AppData        string          `json:"appData"`
 	Categories     json.RawMessage `json:"categories"`
 	Category       string          `json:"category"`
@@ -1853,7 +1854,6 @@ type Integration struct {
 	Publisher      string          `json:"publisher"`
 	Slug           string          `json:"slug"`
 	Title          string          `json:"title"`
-	Type           string          `json:"type"`
 	Url            string          `json:"url"`
 	Variant        string          `json:"variant"`
 }
@@ -1895,12 +1895,12 @@ type LocationDefaultFieldInput_2024_06_14 struct {
 }
 
 type LocationDefaultFieldOutput_2024_06_14 struct {
+	Ttype     string `json:"Ttype"`
 	Hidden    bool   `json:"hidden"`
 	IsDefault string `json:"isDefault"`
 	Label     string `json:"label"`
 	Required  bool   `json:"required"`
 	Slug      string `json:"slug"`
-	Type      string `json:"type"`
 }
 
 type ManagedOrganizationOutput struct {
@@ -1985,16 +1985,17 @@ type MicrosoftServiceAccountKeyInput struct {
 }
 
 type MultiEmailFieldInput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	Label            string `json:"label"`
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type MultiEmailFieldOutput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	IsDefault        string `json:"isDefault"`
@@ -2002,14 +2003,13 @@ type MultiEmailFieldOutput_2024_06_14 struct {
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type MultiSelectAttribute struct {
+	Ttype   string          `json:"Ttype"`
 	Id      string          `json:"id"`
 	Name    string          `json:"name"`
 	Options json.RawMessage `json:"options"`
-	Type    string          `json:"type"`
 }
 
 type MultiSelectAttributeOption struct {
@@ -2018,16 +2018,17 @@ type MultiSelectAttributeOption struct {
 }
 
 type MultiSelectFieldInput_2024_06_14 struct {
+	Ttype            string          `json:"Ttype"`
 	DisableOnPrefill bool            `json:"disableOnPrefill"`
 	Hidden           bool            `json:"hidden"`
 	Label            string          `json:"label"`
 	Options          json.RawMessage `json:"options"`
 	Required         bool            `json:"required"`
 	Slug             string          `json:"slug"`
-	Type             string          `json:"type"`
 }
 
 type MultiSelectFieldOutput_2024_06_14 struct {
+	Ttype            string          `json:"Ttype"`
 	DisableOnPrefill bool            `json:"disableOnPrefill"`
 	Hidden           bool            `json:"hidden"`
 	IsDefault        string          `json:"isDefault"`
@@ -2035,24 +2036,23 @@ type MultiSelectFieldOutput_2024_06_14 struct {
 	Options          json.RawMessage `json:"options"`
 	Required         bool            `json:"required"`
 	Slug             string          `json:"slug"`
-	Type             string          `json:"type"`
 }
 
 type NameDefaultFieldInput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Label            string `json:"label"`
 	Placeholder      string `json:"placeholder"`
-	Type             string `json:"type"`
 }
 
 type NameDefaultFieldOutput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	IsDefault        string `json:"isDefault"`
 	Label            string `json:"label"`
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type NotesDefaultFieldInput_2024_06_14 struct {
@@ -2065,6 +2065,7 @@ type NotesDefaultFieldInput_2024_06_14 struct {
 }
 
 type NotesDefaultFieldOutput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	IsDefault        string `json:"isDefault"`
@@ -2072,7 +2073,6 @@ type NotesDefaultFieldOutput_2024_06_14 struct {
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type NoticeThreshold_2024_06_14 struct {
@@ -2081,24 +2081,25 @@ type NoticeThreshold_2024_06_14 struct {
 }
 
 type NumberAttribute struct {
+	Ttype    string  `json:"Ttype"`
 	Id       string  `json:"id"`
 	Name     string  `json:"name"`
 	Option   float64 `json:"option"`
 	OptionId string  `json:"optionId"`
-	Type     string  `json:"type"`
 }
 
 type NumberFieldInput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	Label            string `json:"label"`
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type NumberFieldOutput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	IsDefault        string `json:"isDefault"`
@@ -2106,7 +2107,6 @@ type NumberFieldOutput_2024_06_14 struct {
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type OAuth2ClientDto struct {
@@ -2180,64 +2180,64 @@ type OAuthClientWebhooksOutputResponseDto struct {
 }
 
 type OnAfterCalVideoGuestsNoShowTriggerDto struct {
+	Ttype  string `json:"Ttype"`
 	Offset string `json:"offset"`
-	Type   string `json:"type"`
 }
 
 type OnAfterCalVideoHostsNoShowTriggerDto struct {
+	Ttype  string `json:"Ttype"`
 	Offset string `json:"offset"`
-	Type   string `json:"type"`
 }
 
 type OnAfterEventTriggerDto struct {
+	Ttype  string `json:"Ttype"`
 	Offset string `json:"offset"`
-	Type   string `json:"type"`
 }
 
 type OnBeforeEventTriggerDto struct {
+	Ttype  string `json:"Ttype"`
 	Offset string `json:"offset"`
-	Type   string `json:"type"`
 }
 
 type OnCancelTriggerDto struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type OnCreationTriggerDto struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type OnFormSubmittedNoEventTriggerDto struct {
+	Ttype  string `json:"Ttype"`
 	Offset string `json:"offset"`
-	Type   string `json:"type"`
 }
 
 type OnFormSubmittedTriggerDto struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type OnNoShowUpdateTriggerDto struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type OnPaidTriggerDto struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type OnPaymentInitiatedTriggerDto struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type OnRejectedTriggerDto struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type OnRequestedTriggerDto struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type OnRescheduleTriggerDto struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type OptionOutput struct {
@@ -2253,6 +2253,7 @@ type OrgMeTeamsOutputResponseDto struct {
 }
 
 type OrgRoleOutput struct {
+	Ttype          string          `json:"Ttype"`
 	Color          string          `json:"color"`
 	CreatedAt      string          `json:"createdAt"`
 	Description    string          `json:"description"`
@@ -2260,7 +2261,6 @@ type OrgRoleOutput struct {
 	Name           string          `json:"name"`
 	OrganizationId float64         `json:"organizationId"`
 	Permissions    json.RawMessage `json:"permissions"`
-	Type           string          `json:"type"`
 	UpdatedAt      string          `json:"updatedAt"`
 }
 
@@ -2320,37 +2320,37 @@ type OrganizationMembershipOutput struct {
 }
 
 type OutputAddressLocation_2024_06_14 struct {
+	Ttype   string `json:"Ttype"`
 	Address string `json:"address"`
 	Public  bool   `json:"public"`
-	Type    string `json:"type"`
 }
 
 type OutputIntegrationLocation_2024_06_14 struct {
+	Ttype        string  `json:"Ttype"`
 	CredentialId float64 `json:"credentialId"`
 	Integration  string  `json:"integration"`
 	Link         string  `json:"link"`
-	Type         string  `json:"type"`
 }
 
 type OutputLinkLocation_2024_06_14 struct {
+	Ttype  string `json:"Ttype"`
 	Link   string `json:"link"`
 	Public bool   `json:"public"`
-	Type   string `json:"type"`
 }
 
 type OutputOrganizersDefaultAppLocation_2024_06_14 struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type OutputPhoneLocation_2024_06_14 struct {
+	Ttype  string `json:"Ttype"`
 	Phone  string `json:"phone"`
 	Public bool   `json:"public"`
-	Type   string `json:"type"`
 }
 
 type OutputUnknownLocation_2024_06_14 struct {
+	Ttype    string `json:"Ttype"`
 	Location string `json:"location"`
-	Type     string `json:"type"`
 }
 
 type PaginationMetaDto struct {
@@ -2365,16 +2365,17 @@ type PaginationMetaDto struct {
 }
 
 type PhoneFieldInput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	Label            string `json:"label"`
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type PhoneFieldOutput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	IsDefault        string `json:"isDefault"`
@@ -2382,7 +2383,6 @@ type PhoneFieldOutput_2024_06_14 struct {
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type PlatformOAuthClientDto struct {
@@ -2422,16 +2422,17 @@ type ProfileOutput struct {
 }
 
 type RadioGroupFieldInput_2024_06_14 struct {
+	Ttype            string          `json:"Ttype"`
 	DisableOnPrefill bool            `json:"disableOnPrefill"`
 	Hidden           bool            `json:"hidden"`
 	Label            string          `json:"label"`
 	Options          json.RawMessage `json:"options"`
 	Required         bool            `json:"required"`
 	Slug             string          `json:"slug"`
-	Type             string          `json:"type"`
 }
 
 type RadioGroupFieldOutput_2024_06_14 struct {
+	Ttype            string          `json:"Ttype"`
 	DisableOnPrefill bool            `json:"disableOnPrefill"`
 	Hidden           bool            `json:"hidden"`
 	IsDefault        string          `json:"isDefault"`
@@ -2439,14 +2440,13 @@ type RadioGroupFieldOutput_2024_06_14 struct {
 	Options          json.RawMessage `json:"options"`
 	Required         bool            `json:"required"`
 	Slug             string          `json:"slug"`
-	Type             string          `json:"type"`
 }
 
 type RangeSlotsOutput_2024_09_04 struct {
 }
 
 type RangeWindow_2024_06_14 struct {
-	Type  string          `json:"type"`
+	Ttype string          `json:"Ttype"`
 	Value json.RawMessage `json:"value"`
 }
 
@@ -2568,6 +2568,7 @@ type RescheduleReasonDefaultFieldInput_2024_06_14 struct {
 }
 
 type RescheduleReasonDefaultFieldOutput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	IsDefault        string `json:"isDefault"`
@@ -2575,7 +2576,6 @@ type RescheduleReasonDefaultFieldOutput_2024_06_14 struct {
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type RescheduleSeatedBookingInput_2024_08_13 struct {
@@ -2657,6 +2657,7 @@ type RoutingFormWorkflowActivationOutputDto struct {
 }
 
 type RoutingFormWorkflowOutput struct {
+	Ttype      string          `json:"Ttype"`
 	Activation string          `json:"activation"`
 	CreatedAt  string          `json:"createdAt"`
 	Id         float64         `json:"id"`
@@ -2664,7 +2665,6 @@ type RoutingFormWorkflowOutput struct {
 	Steps      json.RawMessage `json:"steps"`
 	TeamId     float64         `json:"teamId"`
 	Trigger    string          `json:"trigger"`
-	Type       string          `json:"type"`
 	UpdatedAt  string          `json:"updatedAt"`
 	UserId     float64         `json:"userId"`
 }
@@ -2684,12 +2684,12 @@ type RoutingFormWorkflowStepOutputDto struct {
 }
 
 type RoutingFormWorkflowTriggerDto struct {
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
 }
 
 type RoutingFormWorkflowTriggerOutputDto struct {
+	Ttype  string `json:"Ttype"`
 	Offset string `json:"offset"`
-	Type   string `json:"type"`
 }
 
 type ScheduleAvailabilityInput_2024_06_11 struct {
@@ -2734,6 +2734,7 @@ type Seats_2024_06_14 struct {
 }
 
 type SelectFieldInput_2024_06_14 struct {
+	Ttype            string          `json:"Ttype"`
 	DisableOnPrefill bool            `json:"disableOnPrefill"`
 	Hidden           bool            `json:"hidden"`
 	Label            string          `json:"label"`
@@ -2741,10 +2742,10 @@ type SelectFieldInput_2024_06_14 struct {
 	Placeholder      string          `json:"placeholder"`
 	Required         bool            `json:"required"`
 	Slug             string          `json:"slug"`
-	Type             string          `json:"type"`
 }
 
 type SelectFieldOutput_2024_06_14 struct {
+	Ttype            string          `json:"Ttype"`
 	DisableOnPrefill bool            `json:"disableOnPrefill"`
 	Hidden           bool            `json:"hidden"`
 	IsDefault        string          `json:"isDefault"`
@@ -2753,7 +2754,6 @@ type SelectFieldOutput_2024_06_14 struct {
 	Placeholder      string          `json:"placeholder"`
 	Required         bool            `json:"required"`
 	Slug             string          `json:"slug"`
-	Type             string          `json:"type"`
 }
 
 type SelectedCalendarOutputDto struct {
@@ -2780,11 +2780,11 @@ type SetDefaultConferencingAppOutputResponseDto struct {
 }
 
 type SingleSelectAttribute struct {
+	Ttype    string `json:"Ttype"`
 	Id       string `json:"id"`
 	Name     string `json:"name"`
 	Option   string `json:"option"`
 	OptionId string `json:"optionId"`
-	Type     string `json:"type"`
 }
 
 type SlotsOutput_2024_09_04 struct {
@@ -2904,6 +2904,7 @@ type TeamOutputDto struct {
 }
 
 type TeamRoleOutput struct {
+	Ttype       string          `json:"Ttype"`
 	Color       string          `json:"color"`
 	CreatedAt   string          `json:"createdAt"`
 	Description string          `json:"description"`
@@ -2911,7 +2912,6 @@ type TeamRoleOutput struct {
 	Name        string          `json:"name"`
 	Permissions json.RawMessage `json:"permissions"`
 	TeamId      float64         `json:"teamId"`
-	Type        string          `json:"type"`
 	UpdatedAt   string          `json:"updatedAt"`
 }
 
@@ -2970,16 +2970,17 @@ type TeamWebhooksOutputResponseDto struct {
 }
 
 type TextAreaFieldInput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	Label            string `json:"label"`
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type TextAreaFieldOutput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	IsDefault        string `json:"isDefault"`
@@ -2987,28 +2988,28 @@ type TextAreaFieldOutput_2024_06_14 struct {
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type TextAttribute struct {
+	Ttype    string `json:"Ttype"`
 	Id       string `json:"id"`
 	Name     string `json:"name"`
 	Option   string `json:"option"`
 	OptionId string `json:"optionId"`
-	Type     string `json:"type"`
 }
 
 type TextFieldInput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	Label            string `json:"label"`
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type TextFieldOutput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	IsDefault        string `json:"isDefault"`
@@ -3016,7 +3017,6 @@ type TextFieldOutput_2024_06_14 struct {
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type TextWorkflowMessageDto struct {
@@ -3042,6 +3042,7 @@ type TitleDefaultFieldInput_2024_06_14 struct {
 }
 
 type TitleDefaultFieldOutput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	IsDefault        string `json:"isDefault"`
@@ -3049,7 +3050,6 @@ type TitleDefaultFieldOutput_2024_06_14 struct {
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type UnassignOptionUserOutput struct {
@@ -3077,33 +3077,33 @@ type UpdateAttributeOptionOutput struct {
 }
 
 type UpdateBookingInputAttendeeAddressLocation_2024_08_13 struct {
+	Ttype   string `json:"Ttype"`
 	Address string `json:"address"`
-	Type    string `json:"type"`
 }
 
 type UpdateBookingInputAttendeeDefinedLocation_2024_08_13 struct {
+	Ttype    string `json:"Ttype"`
 	Location string `json:"location"`
-	Type     string `json:"type"`
 }
 
 type UpdateBookingInputAttendeePhoneLocation_2024_08_13 struct {
+	Ttype string `json:"Ttype"`
 	Phone string `json:"phone"`
-	Type  string `json:"type"`
 }
 
 type UpdateBookingInputIntegrationLocation_2024_08_13 struct {
+	Ttype       string `json:"Ttype"`
 	Integration string `json:"integration"`
-	Type        string `json:"type"`
 }
 
 type UpdateBookingInputLinkLocation_2024_08_13 struct {
-	Link string `json:"link"`
-	Type string `json:"type"`
+	Ttype string `json:"Ttype"`
+	Link  string `json:"link"`
 }
 
 type UpdateBookingInputPhoneLocation_2024_08_13 struct {
+	Ttype string `json:"Ttype"`
 	Phone string `json:"phone"`
-	Type  string `json:"type"`
 }
 
 type UpdateBookingLocationInput_2024_08_13 struct {
@@ -3233,8 +3233,8 @@ type UpdateFormWorkflowDto struct {
 }
 
 type UpdateInputAddressLocation_2024_08_13 struct {
+	Ttype   string `json:"Ttype"`
 	Address string `json:"address"`
-	Type    string `json:"type"`
 }
 
 type UpdateManagedUserInput struct {
@@ -3320,10 +3320,10 @@ type UpdateOrgTeamMembershipDto struct {
 }
 
 type UpdateOrganizationAttributeInput struct {
+	Ttype   string `json:"Ttype"`
 	Enabled bool   `json:"enabled"`
 	Name    string `json:"name"`
 	Slug    string `json:"slug"`
-	Type    string `json:"type"`
 }
 
 type UpdateOrganizationAttributeOptionInput struct {
@@ -3531,16 +3531,17 @@ type UpdateWhatsAppAttendeePhoneWorkflowStepDto struct {
 }
 
 type UrlFieldInput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	Label            string `json:"label"`
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type UrlFieldOutput_2024_06_14 struct {
+	Ttype            string `json:"Ttype"`
 	DisableOnPrefill bool   `json:"disableOnPrefill"`
 	Hidden           bool   `json:"hidden"`
 	IsDefault        string `json:"isDefault"`
@@ -3548,7 +3549,6 @@ type UrlFieldOutput_2024_06_14 struct {
 	Placeholder      string `json:"placeholder"`
 	Required         bool   `json:"required"`
 	Slug             string `json:"slug"`
-	Type             string `json:"type"`
 }
 
 type UsageBasedPrivateLinkOutput struct {

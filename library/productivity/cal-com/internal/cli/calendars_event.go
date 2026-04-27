@@ -9,9 +9,8 @@ import (
 
 func newCalendarsEventCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "event",
-		Short:  "Manage event",
-		Hidden: true,
+		Use:   "event",
+		Short: "Manage event",
 	}
 
 	cmd.AddCommand(newCalendarsEventCalUnifiedCalendarsGetCalendarDetailsCmd(flags))

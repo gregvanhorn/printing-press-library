@@ -9,9 +9,8 @@ import (
 
 func newTeamsEventTypesCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "event-types",
-		Short:  "Manage event types",
-		Hidden: true,
+		Use:   "event-types",
+		Short: "Manage event types",
 	}
 
 	cmd.AddCommand(newTeamsEventTypesTeamsCreatePhoneCallCmd(flags))

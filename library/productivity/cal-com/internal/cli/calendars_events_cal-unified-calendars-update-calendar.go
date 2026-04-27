@@ -28,6 +28,19 @@ func newCalendarsEventsCalUnifiedCalendarsUpdateCalendarCmd(flags *rootFlags) *c
 			if len(args) == 0 {
 				return cmd.Help()
 			}
+			if cmd.Flags().Changed("calendar") {
+				allowedCalendar := []string{"google"}
+				validCalendar := false
+				for _, v := range allowedCalendar {
+					if flagCalendar == v {
+						validCalendar = true
+						break
+					}
+				}
+				if !validCalendar {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "calendar", flagCalendar, allowedCalendar)
+				}
+			}
 			if !stdinBody {
 			}
 			c, err := flags.newClient()
@@ -94,13 +107,15 @@ func newCalendarsEventsCalUnifiedCalendarsUpdateCalendarCmd(flags *rootFlags) *c
 				if flags.quiet {
 					return nil
 				}
-				// Apply --compact and --select to the API response before wrapping
+				// Apply --compact and --select to the API response before wrapping.
+				// --select wins when both are set: explicit field choice trumps the
+				// generic high-gravity allow-list. Otherwise --compact still applies
+				// when --agent is on but the user did not name fields.
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				envelope := map[string]any{
 					"action":   "patch",
@@ -129,7 +144,7 @@ func newCalendarsEventsCalUnifiedCalendarsUpdateCalendarCmd(flags *rootFlags) *c
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagCalendar, "calendar", "google", "Calendar")
+	cmd.Flags().StringVar(&flagCalendar, "calendar", "google", "Calendar (one of: google)")
 	cmd.Flags().StringVar(&bodyDescription, "description", "", "Detailed description of the calendar event")
 	cmd.Flags().StringVar(&bodyStatus, "status", "", "Status of the event (accepted, pending, declined, cancelled)")
 	cmd.Flags().StringVar(&bodyTitle, "title", "", "Title of the calendar event")

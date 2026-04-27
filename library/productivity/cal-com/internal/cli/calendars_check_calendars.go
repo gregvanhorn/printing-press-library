@@ -20,6 +20,19 @@ func newCalendarsCheckCalendarsCmd(flags *rootFlags) *cobra.Command {
 		Short:   "Check a calendar connection",
 		Example: "  cal-com-pp-cli calendars check calendars",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if cmd.Flags().Changed("calendar") {
+				allowedCalendar := []string{"apple", "google", "office365"}
+				validCalendar := false
+				for _, v := range allowedCalendar {
+					if flagCalendar == v {
+						validCalendar = true
+						break
+					}
+				}
+				if !validCalendar {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "calendar", flagCalendar, allowedCalendar)
+				}
+			}
 			c, err := flags.newClient()
 			if err != nil {
 				return err
@@ -38,14 +51,15 @@ func newCalendarsCheckCalendarsCmd(flags *rootFlags) *cobra.Command {
 				_ = json.Unmarshal(data, &countItems)
 				printProvenance(cmd, len(countItems), prov)
 			}
-			// For JSON output, wrap with provenance envelope before passing through flags
+			// For JSON output, wrap with provenance envelope before passing through flags.
+			// --select wins over --compact when both are set; --compact only runs when
+			// no explicit fields were requested.
 			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
 				if wrapErr != nil {
@@ -69,7 +83,7 @@ func newCalendarsCheckCalendarsCmd(flags *rootFlags) *cobra.Command {
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagCalendar, "calendar", "apple", "Calendar")
+	cmd.Flags().StringVar(&flagCalendar, "calendar", "apple", "Calendar (one of: apple, google, office365)")
 
 	return cmd
 }

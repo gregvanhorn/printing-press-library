@@ -37,6 +37,19 @@ func newOrganizationsRoutingFormsOrganizationsResponsesCreateResponseCmd(flags *
 			if !cmd.Flags().Changed("end") && !flags.dryRun {
 				return fmt.Errorf("required flag \"%s\" not set", "end")
 			}
+			if cmd.Flags().Changed("format") {
+				allowedFormat := []string{"range", "time"}
+				validFormat := false
+				for _, v := range allowedFormat {
+					if flagFormat == v {
+						validFormat = true
+						break
+					}
+				}
+				if !validFormat {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "format", flagFormat, allowedFormat)
+				}
+			}
 			if !stdinBody {
 			}
 			c, err := flags.newClient()
@@ -94,13 +107,15 @@ func newOrganizationsRoutingFormsOrganizationsResponsesCreateResponseCmd(flags *
 				if flags.quiet {
 					return nil
 				}
-				// Apply --compact and --select to the API response before wrapping
+				// Apply --compact and --select to the API response before wrapping.
+				// --select wins when both are set: explicit field choice trumps the
+				// generic high-gravity allow-list. Otherwise --compact still applies
+				// when --agent is on but the user did not name fields.
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				envelope := map[string]any{
 					"action":   "post",
@@ -133,7 +148,7 @@ func newOrganizationsRoutingFormsOrganizationsResponsesCreateResponseCmd(flags *
 	cmd.Flags().StringVar(&flagEnd, "end", "", "Time until which available slots should be checked. Must be in UTC timezone as ISO 8601 datestring. You can pass...")
 	cmd.Flags().StringVar(&flagTimeZone, "time-zone", "", "Time zone in which the available slots should be returned. Defaults to UTC.")
 	cmd.Flags().Float64Var(&flagDuration, "duration", 0.0, "If event type has multiple possible durations then you can specify the desired duration here. Also, if you are...")
-	cmd.Flags().StringVar(&flagFormat, "format", "", "Format of slot times in response. Use 'range' to get start and end times.")
+	cmd.Flags().StringVar(&flagFormat, "format", "", "Format of slot times in response. Use 'range' to get start and end times. (one of: range, time)")
 	cmd.Flags().StringVar(&flagBookingUidToReschedule, "booking-uid-to-reschedule", "", "The unique identifier of the booking being rescheduled. When provided will ensure that the original booking time...")
 	cmd.Flags().BoolVar(&flagQueueResponse, "queue-response", false, "Whether to queue the form response.")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")

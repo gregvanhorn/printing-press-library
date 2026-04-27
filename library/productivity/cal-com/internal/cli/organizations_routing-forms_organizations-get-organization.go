@@ -32,6 +32,32 @@ func newOrganizationsRoutingFormsOrganizationsGetOrganizationCmd(flags *rootFlag
 			if len(args) == 0 {
 				return cmd.Help()
 			}
+			if cmd.Flags().Changed("sort-created-at") {
+				allowedSortCreatedAt := []string{"asc", "desc"}
+				validSortCreatedAt := false
+				for _, v := range allowedSortCreatedAt {
+					if flagSortCreatedAt == v {
+						validSortCreatedAt = true
+						break
+					}
+				}
+				if !validSortCreatedAt {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "sort-created-at", flagSortCreatedAt, allowedSortCreatedAt)
+				}
+			}
+			if cmd.Flags().Changed("sort-updated-at") {
+				allowedSortUpdatedAt := []string{"asc", "desc"}
+				validSortUpdatedAt := false
+				for _, v := range allowedSortUpdatedAt {
+					if flagSortUpdatedAt == v {
+						validSortUpdatedAt = true
+						break
+					}
+				}
+				if !validSortUpdatedAt {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "sort-updated-at", flagSortUpdatedAt, allowedSortUpdatedAt)
+				}
+			}
 			c, err := flags.newClient()
 			if err != nil {
 				return err
@@ -80,14 +106,15 @@ func newOrganizationsRoutingFormsOrganizationsGetOrganizationCmd(flags *rootFlag
 				_ = json.Unmarshal(data, &countItems)
 				printProvenance(cmd, len(countItems), prov)
 			}
-			// For JSON output, wrap with provenance envelope before passing through flags
+			// For JSON output, wrap with provenance envelope before passing through flags.
+			// --select wins over --compact when both are set; --compact only runs when
+			// no explicit fields were requested.
 			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
 				if wrapErr != nil {
@@ -113,8 +140,8 @@ func newOrganizationsRoutingFormsOrganizationsGetOrganizationCmd(flags *rootFlag
 	}
 	cmd.Flags().Float64Var(&flagSkip, "skip", 0.0, "Number of responses to skip")
 	cmd.Flags().Float64Var(&flagTake, "take", 0.0, "Number of responses to take")
-	cmd.Flags().StringVar(&flagSortCreatedAt, "sort-created-at", "", "Sort by creation time")
-	cmd.Flags().StringVar(&flagSortUpdatedAt, "sort-updated-at", "", "Sort by update time")
+	cmd.Flags().StringVar(&flagSortCreatedAt, "sort-created-at", "", "Sort by creation time (one of: asc, desc)")
+	cmd.Flags().StringVar(&flagSortUpdatedAt, "sort-updated-at", "", "Sort by update time (one of: asc, desc)")
 	cmd.Flags().StringVar(&flagAfterCreatedAt, "after-created-at", "", "Filter by responses created after this date")
 	cmd.Flags().StringVar(&flagBeforeCreatedAt, "before-created-at", "", "Filter by responses created before this date")
 	cmd.Flags().StringVar(&flagAfterUpdatedAt, "after-updated-at", "", "Filter by responses created after this date")

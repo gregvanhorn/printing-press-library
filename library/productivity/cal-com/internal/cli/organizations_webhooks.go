@@ -9,9 +9,8 @@ import (
 
 func newOrganizationsWebhooksCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "webhooks",
-		Short:  "Manage webhooks",
-		Hidden: true,
+		Use:   "webhooks",
+		Short: "Manage webhooks",
 	}
 
 	cmd.AddCommand(newOrganizationsWebhooksOrganizationsCreateOrganizationCmd(flags))

@@ -88,6 +88,11 @@ Data must be synced first with the sync command.`,
 	cmd.Flags().StringVar(&dbPath, "db", "", "Database path")
 	cmd.Flags().IntVar(&limit, "limit", 25, "Max groups to show")
 
+	cmd.AddCommand(newCalcomAnalyticsBookingsCmd(flags))
+	cmd.AddCommand(newCalcomAnalyticsCancellationsCmd(flags))
+	cmd.AddCommand(newCalcomAnalyticsNoShowCmd(flags))
+	cmd.AddCommand(newCalcomAnalyticsDensityCmd(flags))
+
 	return cmd
 }
 

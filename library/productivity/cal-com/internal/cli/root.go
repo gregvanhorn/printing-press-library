@@ -4,43 +4,46 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 	"text/tabwriter"
 	"time"
-
-	"bytes"
-	"io"
-	"os"
 
 	"github.com/mvanhorn/printing-press-library/library/productivity/cal-com/internal/client"
 	"github.com/mvanhorn/printing-press-library/library/productivity/cal-com/internal/config"
 	"github.com/spf13/cobra"
 )
 
-var version = "1.1.0"
+var version = "1.0.0"
 
 type rootFlags struct {
-	asJSON       bool
-	compact      bool
-	csv          bool
-	plain        bool
-	quiet        bool
-	dryRun       bool
-	noCache      bool
-	noInput      bool
-	yes          bool
-	agent        bool
-	selectFields string
-	configPath   string
-	timeout      time.Duration
-	rateLimit    float64
-	dataSource   string
-	profileName  string
-	deliverSpec  string
-	deliverBuf   *bytes.Buffer
-	deliverSink  DeliverSink
+	asJSON        bool
+	compact       bool
+	csv           bool
+	plain         bool
+	quiet         bool
+	dryRun        bool
+	noCache       bool
+	noInput       bool
+	yes           bool
+	agent         bool
+	selectFields  string
+	configPath    string
+	profileName   string
+	deliverSpec   string
+	timeout       time.Duration
+	rateLimit     float64
+	dataSource    string
+	freshnessMeta any
+
+	// deliverBuf captures command output when --deliver is set to a
+	// non-stdout sink. Flushed to the sink after Execute returns.
+	deliverBuf  *bytes.Buffer
+	deliverSink DeliverSink
 }
 
 // Execute runs the CLI in non-interactive mode: never prompts, all values via flags or stdin.
@@ -48,11 +51,29 @@ func Execute() error {
 	var flags rootFlags
 
 	rootCmd := &cobra.Command{
-		Use:           "cal-com-pp-cli",
-		Short:         "Manage bookings, event types, schedules, and availability via the Cal.com API",
-		SilenceUsage:  true,
-		SilenceErrors: true,
-		Version:       version,
+		Use:   "cal-com-pp-cli",
+		Short: `Cal Com CLI — Every Cal.com feature, plus offline agendas, composed booking flows, and analytics no other Cal.com tool ships.`,
+		Long: `Cal Com CLI — Every Cal.com feature, plus offline agendas, composed booking flows, and analytics no other Cal.com tool ships.
+
+Highlights (not in the official API docs):
+  • book   Find a slot and book it in a single command — no slot/reserve/create/confirm ch…
+  • today   Today's bookings with status, attendees, and meeting links — read from the loca…
+  • week   7-day calendar view of upcoming bookings, with conflict highlighting and per-da…
+  • slots find   Find first available slot across multiple event types in one call, ranked by st…
+  • analytics   Booking volume, density, no-show rate, and cancellation rate across a window, g…
+  • conflicts   Detects overlaps between active Cal.com bookings and external calendar busy-tim…
+  • gaps   Finds open windows in your schedule that are available but unbooked, filtered b…
+  • workload   Booking distribution across team members over a window — surfaces overloaded vs…
+  • webhooks coverage   Audits registered webhook triggers against the canonical set and reports lifecy…
+  • event-types stale   Event types with zero bookings in the last N days — candidates for removal.
+  • bookings pending   Pending-confirmation bookings sorted by age, with default 24h max-age cutoff.
+  • webhooks triggers   Static reference of every valid Cal.com webhook trigger constant, grouped by li…
+
+Agent mode: add --agent to any command for JSON output + non-interactive mode.
+Health check: run 'cal-com-pp-cli doctor' to verify auth and connectivity.
+See README.md or the bundled SKILL.md for recipes.`,
+		SilenceUsage: true,
+		Version:      version,
 	}
 	rootCmd.SetVersionTemplate("cal-com-pp-cli {{ .Version }}\n")
 
@@ -72,10 +93,9 @@ func Execute() error {
 	rootCmd.PersistentFlags().BoolVar(&humanFriendly, "human-friendly", false, "Enable colored output and rich formatting")
 	rootCmd.PersistentFlags().BoolVar(&flags.agent, "agent", false, "Set all agent-friendly defaults (--json --compact --no-input --no-color --yes)")
 	rootCmd.PersistentFlags().StringVar(&flags.dataSource, "data-source", "auto", "Data source for read commands: auto (live with local fallback), live (API only), local (synced data only)")
-	rootCmd.PersistentFlags().Float64Var(&flags.rateLimit, "rate-limit", 0, "Max requests per second (0 to disable)")
-
-	rootCmd.PersistentFlags().StringVar(&flags.profileName, "profile", "", "Apply values from a saved profile")
+	rootCmd.PersistentFlags().StringVar(&flags.profileName, "profile", "", "Apply values from a saved profile (see 'cal-com-pp-cli profile list')")
 	rootCmd.PersistentFlags().StringVar(&flags.deliverSpec, "deliver", "", "Route output to a sink: stdout (default), file:<path>, webhook:<url>")
+	rootCmd.PersistentFlags().Float64Var(&flags.rateLimit, "rate-limit", 0, "Max requests per second (0 to disable)")
 
 	rootCmd.PersistentPreRunE = func(cmd *cobra.Command, args []string) error {
 		if flags.deliverSpec != "" {
@@ -95,7 +115,11 @@ func Execute() error {
 				return err
 			}
 			if profile == nil {
-				return fmt.Errorf("profile %q not found", flags.profileName)
+				available := ListProfileNames()
+				if len(available) == 0 {
+					return fmt.Errorf("profile %q not found (no profiles saved yet; run '%s profile save <name> --<flag> <value>')", flags.profileName, cmd.Root().Name())
+				}
+				return fmt.Errorf("profile %q not found; available: %s", flags.profileName, strings.Join(available, ", "))
 			}
 			if err := ApplyProfileToFlags(cmd, profile); err != nil {
 				return err
@@ -126,14 +150,28 @@ func Execute() error {
 		}
 		return nil
 	}
-	rootCmd.AddCommand(newApiKeysCmd(&flags))
-	rootCmd.AddCommand(newDestinationCalendarsCmd(&flags))
+	rootCmd.AddCommand(newBookingsCmd(&flags))
+	rootCmd.AddCommand(newCalendarsCmd(&flags))
+	rootCmd.AddCommand(newConferencingCmd(&flags))
+	rootCmd.AddCommand(newEventTypesCmd(&flags))
+	rootCmd.AddCommand(newMeCmd(&flags))
 	rootCmd.AddCommand(newOauthCmd(&flags))
+	rootCmd.AddCommand(newOauthClientsCmd(&flags))
 	rootCmd.AddCommand(newOrganizationsCmd(&flags))
 	rootCmd.AddCommand(newRoutingFormsCmd(&flags))
+	rootCmd.AddCommand(newSchedulesCmd(&flags))
 	rootCmd.AddCommand(newSelectedCalendarsCmd(&flags))
+	rootCmd.AddCommand(newSlotsCmd(&flags))
+	rootCmd.AddCommand(newStripeCmd(&flags))
+	rootCmd.AddCommand(newTeamsCmd(&flags))
+	rootCmd.AddCommand(newVerifiedResourcesCmd(&flags))
+	rootCmd.AddCommand(newWebhooksCmd(&flags))
 	rootCmd.AddCommand(newDoctorCmd(&flags))
 	rootCmd.AddCommand(newAuthCmd(&flags))
+	rootCmd.AddCommand(newAgentContextCmd(rootCmd))
+	rootCmd.AddCommand(newProfileCmd(&flags))
+	rootCmd.AddCommand(newFeedbackCmd(&flags))
+	rootCmd.AddCommand(newWhichCmd(&flags))
 	rootCmd.AddCommand(newExportCmd(&flags))
 	rootCmd.AddCommand(newImportCmd(&flags))
 	rootCmd.AddCommand(newSearchCmd(&flags))
@@ -142,29 +180,16 @@ func Execute() error {
 	rootCmd.AddCommand(newAnalyticsCmd(&flags))
 	rootCmd.AddCommand(newWorkflowCmd(&flags))
 	rootCmd.AddCommand(newAPICmd(&flags))
-	rootCmd.AddCommand(newMePromotedCmd(&flags))
-	rootCmd.AddCommand(newSchedulesPromotedCmd(&flags))
-	rootCmd.AddCommand(newSlotsPromotedCmd(&flags))
-	rootCmd.AddCommand(newStripePromotedCmd(&flags))
-	rootCmd.AddCommand(newWebhooksPromotedCmd(&flags))
-	rootCmd.AddCommand(newCalendarsPromotedCmd(&flags))
-	rootCmd.AddCommand(newConferencingPromotedCmd(&flags))
-	rootCmd.AddCommand(newEventTypesPromotedCmd(&flags))
-	rootCmd.AddCommand(newVerifiedResourcesPromotedCmd(&flags))
-	rootCmd.AddCommand(newBookingsPromotedCmd(&flags))
-	rootCmd.AddCommand(newOauthClientsPromotedCmd(&flags))
-	rootCmd.AddCommand(newTeamsPromotedCmd(&flags))
+	// Cal.com novel transcendence commands (hand-built, not generator-emitted)
+	rootCmd.AddCommand(newBookCmd(&flags))
 	rootCmd.AddCommand(newTodayCmd(&flags))
+	rootCmd.AddCommand(newWeekCmd(&flags))
 	rootCmd.AddCommand(newConflictsCmd(&flags))
-	rootCmd.AddCommand(newStatsCmd(&flags))
-	rootCmd.AddCommand(newNoshowCmd(&flags))
 	rootCmd.AddCommand(newGapsCmd(&flags))
 	rootCmd.AddCommand(newWorkloadCmd(&flags))
-	rootCmd.AddCommand(newStaleCmd(&flags))
+	rootCmd.AddCommand(newApiKeysPromotedCmd(&flags))
+	rootCmd.AddCommand(newDestinationCalendarsPromotedCmd(&flags))
 	rootCmd.AddCommand(newVersionCliCmd())
-
-	rootCmd.AddCommand(newProfileCmd(&flags))
-	rootCmd.AddCommand(newFeedbackCmd(&flags))
 
 	err := rootCmd.Execute()
 	if err != nil && strings.Contains(err.Error(), "unknown flag") {

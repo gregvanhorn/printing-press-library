@@ -9,9 +9,8 @@ import (
 
 func newOrganizationsRoutingFormsCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "routing-forms",
-		Short:  "Manage routing forms",
-		Hidden: true,
+		Use:   "routing-forms",
+		Short: "Manage routing forms",
 	}
 
 	cmd.AddCommand(newOrganizationsRoutingFormsOrganizationsGetOrganizationCmd(flags))

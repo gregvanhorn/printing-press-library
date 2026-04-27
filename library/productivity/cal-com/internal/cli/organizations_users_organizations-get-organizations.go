@@ -27,6 +27,19 @@ func newOrganizationsUsersOrganizationsGetOrganizationsCmd(flags *rootFlags) *co
 			if len(args) == 0 {
 				return cmd.Help()
 			}
+			if cmd.Flags().Changed("attribute-query-operator") {
+				allowedAttributeQueryOperator := []string{"OR", "AND", "NONE"}
+				validAttributeQueryOperator := false
+				for _, v := range allowedAttributeQueryOperator {
+					if flagAttributeQueryOperator == v {
+						validAttributeQueryOperator = true
+						break
+					}
+				}
+				if !validAttributeQueryOperator {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "attribute-query-operator", flagAttributeQueryOperator, allowedAttributeQueryOperator)
+				}
+			}
 			c, err := flags.newClient()
 			if err != nil {
 				return err
@@ -63,14 +76,15 @@ func newOrganizationsUsersOrganizationsGetOrganizationsCmd(flags *rootFlags) *co
 				_ = json.Unmarshal(data, &countItems)
 				printProvenance(cmd, len(countItems), prov)
 			}
-			// For JSON output, wrap with provenance envelope before passing through flags
+			// For JSON output, wrap with provenance envelope before passing through flags.
+			// --select wins over --compact when both are set; --compact only runs when
+			// no explicit fields were requested.
 			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
 				if wrapErr != nil {
@@ -98,7 +112,7 @@ func newOrganizationsUsersOrganizationsGetOrganizationsCmd(flags *rootFlags) *co
 	cmd.Flags().Float64Var(&flagSkip, "skip", 0.0, "The number of items to skip")
 	cmd.Flags().StringVar(&flagEmails, "emails", "", "The email address or an array of email addresses to filter by")
 	cmd.Flags().StringVar(&flagAssignedOptionIds, "assigned-option-ids", "", "Filter by assigned attribute option ids. ids must be separated by a comma.")
-	cmd.Flags().StringVar(&flagAttributeQueryOperator, "attribute-query-operator", "AND", "Query operator used to filter assigned options, AND by default.")
+	cmd.Flags().StringVar(&flagAttributeQueryOperator, "attribute-query-operator", "AND", "Query operator used to filter assigned options, AND by default. (one of: OR, AND, NONE)")
 	cmd.Flags().StringVar(&flagTeamIds, "team-ids", "", "Filter by teamIds. Team ids must be separated by a comma.")
 
 	return cmd

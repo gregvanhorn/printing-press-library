@@ -9,9 +9,8 @@ import (
 
 func newTeamsVerifiedResourcesCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "verified-resources",
-		Short:  "Manage verified resources",
-		Hidden: true,
+		Use:   "verified-resources",
+		Short: "Manage verified resources",
 	}
 
 	cmd.AddCommand(newTeamsVerifiedResourcesTeamsGetVerifiedEmailByIdCmd(flags))

@@ -25,6 +25,19 @@ func newCalendarsConnectCalendarsRedirectCmd(flags *rootFlags) *cobra.Command {
 			if !cmd.Flags().Changed("is-dry-run") && !flags.dryRun {
 				return fmt.Errorf("required flag \"%s\" not set", "is-dry-run")
 			}
+			if cmd.Flags().Changed("calendar") {
+				allowedCalendar := []string{"office365", "google"}
+				validCalendar := false
+				for _, v := range allowedCalendar {
+					if flagCalendar == v {
+						validCalendar = true
+						break
+					}
+				}
+				if !validCalendar {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "calendar", flagCalendar, allowedCalendar)
+				}
+			}
 			c, err := flags.newClient()
 			if err != nil {
 				return err
@@ -49,14 +62,15 @@ func newCalendarsConnectCalendarsRedirectCmd(flags *rootFlags) *cobra.Command {
 				_ = json.Unmarshal(data, &countItems)
 				printProvenance(cmd, len(countItems), prov)
 			}
-			// For JSON output, wrap with provenance envelope before passing through flags
+			// For JSON output, wrap with provenance envelope before passing through flags.
+			// --select wins over --compact when both are set; --compact only runs when
+			// no explicit fields were requested.
 			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
 				if wrapErr != nil {
@@ -80,7 +94,7 @@ func newCalendarsConnectCalendarsRedirectCmd(flags *rootFlags) *cobra.Command {
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagCalendar, "calendar", "office365", "Calendar")
+	cmd.Flags().StringVar(&flagCalendar, "calendar", "office365", "Calendar (one of: office365, google)")
 	cmd.Flags().BoolVar(&flagIsDryRun, "is-dry-run", false, "Is dry run")
 	cmd.Flags().StringVar(&flagRedir, "redir", "", "Redirect URL after successful calendar authorization.")
 

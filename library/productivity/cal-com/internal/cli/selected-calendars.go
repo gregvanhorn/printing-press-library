@@ -9,9 +9,8 @@ import (
 
 func newSelectedCalendarsCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "selected-calendars",
-		Short:  "Manage selected calendars",
-		Hidden: true,
+		Use:   "selected-calendars",
+		Short: "Manage selected calendars",
 	}
 
 	cmd.AddCommand(newSelectedCalendarsAddCmd(flags))

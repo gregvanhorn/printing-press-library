@@ -27,6 +27,19 @@ func newConferencingOauthConferencingSaveCmd(flags *rootFlags) *cobra.Command {
 			if !cmd.Flags().Changed("code") && !flags.dryRun {
 				return fmt.Errorf("required flag \"%s\" not set", "code")
 			}
+			if cmd.Flags().Changed("app") {
+				allowedApp := []string{"zoom", "msteams"}
+				validApp := false
+				for _, v := range allowedApp {
+					if flagApp == v {
+						validApp = true
+						break
+					}
+				}
+				if !validApp {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "app", flagApp, allowedApp)
+				}
+			}
 			c, err := flags.newClient()
 			if err != nil {
 				return err
@@ -51,14 +64,15 @@ func newConferencingOauthConferencingSaveCmd(flags *rootFlags) *cobra.Command {
 				_ = json.Unmarshal(data, &countItems)
 				printProvenance(cmd, len(countItems), prov)
 			}
-			// For JSON output, wrap with provenance envelope before passing through flags
+			// For JSON output, wrap with provenance envelope before passing through flags.
+			// --select wins over --compact when both are set; --compact only runs when
+			// no explicit fields were requested.
 			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
 				if wrapErr != nil {
@@ -83,7 +97,7 @@ func newConferencingOauthConferencingSaveCmd(flags *rootFlags) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&flagState, "state", "", "State")
-	cmd.Flags().StringVar(&flagApp, "app", "zoom", "Conferencing application type")
+	cmd.Flags().StringVar(&flagApp, "app", "zoom", "Conferencing application type (one of: zoom, msteams)")
 	cmd.Flags().StringVar(&flagCode, "code", "", "Code")
 
 	return cmd

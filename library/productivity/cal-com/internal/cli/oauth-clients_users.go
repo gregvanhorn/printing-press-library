@@ -9,9 +9,8 @@ import (
 
 func newOauthClientsUsersCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "users",
-		Short:  "Manage users",
-		Hidden: true,
+		Use:   "users",
+		Short: "Manage users",
 	}
 
 	cmd.AddCommand(newOauthClientsUsersOauthClientCreateCmd(flags))

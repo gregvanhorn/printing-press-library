@@ -9,9 +9,8 @@ import (
 
 func newOrganizationsTeamsCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "teams",
-		Short:  "Manage teams",
-		Hidden: true,
+		Use:   "teams",
+		Short: "Manage teams",
 	}
 
 	cmd.AddCommand(newOrganizationsTeamsOrgVerifiedResourcesGetVerifiedEmailByIdCmd(flags))

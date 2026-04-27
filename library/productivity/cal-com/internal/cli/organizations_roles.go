@@ -9,9 +9,8 @@ import (
 
 func newOrganizationsRolesCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "roles",
-		Short:  "Manage roles",
-		Hidden: true,
+		Use:   "roles",
+		Short: "Manage roles",
 	}
 
 	cmd.AddCommand(newOrganizationsRolesOrganizationsCreateCmd(flags))

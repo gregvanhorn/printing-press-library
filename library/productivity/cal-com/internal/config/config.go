@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/pelletier/go-toml/v2"
@@ -59,7 +60,6 @@ func Load(configPath string) (*Config, error) {
 	if v := os.Getenv("CAL_COM_BASE_URL"); v != "" {
 		cfg.BaseURL = v
 	}
-
 	return cfg, nil
 }
 
@@ -72,12 +72,22 @@ func (c *Config) AuthHeader() string {
 		return "Bearer " + c.AccessToken
 	}
 	if c.CalComToken != "" {
-		if c.AuthSource == "" {
-			c.AuthSource = "config:cal_com_token"
-		}
 		return "Bearer " + c.CalComToken
 	}
 	return ""
+}
+
+func applyAuthFormat(format string, replacements map[string]string) string {
+	if format == "" {
+		return ""
+	}
+	for key, value := range replacements {
+		format = strings.ReplaceAll(format, "{"+key+"}", value)
+	}
+	if strings.Contains(format, "{") {
+		return ""
+	}
+	return format
 }
 
 func (c *Config) SaveTokens(clientID, clientSecret, accessToken, refreshToken string, expiry time.Time) error {
@@ -107,3 +117,6 @@ func (c *Config) save() error {
 	}
 	return os.WriteFile(c.Path, data, 0o600)
 }
+
+// Ensure strings import is used
+var _ = strings.ReplaceAll

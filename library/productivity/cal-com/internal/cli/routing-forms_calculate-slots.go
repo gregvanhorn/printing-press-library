@@ -9,9 +9,8 @@ import (
 
 func newRoutingFormsCalculateSlotsCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "calculate-slots",
-		Short:  "Manage calculate slots",
-		Hidden: true,
+		Use:   "calculate-slots",
+		Short: "Manage calculate slots",
 	}
 
 	cmd.AddCommand(newRoutingFormsCalculateSlotsRoutingFormsBasedOnRoutingFormResponseCmd(flags))

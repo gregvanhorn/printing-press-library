@@ -9,9 +9,8 @@ import (
 
 func newOrganizationsBookingsCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "bookings",
-		Short:  "Manage bookings",
-		Hidden: true,
+		Use:   "bookings",
+		Short: "Manage bookings",
 	}
 
 	cmd.AddCommand(newOrganizationsBookingsOrganizationsGetAllOrgTeamCmd(flags))

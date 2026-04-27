@@ -5,6 +5,7 @@ package client
 
 import (
 	"bytes"
+	"github.com/mvanhorn/printing-press-library/library/productivity/cal-com/internal/config"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -19,8 +20,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/mvanhorn/printing-press-library/library/productivity/cal-com/internal/config"
 )
 
 type Client struct {
@@ -130,13 +129,18 @@ func (e *APIError) Error() string {
 	return fmt.Sprintf("%s %s returned HTTP %d: %s", e.Method, e.Path, e.StatusCode, e.Body)
 }
 
+func newHTTPClient(timeout time.Duration, jar http.CookieJar) *http.Client {
+	return &http.Client{Timeout: timeout, Jar: jar}
+}
+
 func New(cfg *config.Config, timeout time.Duration, rateLimit float64) *Client {
 	homeDir, _ := os.UserHomeDir()
 	cacheDir := filepath.Join(homeDir, ".cache", "cal-com-pp-cli")
+	httpClient := newHTTPClient(timeout, nil)
 	return &Client{
 		BaseURL:    strings.TrimRight(cfg.BaseURL, "/"),
 		Config:     cfg,
-		HTTPClient: &http.Client{Timeout: timeout},
+		HTTPClient: httpClient,
 		cacheDir:   cacheDir,
 		limiter:    newAdaptiveLimiter(rateLimit),
 	}
@@ -163,6 +167,11 @@ func (c *Client) GetWithHeaders(path string, params map[string]string, headers m
 		c.writeCache(path, params, result)
 	}
 	return result, err
+}
+
+func (c *Client) ProbeGet(path string) (int, error) {
+	_, status, err := c.do("GET", path, nil, nil, nil)
+	return status, err
 }
 
 func (c *Client) cacheKey(path string, params map[string]string) string {
@@ -239,9 +248,18 @@ func (c *Client) do(method, path string, params map[string]string, body any, hea
 		bodyBytes = b
 	}
 
+	// Resolve auth material before the dry-run branch so --dry-run can preview
+	// exactly what would be sent. Uses only cached credentials; a token that
+	// requires a network refresh will be re-fetched on the live request path,
+	// not during dry-run.
+	authHeader, err := c.authHeader()
+	if err != nil {
+		return nil, 0, err
+	}
+
 	// Build the request for dry-run display or actual execution
 	if c.DryRun {
-		return c.dryRun(method, targetURL, path, params, bodyBytes, headerOverrides)
+		return c.dryRun(method, targetURL, path, params, bodyBytes, headerOverrides, authHeader)
 	}
 
 	const maxRetries = 3
@@ -273,12 +291,13 @@ func (c *Client) do(method, path string, params map[string]string, body any, hea
 			req.URL.RawQuery = q.Encode()
 		}
 
-		authHeader, err := c.authHeader()
-		if err != nil {
-			return nil, 0, err
-		}
 		if authHeader != "" {
 			req.Header.Set("Authorization", authHeader)
+		}
+		// Per-path required headers (e.g., Cal.com per-endpoint cal-api-version).
+		// Applied before caller overrides so a caller can still bump a version.
+		for k, v := range requiredHeadersForPath(path) {
+			req.Header.Set(k, v)
 		}
 		// Per-endpoint header overrides (e.g., different API version per resource)
 		for k, v := range headerOverrides {
@@ -338,7 +357,10 @@ func (c *Client) do(method, path string, params map[string]string, body any, hea
 	return nil, 0, lastErr
 }
 
-func (c *Client) dryRun(method, targetURL, path string, params map[string]string, body []byte, headerOverrides map[string]string) (json.RawMessage, int, error) {
+// dryRun prints the outgoing request exactly as the live path would send it,
+// using the auth material already resolved in `do()`. Never triggers a network
+// call — the caller is responsible for passing cached auth material only.
+func (c *Client) dryRun(method, targetURL, path string, params map[string]string, body []byte, headerOverrides map[string]string, authHeader string) (json.RawMessage, int, error) {
 	fmt.Fprintf(os.Stderr, "%s %s\n", method, targetURL)
 	if params != nil {
 		for k, v := range params {
@@ -356,19 +378,25 @@ func (c *Client) dryRun(method, targetURL, path string, params map[string]string
 			enc.Encode(pretty)
 		}
 	}
-	authHeader, err := c.authHeader()
-	if err != nil {
-		return nil, 0, err
-	}
 	if authHeader != "" {
-		fmt.Fprintf(os.Stderr, "  Authorization: %s\n", maskToken(authHeader))
+		fmt.Fprintf(os.Stderr, "  %s: %s\n", "Authorization", maskToken(authHeader))
+	}
+	for k, v := range requiredHeadersForPath(path) {
+		fmt.Fprintf(os.Stderr, "  %s: %s\n", k, v)
+	}
+	for k, v := range headerOverrides {
+		fmt.Fprintf(os.Stderr, "  %s: %s\n", k, v)
 	}
 	fmt.Fprintf(os.Stderr, "\n(dry run - no request sent)\n")
 	return json.RawMessage(`{"dry_run": true}`), 0, nil
 }
 
-// authScheme is the Authorization header prefix. The Cal.com API uses "Bearer " tokens.
-const authScheme = "Bearer "
+func (c *Client) ConfiguredTimeout() time.Duration {
+	if c.HTTPClient != nil && c.HTTPClient.Timeout > 0 {
+		return c.HTTPClient.Timeout
+	}
+	return 30 * time.Second
+}
 
 func (c *Client) authHeader() (string, error) {
 	if c.Config == nil {
@@ -444,16 +472,25 @@ func (c *Client) refreshAccessToken() error {
 	return nil
 }
 
+const maxRetryWait = 60 * time.Second
+
 func retryAfter(resp *http.Response) time.Duration {
 	header := resp.Header.Get("Retry-After")
 	if header == "" {
 		return 5 * time.Second
 	}
 	if seconds, err := strconv.Atoi(header); err == nil {
-		return time.Duration(seconds) * time.Second
+		d := time.Duration(seconds) * time.Second
+		if d > maxRetryWait {
+			return maxRetryWait
+		}
+		return d
 	}
 	if t, err := http.ParseTime(header); err == nil {
 		wait := time.Until(t)
+		if wait > maxRetryWait {
+			return maxRetryWait
+		}
 		if wait > 0 {
 			return wait
 		}

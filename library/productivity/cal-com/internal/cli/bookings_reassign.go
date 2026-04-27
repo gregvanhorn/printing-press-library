@@ -9,9 +9,8 @@ import (
 
 func newBookingsReassignCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "reassign",
-		Short:  "Manage reassign",
-		Hidden: true,
+		Use:   "reassign",
+		Short: "Manage reassign",
 	}
 
 	cmd.AddCommand(newBookingsReassignBookingsBookingCmd(flags))

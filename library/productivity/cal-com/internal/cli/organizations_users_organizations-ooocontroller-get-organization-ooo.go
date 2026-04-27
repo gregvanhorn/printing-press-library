@@ -25,6 +25,32 @@ func newOrganizationsUsersOrganizationsOoocontrollerGetOrganizationOooCmd(flags 
 			if len(args) == 0 {
 				return cmd.Help()
 			}
+			if cmd.Flags().Changed("sort-start") {
+				allowedSortStart := []string{"asc", "desc"}
+				validSortStart := false
+				for _, v := range allowedSortStart {
+					if flagSortStart == v {
+						validSortStart = true
+						break
+					}
+				}
+				if !validSortStart {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "sort-start", flagSortStart, allowedSortStart)
+				}
+			}
+			if cmd.Flags().Changed("sort-end") {
+				allowedSortEnd := []string{"asc", "desc"}
+				validSortEnd := false
+				for _, v := range allowedSortEnd {
+					if flagSortEnd == v {
+						validSortEnd = true
+						break
+					}
+				}
+				if !validSortEnd {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "sort-end", flagSortEnd, allowedSortEnd)
+				}
+			}
 			c, err := flags.newClient()
 			if err != nil {
 				return err
@@ -59,14 +85,15 @@ func newOrganizationsUsersOrganizationsOoocontrollerGetOrganizationOooCmd(flags 
 				_ = json.Unmarshal(data, &countItems)
 				printProvenance(cmd, len(countItems), prov)
 			}
-			// For JSON output, wrap with provenance envelope before passing through flags
+			// For JSON output, wrap with provenance envelope before passing through flags.
+			// --select wins over --compact when both are set; --compact only runs when
+			// no explicit fields were requested.
 			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
 				if wrapErr != nil {
@@ -92,8 +119,8 @@ func newOrganizationsUsersOrganizationsOoocontrollerGetOrganizationOooCmd(flags 
 	}
 	cmd.Flags().Float64Var(&flagTake, "take", 250.000000, "Maximum number of items to return")
 	cmd.Flags().Float64Var(&flagSkip, "skip", 0.000000, "Number of items to skip")
-	cmd.Flags().StringVar(&flagSortStart, "sort-start", "", "Sort results by their start time in ascending or descending order.")
-	cmd.Flags().StringVar(&flagSortEnd, "sort-end", "", "Sort results by their end time in ascending or descending order.")
+	cmd.Flags().StringVar(&flagSortStart, "sort-start", "", "Sort results by their start time in ascending or descending order. (one of: asc, desc)")
+	cmd.Flags().StringVar(&flagSortEnd, "sort-end", "", "Sort results by their end time in ascending or descending order. (one of: asc, desc)")
 
 	return cmd
 }

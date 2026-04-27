@@ -9,9 +9,8 @@ import (
 
 func newEventTypesPrivateLinksCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:    "private-links",
-		Short:  "Manage private links",
-		Hidden: true,
+		Use:   "private-links",
+		Short: "Manage private links",
 	}
 
 	cmd.AddCommand(newEventTypesPrivateLinksEventTypesCreateCmd(flags))

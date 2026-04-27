@@ -1,0 +1,8 @@
+name: cal-com-pp-mcp
+description: cal-com API
+startCommand:
+    command: go run ./cmd/cal-com-pp-mcp
+env:
+    CAL_COM_TOKEN:
+        description: cal-com API credential
+        required: true

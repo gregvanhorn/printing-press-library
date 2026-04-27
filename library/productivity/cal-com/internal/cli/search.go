@@ -133,8 +133,6 @@ In local mode: searches locally synced data only.`,
 			switch resourceType {
 			case "calendars":
 				results, err = db.SearchCalendars(query, limit)
-			case "event_types":
-				results, err = db.SearchEventTypes(query, limit)
 			case "":
 				// Search all FTS-enabled tables individually to avoid duplicates.
 				seen := make(map[string]bool)
@@ -143,19 +141,6 @@ In local mode: searches locally synced data only.`,
 					partial, searchErr := db.SearchCalendars(query, limit)
 					if searchErr != nil {
 						return fmt.Errorf("search calendars failed: %w", searchErr)
-					}
-					for _, r := range partial {
-						key := string(r)
-						if !seen[key] {
-							seen[key] = true
-							results = append(results, r)
-						}
-					}
-				}
-				{
-					partial, searchErr := db.SearchEventTypes(query, limit)
-					if searchErr != nil {
-						return fmt.Errorf("search event_types failed: %w", searchErr)
 					}
 					for _, r := range partial {
 						key := string(r)

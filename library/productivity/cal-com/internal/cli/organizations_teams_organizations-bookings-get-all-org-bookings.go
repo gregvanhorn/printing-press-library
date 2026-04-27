@@ -34,6 +34,45 @@ func newOrganizationsTeamsOrganizationsBookingsGetAllOrgBookingsCmd(flags *rootF
 			if len(args) == 0 {
 				return cmd.Help()
 			}
+			if cmd.Flags().Changed("sort-start") {
+				allowedSortStart := []string{"asc", "desc"}
+				validSortStart := false
+				for _, v := range allowedSortStart {
+					if flagSortStart == v {
+						validSortStart = true
+						break
+					}
+				}
+				if !validSortStart {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "sort-start", flagSortStart, allowedSortStart)
+				}
+			}
+			if cmd.Flags().Changed("sort-end") {
+				allowedSortEnd := []string{"asc", "desc"}
+				validSortEnd := false
+				for _, v := range allowedSortEnd {
+					if flagSortEnd == v {
+						validSortEnd = true
+						break
+					}
+				}
+				if !validSortEnd {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "sort-end", flagSortEnd, allowedSortEnd)
+				}
+			}
+			if cmd.Flags().Changed("sort-created") {
+				allowedSortCreated := []string{"asc", "desc"}
+				validSortCreated := false
+				for _, v := range allowedSortCreated {
+					if flagSortCreated == v {
+						validSortCreated = true
+						break
+					}
+				}
+				if !validSortCreated {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "sort-created", flagSortCreated, allowedSortCreated)
+				}
+			}
 			c, err := flags.newClient()
 			if err != nil {
 				return err
@@ -98,14 +137,15 @@ func newOrganizationsTeamsOrganizationsBookingsGetAllOrgBookingsCmd(flags *rootF
 				_ = json.Unmarshal(data, &countItems)
 				printProvenance(cmd, len(countItems), prov)
 			}
-			// For JSON output, wrap with provenance envelope before passing through flags
+			// For JSON output, wrap with provenance envelope before passing through flags.
+			// --select wins over --compact when both are set; --compact only runs when
+			// no explicit fields were requested.
 			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
 				if wrapErr != nil {
@@ -137,9 +177,9 @@ func newOrganizationsTeamsOrganizationsBookingsGetAllOrgBookingsCmd(flags *rootF
 	cmd.Flags().StringVar(&flagEventTypeId, "event-type-id", "", "Filter bookings by event type id belonging to the team.")
 	cmd.Flags().StringVar(&flagAfterStart, "after-start", "", "Filter bookings with start after this date string.")
 	cmd.Flags().StringVar(&flagBeforeEnd, "before-end", "", "Filter bookings with end before this date string.")
-	cmd.Flags().StringVar(&flagSortStart, "sort-start", "", "Sort results by their start time in ascending or descending order.")
-	cmd.Flags().StringVar(&flagSortEnd, "sort-end", "", "Sort results by their end time in ascending or descending order.")
-	cmd.Flags().StringVar(&flagSortCreated, "sort-created", "", "Sort results by their creation time (when booking was made) in ascending or descending order.")
+	cmd.Flags().StringVar(&flagSortStart, "sort-start", "", "Sort results by their start time in ascending or descending order. (one of: asc, desc)")
+	cmd.Flags().StringVar(&flagSortEnd, "sort-end", "", "Sort results by their end time in ascending or descending order. (one of: asc, desc)")
+	cmd.Flags().StringVar(&flagSortCreated, "sort-created", "", "Sort results by their creation time (when booking was made) in ascending or descending order. (one of: asc, desc)")
 	cmd.Flags().Float64Var(&flagTake, "take", 0.0, "The number of items to return")
 	cmd.Flags().Float64Var(&flagSkip, "skip", 0.0, "The number of items to skip")
 

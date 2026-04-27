@@ -25,6 +25,19 @@ func newTeamsEventTypesTeamsGetTeamCmd(flags *rootFlags) *cobra.Command {
 			if len(args) == 0 {
 				return cmd.Help()
 			}
+			if cmd.Flags().Changed("sort-created-at") {
+				allowedSortCreatedAt := []string{"asc", "desc"}
+				validSortCreatedAt := false
+				for _, v := range allowedSortCreatedAt {
+					if flagSortCreatedAt == v {
+						validSortCreatedAt = true
+						break
+					}
+				}
+				if !validSortCreatedAt {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "sort-created-at", flagSortCreatedAt, allowedSortCreatedAt)
+				}
+			}
 			c, err := flags.newClient()
 			if err != nil {
 				return err
@@ -52,14 +65,15 @@ func newTeamsEventTypesTeamsGetTeamCmd(flags *rootFlags) *cobra.Command {
 				_ = json.Unmarshal(data, &countItems)
 				printProvenance(cmd, len(countItems), prov)
 			}
-			// For JSON output, wrap with provenance envelope before passing through flags
+			// For JSON output, wrap with provenance envelope before passing through flags.
+			// --select wins over --compact when both are set; --compact only runs when
+			// no explicit fields were requested.
 			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
 				if wrapErr != nil {
@@ -85,7 +99,7 @@ func newTeamsEventTypesTeamsGetTeamCmd(flags *rootFlags) *cobra.Command {
 	}
 	cmd.Flags().StringVar(&flagEventSlug, "event-slug", "", "Slug of team event type to return.")
 	cmd.Flags().Float64Var(&flagHostsLimit, "hosts-limit", 0.0, "Specifies the maximum number of hosts to include in the response. This limit helps optimize performance. If not...")
-	cmd.Flags().StringVar(&flagSortCreatedAt, "sort-created-at", "", "Sort event types by creation date. When not provided, no explicit ordering is applied.")
+	cmd.Flags().StringVar(&flagSortCreatedAt, "sort-created-at", "", "Sort event types by creation date. When not provided, no explicit ordering is applied. (one of: asc, desc)")
 
 	return cmd
 }

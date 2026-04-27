@@ -24,6 +24,19 @@ func newCalendarsCredentialsCalendarsSyncCmd(flags *rootFlags) *cobra.Command {
 		Short:   "Save Apple calendar credentials",
 		Example: "  cal-com-pp-cli calendars credentials calendars-sync --password example-value",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if cmd.Flags().Changed("calendar") {
+				allowedCalendar := []string{"apple"}
+				validCalendar := false
+				for _, v := range allowedCalendar {
+					if flagCalendar == v {
+						validCalendar = true
+						break
+					}
+				}
+				if !validCalendar {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "calendar", flagCalendar, allowedCalendar)
+				}
+			}
 			if !stdinBody {
 				if !cmd.Flags().Changed("password") && !flags.dryRun {
 					return fmt.Errorf("required flag \"%s\" not set", "password")
@@ -89,13 +102,15 @@ func newCalendarsCredentialsCalendarsSyncCmd(flags *rootFlags) *cobra.Command {
 				if flags.quiet {
 					return nil
 				}
-				// Apply --compact and --select to the API response before wrapping
+				// Apply --compact and --select to the API response before wrapping.
+				// --select wins when both are set: explicit field choice trumps the
+				// generic high-gravity allow-list. Otherwise --compact still applies
+				// when --agent is on but the user did not name fields.
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				envelope := map[string]any{
 					"action":   "post",
@@ -124,7 +139,7 @@ func newCalendarsCredentialsCalendarsSyncCmd(flags *rootFlags) *cobra.Command {
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagCalendar, "calendar", "apple", "Calendar")
+	cmd.Flags().StringVar(&flagCalendar, "calendar", "apple", "Calendar (one of: apple)")
 	cmd.Flags().StringVar(&bodyPassword, "password", "", "Password")
 	cmd.Flags().StringVar(&bodyUsername, "username", "", "Username")
 	cmd.Flags().BoolVar(&stdinBody, "stdin", false, "Read request body as JSON from stdin")

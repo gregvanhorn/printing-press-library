@@ -29,6 +29,19 @@ func newCalendarsFreebusyCalUnifiedCalendarsGetFreeBusyCmd(flags *rootFlags) *co
 			if !cmd.Flags().Changed("to") && !flags.dryRun {
 				return fmt.Errorf("required flag \"%s\" not set", "to")
 			}
+			if cmd.Flags().Changed("calendar") {
+				allowedCalendar := []string{"google", "office365", "apple"}
+				validCalendar := false
+				for _, v := range allowedCalendar {
+					if flagCalendar == v {
+						validCalendar = true
+						break
+					}
+				}
+				if !validCalendar {
+					fmt.Fprintf(os.Stderr, "warning: --%s %q not in allowed set %v\n", "calendar", flagCalendar, allowedCalendar)
+				}
+			}
 			c, err := flags.newClient()
 			if err != nil {
 				return err
@@ -56,14 +69,15 @@ func newCalendarsFreebusyCalUnifiedCalendarsGetFreeBusyCmd(flags *rootFlags) *co
 				_ = json.Unmarshal(data, &countItems)
 				printProvenance(cmd, len(countItems), prov)
 			}
-			// For JSON output, wrap with provenance envelope before passing through flags
+			// For JSON output, wrap with provenance envelope before passing through flags.
+			// --select wins over --compact when both are set; --compact only runs when
+			// no explicit fields were requested.
 			if flags.asJSON || !isTerminal(cmd.OutOrStdout()) {
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				wrapped, wrapErr := wrapWithProvenance(filtered, prov)
 				if wrapErr != nil {
@@ -87,7 +101,7 @@ func newCalendarsFreebusyCalUnifiedCalendarsGetFreeBusyCmd(flags *rootFlags) *co
 			return printOutputWithFlags(cmd.OutOrStdout(), data, flags)
 		},
 	}
-	cmd.Flags().StringVar(&flagCalendar, "calendar", "google", "Calendar")
+	cmd.Flags().StringVar(&flagCalendar, "calendar", "google", "Calendar (one of: google, office365, apple)")
 	cmd.Flags().StringVar(&flagFrom, "from", "", "Start of the date range (ISO 8601 date or date-time)")
 	cmd.Flags().StringVar(&flagTo, "to", "", "End of the date range (ISO 8601 date or date-time)")
 	cmd.Flags().StringVar(&flagTimeZone, "time-zone", "", "IANA time zone (e.g. America/New_York)")

@@ -74,7 +74,11 @@ func newEventTypesWebhooksEventTypeCreateEventTypeCmd(flags *rootFlags) *cobra.C
 					body["subscriberUrl"] = bodySubscriberUrl
 				}
 				if bodyTriggers != "" {
-					body["triggers"] = bodyTriggers
+					var parsedTriggers any
+					if err := json.Unmarshal([]byte(bodyTriggers), &parsedTriggers); err != nil {
+						return fmt.Errorf("parsing --triggers JSON: %w", err)
+					}
+					body["triggers"] = parsedTriggers
 				}
 				if bodyVersion != "" {
 					body["version"] = bodyVersion
@@ -110,13 +114,15 @@ func newEventTypesWebhooksEventTypeCreateEventTypeCmd(flags *rootFlags) *cobra.C
 				if flags.quiet {
 					return nil
 				}
-				// Apply --compact and --select to the API response before wrapping
+				// Apply --compact and --select to the API response before wrapping.
+				// --select wins when both are set: explicit field choice trumps the
+				// generic high-gravity allow-list. Otherwise --compact still applies
+				// when --agent is on but the user did not name fields.
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				envelope := map[string]any{
 					"action":   "post",

@@ -1,10 +1,10 @@
 {
-  "dir": "/Users/tmchow/printing-press/library/cal-com-pp-cli",
-  "spec_path": "/Users/tmchow/printing-press/manuscripts/cal-com-pp-cli/20260405-183800/research/cal-com-openapi-v2.json",
+  "dir": "/Users/tmchow/printing-press/library/cal-com",
+  "spec_path": "/Users/tmchow/printing-press/manuscripts/cal-com/20260426-231315/research/cal-com-openapi-v2.json",
   "verdict": "PASS",
   "path_check": {
-    "tested": 6,
-    "valid": 6,
+    "tested": 4,
+    "valid": 4,
     "valid_pct": 100
   },
   "auth_check": {
@@ -13,12 +13,17 @@
     "match": true,
     "detail": "spec and generated client both use \"Bearer\""
   },
+  "browser_session_check": {
+    "required": false,
+    "pass": true,
+    "detail": "browser-session auth not required"
+  },
   "dead_flags": {
-    "total": 15,
+    "total": 17,
     "dead": 0
   },
   "dead_functions": {
-    "total": 47,
+    "total": 48,
     "dead": 0
   },
   "pipeline_check": {
@@ -35,8 +40,8 @@
   },
   "wiring_check": {
     "command_tree": {
-      "defined": 338,
-      "registered": 338
+      "defined": 390,
+      "registered": 390
     },
     "config_consistency": {
       "consistent": true
@@ -52,6 +57,17 @@
     "planned": 0,
     "found": 0,
     "skipped": true
+  },
+  "reimplementation_check": {
+    "checked": 0,
+    "exempted_via_store": 0,
+    "skipped": true
+  },
+  "test_presence": {
+    "checked": 0
+  },
+  "naming_check": {
+    "checked": 368
   },
   "issues": null
 }

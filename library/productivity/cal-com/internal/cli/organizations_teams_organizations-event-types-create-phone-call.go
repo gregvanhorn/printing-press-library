@@ -40,9 +40,6 @@ func newOrganizationsTeamsOrganizationsEventTypesCreatePhoneCallCmd(flags *rootF
 				if !cmd.Flags().Changed("number-to-call") && !flags.dryRun {
 					return fmt.Errorf("required flag \"%s\" not set", "number-to-call")
 				}
-				if !cmd.Flags().Changed("template-type") && !flags.dryRun {
-					return fmt.Errorf("required flag \"%s\" not set", "template-type")
-				}
 				if !cmd.Flags().Changed("your-phone-number") && !flags.dryRun {
 					return fmt.Errorf("required flag \"%s\" not set", "your-phone-number")
 				}
@@ -136,13 +133,15 @@ func newOrganizationsTeamsOrganizationsEventTypesCreatePhoneCallCmd(flags *rootF
 				if flags.quiet {
 					return nil
 				}
-				// Apply --compact and --select to the API response before wrapping
+				// Apply --compact and --select to the API response before wrapping.
+				// --select wins when both are set: explicit field choice trumps the
+				// generic high-gravity allow-list. Otherwise --compact still applies
+				// when --agent is on but the user did not name fields.
 				filtered := data
-				if flags.compact {
-					filtered = compactFields(filtered)
-				}
 				if flags.selectFields != "" {
 					filtered = filterFields(filtered, flags.selectFields)
+				} else if flags.compact {
+					filtered = compactFields(filtered)
 				}
 				envelope := map[string]any{
 					"action":   "post",

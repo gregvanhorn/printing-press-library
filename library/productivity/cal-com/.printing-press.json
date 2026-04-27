@@ -1,10 +1,79 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-04-06T02:09:55.099963Z",
-  "printing_press_version": "1.0.1-0.20260406013547-96b9b42cfd31+dirty",
+  "generated_at": "2026-04-27T07:23:04.158688Z",
+  "printing_press_version": "2.3.9",
   "api_name": "cal-com",
   "cli_name": "cal-com-pp-cli",
   "spec_format": "openapi3",
   "spec_checksum": "sha256:585261b1c70ab21ef76004af6a4ea0cb52f2c64e6ef467c22e0f02484300a8f4",
-  "run_id": "20260405-183800"
+  "mcp_binary": "cal-com-pp-mcp",
+  "mcp_tool_count": 285,
+  "mcp_ready": "full",
+  "auth_type": "bearer_token",
+  "auth_env_vars": [
+    "CAL_COM_TOKEN"
+  ],
+  "novel_features": [
+    {
+      "name": "One-shot booking",
+      "command": "book",
+      "description": "Find a slot and book it in a single command \u2014 no slot/reserve/create/confirm chain."
+    },
+    {
+      "name": "Today's agenda",
+      "command": "today",
+      "description": "Today's bookings with status, attendees, and meeting links \u2014 read from the local store, no API call needed."
+    },
+    {
+      "name": "Week view",
+      "command": "week",
+      "description": "7-day calendar view of upcoming bookings, with conflict highlighting and per-day rollup counts."
+    },
+    {
+      "name": "Cross-event-type slot search",
+      "command": "slots find",
+      "description": "Find first available slot across multiple event types in one call, ranked by start time."
+    },
+    {
+      "name": "Booking analytics",
+      "command": "analytics",
+      "description": "Booking volume, density, no-show rate, and cancellation rate across a window, grouped by event type / attendee / weekday / hour."
+    },
+    {
+      "name": "Conflict detection",
+      "command": "conflicts",
+      "description": "Detects overlaps between active Cal.com bookings and external calendar busy-times."
+    },
+    {
+      "name": "Availability gap finder",
+      "command": "gaps",
+      "description": "Finds open windows in your schedule that are available but unbooked, filtered by minimum block size."
+    },
+    {
+      "name": "Team workload balance",
+      "command": "workload",
+      "description": "Booking distribution across team members over a window \u2014 surfaces overloaded vs underutilized hosts."
+    },
+    {
+      "name": "Webhook coverage",
+      "command": "webhooks coverage",
+      "description": "Audits registered webhook triggers against the canonical set and reports lifecycle events with no subscriber."
+    },
+    {
+      "name": "Stale event types",
+      "command": "event-types stale",
+      "description": "Event types with zero bookings in the last N days \u2014 candidates for removal."
+    },
+    {
+      "name": "Pending review",
+      "command": "bookings pending",
+      "description": "Pending-confirmation bookings sorted by age, with default 24h max-age cutoff."
+    },
+    {
+      "name": "Webhook trigger catalog",
+      "command": "webhooks triggers",
+      "description": "Static reference of every valid Cal.com webhook trigger constant, grouped by lifecycle stage."
+    }
+  ],
+  "run_id": "20260426-231315"
 }
