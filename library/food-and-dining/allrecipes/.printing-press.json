@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-04-27T07:07:55.113412Z",
+  "printing_press_version": "2.3.9",
+  "api_name": "allrecipes",
+  "cli_name": "allrecipes-pp-cli",
+  "spec_path": "/Users/tmchow/printing-press/.runstate/toasty-baking-tome-009c7c2d/runs/20260426-230519/research/allrecipes-spec.yaml",
+  "spec_format": "internal",
+  "spec_checksum": "sha256:2a85a69707a2170b596052db24d531fc0b39ba266299a850bfc19abb3f6fb038",
+  "run_id": "20260426-230519",
+  "mcp_binary": "allrecipes-pp-mcp",
+  "mcp_tool_count": 2,
+  "mcp_ready": "full",
+  "auth_type": "none",
+  "novel_features": [
+    {
+      "name": "Pantry match",
+      "command": "pantry",
+      "description": "Score Allrecipes recipes against your pantry \u2014 see which ones you can actually cook tonight without a grocery run."
+    },
+    {
+      "name": "Bayesian top-rated",
+      "command": "top-rated",
+      "description": "Rank recipes by Bayesian-smoothed rating \u2014 proven popular wins over 1-review 5-star noise."
+    },
+    {
+      "name": "Reverse ingredient index",
+      "command": "with-ingredient",
+      "description": "Find every cached recipe that uses a given ingredient \u2014 a SQL view across your local corpus."
+    },
+    {
+      "name": "Quick weeknight",
+      "command": "quick",
+      "description": "Top-rated recipes that fit a strict time cap \u2014 Allrecipes' UI cannot enforce one, but the local cache can."
+    },
+    {
+      "name": "Personal cookbook export",
+      "command": "cookbook",
+      "description": "Compile a top-rated category into a single markdown cookbook with TOC, ingredients, and instructions."
+    },
+    {
+      "name": "Multi-recipe grocery list",
+      "command": "grocery-list",
+      "description": "Aggregate ingredients from many recipes into a deduped, agent-readable shopping list."
+    },
+    {
+      "name": "Dietary filter on cache",
+      "command": "dietary",
+      "description": "Filter cached recipes by gluten-free / vegan / low-carb using JSON-LD keywords plus ingredient-name patterns."
+    },
+    {
+      "name": "Doctor with Cloudflare diagnosis",
+      "command": "doctor",
+      "description": "Health check that names the Cloudflare 'Just a moment...' interstitial by inspecting the response body, then advises the browser-chrome transport."
+    }
+  ]
+}

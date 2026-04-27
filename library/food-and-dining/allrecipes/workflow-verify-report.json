@@ -1,0 +1,8 @@
+{
+  "dir": "/Users/tmchow/printing-press/.runstate/toasty-baking-tome-009c7c2d/runs/20260426-230519/working/allrecipes-pp-cli",
+  "workflows": null,
+  "verdict": "workflow-pass",
+  "issues": [
+    "no workflow manifest found, skipping"
+  ]
+}

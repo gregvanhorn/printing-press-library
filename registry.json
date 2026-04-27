@@ -9,6 +9,25 @@
       "path": "library/developer-tools/agent-capture"
     },
     {
+      "name": "allrecipes",
+      "category": "food-and-dining",
+      "api": "Allrecipes",
+      "description": "Allrecipes Pocket \u2014 every Allrecipes recipe in your terminal: cached as data, with pantry-aware search, Bayesian-smoothed ranking, multi-recipe grocery lists, and clean markdown export.",
+      "path": "library/food-and-dining/allrecipes",
+      "mcp": {
+        "binary": "allrecipes-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 2,
+        "public_tool_count": 2,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full",
+        "manifest_checksum": "sha256:a42ccb6007f505c234a847bb4689a1b270989f67512ab45047172769fef7f81d",
+        "spec_format": "internal",
+        "manifest_url": "library/food-and-dining/allrecipes/tools-manifest.json"
+      }
+    },
+    {
       "name": "archive-is",
       "category": "media-and-entertainment",
       "api": "Archive.today",
