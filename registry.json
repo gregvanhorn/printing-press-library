@@ -64,6 +64,24 @@
       }
     },
     {
+      "name": "company-goat",
+      "category": "developer-tools",
+      "api": "Company GOAT",
+      "description": "Multi-source company research for small and midsize startups, with SEC Form D fundraising data hidden behind paid Crunchbase tiers.",
+      "path": "library/developer-tools/company-goat",
+      "mcp": {
+        "binary": "company-goat-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 1,
+        "public_tool_count": 0,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full",
+        "manifest_url": "library/developer-tools/company-goat/tools-manifest.json",
+        "manifest_checksum": "sha256:b43efc9c70968bb1c9556313756d1e2ea1230c70ac8991e8db0bdefcf9365b6d"
+      }
+    },
+    {
       "name": "contact-goat",
       "category": "sales-and-crm",
       "api": "contact-goat",
