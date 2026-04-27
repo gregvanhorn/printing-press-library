@@ -10,20 +10,61 @@ Three to try first:
 - flight-goat (Kayak nonstop search plus sniffed Google Flights). _"Non-stop flights over 8 hours from Seattle for 4 people, Dec 24 to Jan 1, cheapest first."_ Two sources, one query.
 - linear-pp-cli (50ms against a local SQLite mirror). _"Every blocked issue whose blocker has been stuck for a week."_ Compound queries the Linear API can't answer.
 
-## Start here
+## Release status
 
-This repo is itself a Claude Code plugin marketplace. Add it, install the plugin, and you have every CLI in the catalog one slash-command away.
+The v0.1.0 npm installer and `cli-skills/` direct-install namespace are prepared in this repo, but public use is waiting on three release steps:
+
+1. Merge this work to `main`, so `cli-skills/` exists on the default branch.
+2. Publish `@mvanhorn/printing-press` to npm.
+3. Make the repo public, or document the private-repo token setup for early users.
+
+While the repo is private, live installer use requires `GITHUB_TOKEN` or `GH_TOKEN` for catalog and skill fetches, plus private Go module access for `go install`.
+
+## Install a CLI
+
+After v0.1.0 is published, the primary install path is:
+
+```bash
+npx -y @mvanhorn/printing-press install espn
+```
+
+That command installs the Go binary and the focused `pp-espn` skill. The npm package is intentionally thin: it reads the live catalog in `registry.json`, resolves the CLI's Go module path, runs `go install`, and installs the matching skill from `cli-skills/pp-<name>`.
+
+Useful commands:
+
+```bash
+npx -y @mvanhorn/printing-press search sports
+npx -y @mvanhorn/printing-press list
+npx -y @mvanhorn/printing-press update espn
+npx -y @mvanhorn/printing-press uninstall espn --yes
+```
+
+## Use the plugin router
+
+This repo is also a Claude Code plugin marketplace. Add it and install the plugin:
 
 ```text
 /plugin marketplace add mvanhorn/printing-press-library
 /plugin install printing-press-library@printing-press-library
 ```
 
-After install, the main router skill is:
+The plugin exposes the catalog router skill:
 
 ```text
 /ppl
 ```
+
+/ppl handles discovery, routing, and install guidance:
+
+```text
+/ppl
+/ppl sports scores
+/ppl install espn
+/ppl espn lakers score
+/ppl linear my open issues
+```
+
+The plugin intentionally does not install every focused `/pp-*` skill by default. Focused skills live under `cli-skills/` for direct installation, so users can install only the tools they want.
 
 Want to print new CLIs from API specs? Install the Printing Press itself too:
 
@@ -32,22 +73,15 @@ Want to print new CLIs from API specs? Install the Printing Press itself too:
 /plugin install cli-printing-press@cli-printing-press
 ```
 
-## Two ways in
+## Focused skills
 
-The repository and plugin are named `printing-press-library`. The mega-skill you actually use is `/ppl`. That naming split is intentional.
+When you already know the tool you want, install just that skill:
 
-Use `/ppl` when you want discovery, routing, or installation. Examples:
-
-```text
-/ppl
-/ppl sports scores
-/ppl install espn cli
-/ppl install espn mcp
-/ppl espn lakers score
-/ppl linear my open issues
+```bash
+npx skills add mvanhorn/printing-press-library/cli-skills/pp-espn -g
 ```
 
-Use a focused `/pp-<name>` skill when you already know the tool you want. Examples:
+Then use the focused slash skill directly:
 
 ```text
 /pp-espn lakers score
@@ -55,42 +89,42 @@ Use a focused `/pp-<name>` skill when you already know the tool you want. Exampl
 /pp-weather-goat phoenix forecast
 ```
 
-`/ppl` is the catalog plus the librarian. Each `/pp-<name>` is a single shelf you reach directly when you don't need help finding it.
+`/ppl` is the catalog router. Each `/pp-<name>` skill is a focused interface for one CLI.
 
 ## Catalog
 
-Tools grouped by category, sourced from [`registry.json`](registry.json). Each row links to the tool source and its focused plugin skill.
+Tools grouped by category, sourced from [`registry.json`](registry.json). Each row links to the tool source and its focused direct-install skill.
 
 | Name | Skill | Auth | MCP | Slash install | What it does |
 |------|-------|------|-----|---------------|--------------|
-| [`agent-capture`](library/developer-tools/agent-capture/) | [`/pp-agent-capture`](skills/pp-agent-capture/SKILL.md) | local only | no | `/ppl install agent-capture cli` | Record, screenshot, and convert macOS windows and screens for agent evidence. |
-| [`archive-is`](library/media-and-entertainment/archive-is/) | [`/pp-archive-is`](skills/pp-archive-is/SKILL.md) | none | full | `/ppl install archive-is cli` | Find and create Archive.today snapshots for URLs. |
-| [`cal-com`](library/productivity/cal-com/) | [`/pp-cal-com`](skills/pp-cal-com/SKILL.md) | API key | full | `/ppl install cal-com cli` | Manage bookings, schedules, event types, and availability. |
-| [`contact-goat`](library/sales-and-crm/contact-goat/) | [`/pp-contact-goat`](skills/pp-contact-goat/SKILL.md) | mixed | full | `/ppl install contact-goat cli` | Cross-source warm-intro graph across LinkedIn, Happenstance, and Deepline with a unified local store. |
-| [`dominos-pp-cli`](library/commerce/dominos-pp-cli/) | [`/pp-dominos`](skills/pp-dominos/SKILL.md) | browser login | full | `/ppl install dominos cli` | Order Domino's, browse menus, and track deliveries. |
-| [`dub`](library/marketing/dub/) | [`/pp-dub`](skills/pp-dub/SKILL.md) | API key | full | `/ppl install dub cli` | Create short links, track analytics, and manage domains. |
-| [`espn`](library/media-and-entertainment/espn/) | [`/pp-espn`](skills/pp-espn/SKILL.md) | none | full | `/ppl install espn cli` | Live scores, standings, schedules, and sports news. |
-| [`flightgoat`](library/travel/flightgoat/) | [`/pp-flightgoat`](skills/pp-flightgoat/SKILL.md) | API key optional | full | `/ppl install flightgoat cli` | Search flights, explore routes, and track flights. |
-| [`hackernews`](library/media-and-entertainment/hackernews/) | [`/pp-hackernews`](skills/pp-hackernews/SKILL.md) | none | full | `/ppl install hackernews cli` | Browse stories, comments, jobs, and topic slices from Hacker News. |
-| [`hubspot-pp-cli`](library/sales-and-crm/hubspot/) | [`/pp-hubspot`](skills/pp-hubspot/SKILL.md) | API key | full | `/ppl install hubspot cli` | Work with contacts, companies, deals, tickets, and pipelines. |
-| [`instacart`](library/commerce/instacart/) | [`/pp-instacart`](skills/pp-instacart/SKILL.md) | browser session | no | `/ppl install instacart cli` | Search products, manage carts, and shop Instacart from the terminal. |
-| [`kalshi`](library/payments/kalshi/) | [`/pp-kalshi`](skills/pp-kalshi/SKILL.md) | API key | full | `/ppl install kalshi cli` | Trade markets, inspect portfolios, and analyze odds. |
-| [`linear`](library/project-management/linear/) | [`/pp-linear`](skills/pp-linear/SKILL.md) | API key | full | `/ppl install linear cli` | Manage issues, cycles, teams, and projects with local sync. |
-| [`movie-goat`](library/media-and-entertainment/movie-goat/) | [`/pp-movie-goat`](skills/pp-movie-goat/SKILL.md) | bearer token | full | `/ppl install movie-goat cli` | Compare movie ratings, streaming availability, and recommendations. |
-| [`pagliacci-pizza`](library/food-and-dining/pagliacci-pizza/) | [`/pp-pagliacci-pizza`](skills/pp-pagliacci-pizza/SKILL.md) | browser login | partial | `/ppl install pagliacci-pizza cli` | Order Pagliacci and browse public menu and store data without login. |
-| [`pokeapi`](library/media-and-entertainment/pokeapi/) | [`/pp-pokeapi`](skills/pp-pokeapi/SKILL.md) | none | full | `/ppl install pokeapi cli` | PokeAPI as an agent-ready knowledge graph plus matchup and team-coverage workflows. |
-| [`postman-explore`](library/developer-tools/postman-explore/) | [`/pp-postman-explore`](skills/pp-postman-explore/SKILL.md) | none | full | `/ppl install postman-explore cli` | Search and browse the Postman API Network. |
-| [`producthunt`](library/marketing/producthunt/) | [`/pp-producthunt`](skills/pp-producthunt/SKILL.md) | none | full | `/ppl install producthunt cli` | Token-free Product Hunt CLI with local sync and views the website doesn't expose. |
-| [`recipe-goat`](library/food-and-dining/recipe-goat/) | [`/pp-recipe-goat`](skills/pp-recipe-goat/SKILL.md) | API key | full | `/ppl install recipe-goat cli` | Find recipes across 37 trusted sites with trust-aware ranking and local cookbook. |
-| [`slack`](library/productivity/slack/) | [`/pp-slack`](skills/pp-slack/SKILL.md) | API key | full | `/ppl install slack cli` | Send messages, search conversations, and monitor channels. |
-| [`steam-web`](library/media-and-entertainment/steam-web/) | [`/pp-steam-web`](skills/pp-steam-web/SKILL.md) | API key | full | `/ppl install steam-web cli` | Look up Steam players, games, achievements, and stats. |
-| [`trigger-dev`](library/developer-tools/trigger-dev/) | [`/pp-trigger-dev`](skills/pp-trigger-dev/SKILL.md) | API key | full | `/ppl install trigger-dev cli` | Monitor runs, trigger tasks, and inspect schedules and failures. |
-| [`weather-goat`](library/other/weather-goat/) | [`/pp-weather-goat`](skills/pp-weather-goat/SKILL.md) | none | full | `/ppl install weather-goat cli` | Forecasts, alerts, air quality, and activity verdicts. |
-| [`yahoo-finance`](library/commerce/yahoo-finance/) | [`/pp-yahoo-finance`](skills/pp-yahoo-finance/SKILL.md) | none | full | `/ppl install yahoo-finance cli` | Quotes, charts, fundamentals, options, and watchlists. |
+| [`agent-capture`](library/developer-tools/agent-capture/) | [`/pp-agent-capture`](cli-skills/pp-agent-capture/SKILL.md) | local only | no | `/ppl install agent-capture cli` | Record, screenshot, and convert macOS windows and screens for agent evidence. |
+| [`archive-is`](library/media-and-entertainment/archive-is/) | [`/pp-archive-is`](cli-skills/pp-archive-is/SKILL.md) | none | full | `/ppl install archive-is cli` | Find and create Archive.today snapshots for URLs. |
+| [`cal-com`](library/productivity/cal-com/) | [`/pp-cal-com`](cli-skills/pp-cal-com/SKILL.md) | API key | full | `/ppl install cal-com cli` | Manage bookings, schedules, event types, and availability. |
+| [`contact-goat`](library/sales-and-crm/contact-goat/) | [`/pp-contact-goat`](cli-skills/pp-contact-goat/SKILL.md) | mixed | full | `/ppl install contact-goat cli` | Cross-source warm-intro graph across LinkedIn, Happenstance, and Deepline with a unified local store. |
+| [`dominos-pp-cli`](library/commerce/dominos-pp-cli/) | [`/pp-dominos`](cli-skills/pp-dominos/SKILL.md) | browser login | full | `/ppl install dominos cli` | Order Domino's, browse menus, and track deliveries. |
+| [`dub`](library/marketing/dub/) | [`/pp-dub`](cli-skills/pp-dub/SKILL.md) | API key | full | `/ppl install dub cli` | Create short links, track analytics, and manage domains. |
+| [`espn`](library/media-and-entertainment/espn/) | [`/pp-espn`](cli-skills/pp-espn/SKILL.md) | none | full | `/ppl install espn cli` | Live scores, standings, schedules, and sports news. |
+| [`flightgoat`](library/travel/flightgoat/) | [`/pp-flightgoat`](cli-skills/pp-flightgoat/SKILL.md) | API key optional | full | `/ppl install flightgoat cli` | Search flights, explore routes, and track flights. |
+| [`hackernews`](library/media-and-entertainment/hackernews/) | [`/pp-hackernews`](cli-skills/pp-hackernews/SKILL.md) | none | full | `/ppl install hackernews cli` | Browse stories, comments, jobs, and topic slices from Hacker News. |
+| [`hubspot-pp-cli`](library/sales-and-crm/hubspot/) | [`/pp-hubspot`](cli-skills/pp-hubspot/SKILL.md) | API key | full | `/ppl install hubspot cli` | Work with contacts, companies, deals, tickets, and pipelines. |
+| [`instacart`](library/commerce/instacart/) | [`/pp-instacart`](cli-skills/pp-instacart/SKILL.md) | browser session | no | `/ppl install instacart cli` | Search products, manage carts, and shop Instacart from the terminal. |
+| [`kalshi`](library/payments/kalshi/) | [`/pp-kalshi`](cli-skills/pp-kalshi/SKILL.md) | API key | full | `/ppl install kalshi cli` | Trade markets, inspect portfolios, and analyze odds. |
+| [`linear`](library/project-management/linear/) | [`/pp-linear`](cli-skills/pp-linear/SKILL.md) | API key | full | `/ppl install linear cli` | Manage issues, cycles, teams, and projects with local sync. |
+| [`movie-goat`](library/media-and-entertainment/movie-goat/) | [`/pp-movie-goat`](cli-skills/pp-movie-goat/SKILL.md) | bearer token | full | `/ppl install movie-goat cli` | Compare movie ratings, streaming availability, and recommendations. |
+| [`pagliacci-pizza`](library/food-and-dining/pagliacci-pizza/) | [`/pp-pagliacci-pizza`](cli-skills/pp-pagliacci-pizza/SKILL.md) | browser login | partial | `/ppl install pagliacci-pizza cli` | Order Pagliacci and browse public menu and store data without login. |
+| [`pokeapi`](library/media-and-entertainment/pokeapi/) | [`/pp-pokeapi`](cli-skills/pp-pokeapi/SKILL.md) | none | full | `/ppl install pokeapi cli` | PokeAPI as an agent-ready knowledge graph plus matchup and team-coverage workflows. |
+| [`postman-explore`](library/developer-tools/postman-explore/) | [`/pp-postman-explore`](cli-skills/pp-postman-explore/SKILL.md) | none | full | `/ppl install postman-explore cli` | Search and browse the Postman API Network. |
+| [`producthunt`](library/marketing/producthunt/) | [`/pp-producthunt`](cli-skills/pp-producthunt/SKILL.md) | none | full | `/ppl install producthunt cli` | Token-free Product Hunt CLI with local sync and views the website doesn't expose. |
+| [`recipe-goat`](library/food-and-dining/recipe-goat/) | [`/pp-recipe-goat`](cli-skills/pp-recipe-goat/SKILL.md) | API key | full | `/ppl install recipe-goat cli` | Find recipes across 37 trusted sites with trust-aware ranking and local cookbook. |
+| [`slack`](library/productivity/slack/) | [`/pp-slack`](cli-skills/pp-slack/SKILL.md) | API key | full | `/ppl install slack cli` | Send messages, search conversations, and monitor channels. |
+| [`steam-web`](library/media-and-entertainment/steam-web/) | [`/pp-steam-web`](cli-skills/pp-steam-web/SKILL.md) | API key | full | `/ppl install steam-web cli` | Look up Steam players, games, achievements, and stats. |
+| [`trigger-dev`](library/developer-tools/trigger-dev/) | [`/pp-trigger-dev`](cli-skills/pp-trigger-dev/SKILL.md) | API key | full | `/ppl install trigger-dev cli` | Monitor runs, trigger tasks, and inspect schedules and failures. |
+| [`weather-goat`](library/other/weather-goat/) | [`/pp-weather-goat`](cli-skills/pp-weather-goat/SKILL.md) | none | full | `/ppl install weather-goat cli` | Forecasts, alerts, air quality, and activity verdicts. |
+| [`yahoo-finance`](library/commerce/yahoo-finance/) | [`/pp-yahoo-finance`](cli-skills/pp-yahoo-finance/SKILL.md) | none | full | `/ppl install yahoo-finance cli` | Quotes, charts, fundamentals, options, and watchlists. |
 
-## Direct install
+## Binary-only install
 
-You need [Go 1.23+](https://go.dev/dl/).
+If you only want the binary and not the companion skill, install directly with [Go 1.23+](https://go.dev/dl/):
 
 ```bash
 go install github.com/mvanhorn/printing-press-library/<path>/cmd/<binary>@latest
@@ -132,16 +166,23 @@ library/
   marketplace.json
   plugin.json
 
+cli-skills/
+  pp-*/
+    SKILL.md                 # generated direct-install mirror of library/<.>/SKILL.md
+
+npm/
+  package.json
+  src/
+  bin/
+
 skills/
   ppl/
     SKILL.md
-  pp-*/
-    SKILL.md                 # generated mirror of library/<.>/SKILL.md
 
 registry.json
 ```
 
-Each published tool is self-contained: source code, a local README, a `.printing-press.json` provenance manifest, and the manuscripts from the printing run. `skills/pp-*` is a generated mirror of each library `SKILL.md`, produced by `tools/generate-skills/main.go`.
+Each published tool is self-contained: source code, a local README, a `.printing-press.json` provenance manifest, and the manuscripts from the printing run. `cli-skills/pp-*` is a generated mirror of each library `SKILL.md`, produced by `tools/generate-skills/main.go`. `skills/ppl` is the plugin-facing router skill.
 
 ## What endorsed means
 

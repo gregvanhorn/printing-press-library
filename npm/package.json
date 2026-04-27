@@ -1,0 +1,27 @@
+{
+  "name": "@mvanhorn/printing-press",
+  "version": "0.1.0",
+  "description": "Installer and catalog CLI for Printing Press-generated CLIs.",
+  "type": "module",
+  "bin": {
+    "pp": "./bin/pp.mjs"
+  },
+  "files": [
+    "bin/",
+    "CHANGELOG.md",
+    "dist/src/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "test": "npm run build && node --test \"dist/tests/**/*.test.js\""
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.39",
+    "typescript": "^5.9.3"
+  }
+}

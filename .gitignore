@@ -17,6 +17,10 @@ __debug_bin*
 # Generator build artifacts (CI uses `go run`, these come from local `go build`)
 tools/generate-skills/generate-skills
 
+# NPM package local artifacts
+npm/dist/
+npm/node_modules/
+
 # Vendored dependencies (each CLI manages its own)
 vendor/
 

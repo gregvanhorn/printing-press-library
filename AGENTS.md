@@ -20,12 +20,15 @@ library/<category>/<cli-slug>/      — one published CLI per directory
 
 .claude-plugin/
   marketplace.json                  — marketplace manifest (declares the plugin at source "./")
-  plugin.json                       — plugin manifest; `version` bumps patch on changes
-skills/pp-<slug>/SKILL.md           — generated mirror of library/<…>/SKILL.md (see "Keeping skills/ in sync")
-skills/ppl/                         — the mega-skill across all CLIs
+  plugin.json                       — plugin manifest; discovers only "./skills/"
+
+cli-skills/pp-<slug>/SKILL.md       — generated per-CLI skill mirror for direct installs
+skills/ppl/                         — the plugin-facing mega-skill across all CLIs
+
+npm/                                — @mvanhorn/printing-press npm installer wrapper
 
 registry.json                       — top-level catalog: every CLI's name, category, description, path, MCP metadata
-tools/generate-skills/              — regenerates skills/pp-* from library/ + registry.json
+tools/generate-skills/              — regenerates cli-skills/pp-* + skills/ppl references
 .github/scripts/verify-skill/       — Python verifier that checks SKILL.md matches shipped Go source
 .github/workflows/                  — CI: verify-skills.yml, generate-skills.yml
 ```
@@ -75,15 +78,23 @@ A few older CLIs (e.g. `agent-capture`, `instacart`) use a package-global `var r
 
 ## SKILL.md coverage
 
-As of 2026-04-20, every CLI in `library/` ships a `library/<category>/<slug>/SKILL.md`. The generator (`tools/generate-skills/main.go`) copies each library SKILL.md verbatim to `skills/pp-<slug>/SKILL.md`. The verifier (`verify-skills.yml`) runs flag / command / positional-arg checks against every CLI.
+As of 2026-04-20, every CLI in `library/` ships a `library/<category>/<slug>/SKILL.md`. The generator (`tools/generate-skills/main.go`) copies each library SKILL.md verbatim to `cli-skills/pp-<slug>/SKILL.md`. The verifier (`verify-skills.yml`) runs flag / command / positional-arg checks against every CLI.
 
-**No command shims.** Claude Code has merged `commands/` into `skills/` — a skill at `skills/pp-foo/SKILL.md` registers `/pp-foo` directly. Don't re-add a `commands/` directory to work around perceived autocomplete gaps; that's double-registration of the same `/name` namespace. If `/pp-*` doesn't appear in slash autocomplete, check Claude Code version (cf. [#48963](https://github.com/anthropics/claude-code/issues/48963)) rather than adding shims.
+**No command shims.** Per-CLI skills live under `cli-skills/pp-foo/SKILL.md` for direct installation through `npx skills add` and the npm installer. Don't re-add a `commands/` directory, and don't duplicate generated `pp-*` skills back under `skills/` to restore plugin autocomplete. The plugin intentionally exposes `skills/ppl` as the router skill; `cli-skills/` is the flat direct-install namespace.
 
 When adding a new CLI, ship a library SKILL.md alongside the generated code. Registry-only synthesis still works as a fallback but is strictly worse: agents get no "when to use" guidance, no curated command list, and the trigger-phrase list is generic ("install X, use X, run X") so natural-language matches miss.
 
-## Keeping `skills/` in sync
+## NPM installer surface
 
-`skills/pp-<slug>/SKILL.md` is a **generated mirror** of `library/<category>/<slug>/SKILL.md`, produced by `tools/generate-skills/main.go`. Any PR that modifies a library SKILL.md or a library CLI's `internal/cli/**` source must also commit the regenerated plugin output.
+`@mvanhorn/printing-press` lives in `npm/`. The `pp` command reads the live `registry.json`, resolves a catalog name to its published Go module path, runs `go install`, and installs the matching `cli-skills/pp-<name>` skill with `skills@latest`.
+
+Adding or updating a CLI should not require an npm publish after v0.1.0 lands. The package is a thin installer over the catalog; new CLIs become installable when `registry.json`, `library/`, and `cli-skills/` are updated on the target branch.
+
+While this repo remains private, live installer usage requires `GITHUB_TOKEN` or `GH_TOKEN` for registry and skill fetches plus working private Go module auth. Don't describe the npm install path as public-ready until the package is published and the repo visibility/token story is settled.
+
+## Keeping `cli-skills/` in sync
+
+`cli-skills/pp-<slug>/SKILL.md` is a **generated mirror** of `library/<category>/<slug>/SKILL.md`, produced by `tools/generate-skills/main.go`. Any PR that modifies a library SKILL.md or a library CLI's `internal/cli/**` source must also commit the regenerated direct-install skill output.
 
 **When you change `library/**/SKILL.md` or `library/**/internal/cli/**`:**
 
@@ -91,10 +102,10 @@ When adding a new CLI, ship a library SKILL.md alongside the generated code. Reg
    ```bash
    go run ./tools/generate-skills/main.go
    ```
-2. Bump `.claude-plugin/plugin.json` `version` (semver patch, e.g. `1.1.9` → `1.1.10`). The generator's `maybeUpdatePluginVersion` only auto-bumps on directory-set changes (CLI added or removed); **SKILL content changes do not trigger an auto-bump and need a manual edit**.
-3. Commit the regenerated `skills/pp-*/SKILL.md` files AND the version bump alongside your library change — ideally in one `chore(plugin): regenerate pp-* skills + bump to X.Y.Z` commit.
+2. Commit the regenerated `cli-skills/pp-*/SKILL.md` files and `skills/ppl/references/registry.json` alongside your library change.
+3. Bump `.claude-plugin/plugin.json` only when plugin-facing files change, such as `skills/ppl/**` or `.claude-plugin/**`. Per-CLI mirror churn under `cli-skills/` is intentionally outside the plugin manifest's `./skills/` discovery tree.
 
-**Why the manual step exists:** `.github/workflows/generate-skills.yml` only triggers on changes to `registry.json`, `library/**/.printing-press.json`, or `tools/generate-skills/**`. It does not fire on SKILL.md or `internal/cli/**` changes. Expanding those triggers, plus teaching `maybeUpdatePluginVersion` to bump on content changes, is worth a follow-up; until then, the manual run is the workaround.
+**Why the manual step exists:** `.github/workflows/generate-skills.yml` only triggers on changes to `registry.json`, `library/**/.printing-press.json`, or `tools/generate-skills/**`. It does not fire on SKILL.md or `internal/cli/**` changes. Expanding those triggers is worth a follow-up; until then, the manual run is the workaround.
 
 ## Marketplace manifest
 
