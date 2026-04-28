@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -165,7 +166,7 @@ Exit codes:
 	}
 	cmd.Flags().StringVar(&t.Domain, "domain", "", "Skip name resolution and use this domain (e.g. stripe.com)")
 	cmd.Flags().IntVar(&t.Pick, "pick", 0, "Pick candidate N (1-indexed) from a previous ambiguous resolve")
-	cmd.Flags().StringVar(&who, "who", "", "Show all Form D filings naming this person (e.g. \"Patrick Collison\")")
+	cmd.Flags().StringVar(&who, "who", "", "Show every SEC filing naming this person: Form D related-person matches (officer, director, promoter) plus EDGAR mentions across S-1, 10-K, DEF 14A, etc. (e.g. \"Patrick Collison\")")
 	cmd.Flags().IntVar(&maxFilings, "max", 5, "Maximum filings to fetch and parse")
 	cmd.Flags().IntVar(&sinceYear, "since", 0, "Filter to filings on or after this year")
 	return cmd
@@ -175,54 +176,148 @@ func runFundingWho(cmd *cobra.Command, flags *rootFlags, secCli *sec.Client, who
 	ctx, cancel := context.WithTimeout(cmd.Context(), 60*time.Second)
 	defer cancel()
 
-	// EFTS supports phrase search — use the person's name in quotes.
-	filings, err := secCli.SearchAndFetchAll(ctx, who, maxFilings*2)
+	// Pass 1: Form D filings naming the person as a related party
+	// (officer, director, promoter). High confidence: the XML parser
+	// extracts structured related-person fields.
+	formDFilings, err := secCli.SearchAndFetchAll(ctx, who, maxFilings*2)
 	if err != nil {
 		return classifyAPIError(fmt.Errorf("sec edgar: %w", err))
 	}
-	// Filter to filings actually naming this person in relatedPersons.
-	wantLower := strings.ToLower(who)
-	matched := filings[:0]
-	for _, fd := range filings {
-		hit := false
+	matchedFormD := formDFilings[:0]
+	for _, fd := range formDFilings {
 		for _, p := range fd.RelatedPersons {
-			if strings.Contains(strings.ToLower(p.Name), wantLower) {
-				hit = true
+			if nameMatchesAtWordBoundary(p.Name, who) {
+				matchedFormD = append(matchedFormD, fd)
 				break
 			}
 		}
-		if hit {
-			matched = append(matched, fd)
-		}
 	}
 	if sinceYear > 0 {
-		matched = filterByYear(matched, sinceYear)
+		matchedFormD = filterByYear(matchedFormD, sinceYear)
 	}
 
-	if len(matched) == 0 {
-		fmt.Fprintf(cmd.OutOrStdout(), "no Form D filings found naming %q\n", who)
+	// Pass 2: broader EDGAR mentions of the name across S-1, 10-K,
+	// DEF 14A, 8-K, etc. Lower confidence: matches on the EFTS hit's
+	// display_names, not on parsed related-person fields. This catches
+	// officers and named executives of companies that have not filed
+	// Form D (typical for SAFE-funded or acquired startups).
+	mentions := searchMentionsForPerson(ctx, secCli, who, sinceYear)
+
+	if len(matchedFormD) == 0 && (mentions == nil || mentions.Total == 0) {
+		fmt.Fprintf(cmd.OutOrStdout(), "no SEC filings found naming %q\n", who)
+		fmt.Fprintf(cmd.OutOrStdout(), "Try: company-goat-pp-cli funding --who %q with a different spelling, or browse https://efts.sec.gov/LATEST/search-index?q=%%22%s%%22\n", who, urlEscape(who))
 		os.Exit(5)
 	}
 
-	out := struct {
-		Person   string          `json:"person"`
-		Filings  []fundingFiling `json:"form_d_filings"`
-		Coverage string          `json:"coverage_note"`
-	}{
+	type whoOut struct {
+		Person   string           `json:"person"`
+		Filings  []fundingFiling  `json:"form_d_filings"`
+		Mentions *fundingMentions `json:"mentions,omitempty"`
+		Coverage string           `json:"coverage_note"`
+	}
+	out := whoOut{
 		Person:   who,
-		Filings:  fundingFilingsFromSEC(matched),
-		Coverage: "Form D is US-only. Filings count: " + fmt.Sprintf("%d", len(matched)),
+		Filings:  fundingFilingsFromSEC(matchedFormD),
+		Mentions: mentions,
+		Coverage: fmt.Sprintf("Form D filings: %d. EDGAR mentions: %d. Form D is US-only; mentions cover all form types.",
+			len(matchedFormD), mentionTotal(mentions)),
 	}
 	w := cmd.OutOrStdout()
 	asJSON := flags.asJSON || !isTerminal(w)
 	if asJSON {
 		return flags.printJSON(cmd, out)
 	}
-	fmt.Fprintf(w, "Form D filings naming %q:\n\n", who)
-	for _, f := range out.Filings {
-		fmt.Fprintf(w, "  %s  %-40s  %s\n", f.FilingDate, f.EntityName, formatAmount(f.OfferingAmount))
+	if len(matchedFormD) > 0 {
+		fmt.Fprintf(w, "Form D filings naming %q:\n\n", who)
+		for _, f := range out.Filings {
+			fmt.Fprintf(w, "  %s  %-40s  %s\n", f.FilingDate, f.EntityName, formatAmount(f.OfferingAmount))
+		}
 	}
+	if mentions != nil && mentions.Total > 0 {
+		fmt.Fprintf(w, "\nEDGAR mentions of %q (%d total):\n", who, mentions.Total)
+		renderMentionGroup(w, "Subsidiary signal", mentions.Subsidiary)
+		renderMentionGroup(w, "Venture-debt signal", mentions.Debt)
+		renderMentionGroup(w, "Acquisition signal", mentions.Acquisition)
+		renderMentionGroup(w, "Other mentions", mentions.Other)
+	}
+	fmt.Fprintf(w, "\n%s\n", out.Coverage)
 	return nil
+}
+
+// searchMentionsForPerson runs SearchAnyForm and filters hits to those
+// where the person's name appears in the display_names at a word
+// boundary. Form D hits are excluded since pass 1 covers them with
+// parsed-XML high-confidence matching.
+func searchMentionsForPerson(ctx context.Context, secCli *sec.Client, person string, sinceYear int) *fundingMentions {
+	resp, err := secCli.SearchAnyForm(ctx, person, 25)
+	if err != nil || resp == nil || len(resp.Hits) == 0 {
+		return nil
+	}
+	out := &fundingMentions{}
+	prefix := ""
+	if sinceYear > 0 {
+		prefix = fmt.Sprintf("%04d", sinceYear)
+	}
+	for _, hit := range resp.Hits {
+		if strings.EqualFold(hit.Form, "D") {
+			continue
+		}
+		if prefix != "" && hit.FileDate < prefix {
+			continue
+		}
+		filer := firstDisplayName(hit.DisplayNames)
+		if !nameMatchesAtWordBoundary(filer, person) {
+			continue
+		}
+		row := mentionRow{
+			Form:         hit.Form,
+			Filer:        filer,
+			FileDate:     hit.FileDate,
+			AccessionURL: accessionURL(hit),
+		}
+		switch binMention(hit, person) {
+		case "subsidiary":
+			out.Subsidiary = append(out.Subsidiary, row)
+		case "debt":
+			out.Debt = append(out.Debt, row)
+		case "acquisition":
+			out.Acquisition = append(out.Acquisition, row)
+		default:
+			out.Other = append(out.Other, row)
+		}
+		out.Total++
+	}
+	if out.Total == 0 {
+		return nil
+	}
+	return out
+}
+
+func mentionTotal(m *fundingMentions) int {
+	if m == nil {
+		return 0
+	}
+	return m.Total
+}
+
+// nameMatchesAtWordBoundary returns true when needle appears in haystack
+// as a complete word phrase (case-insensitive). "Patrick Collins" matches
+// "Patrick Collins" but not "Patrick Collinsworth".
+func nameMatchesAtWordBoundary(haystack, needle string) bool {
+	parts := strings.Fields(needle)
+	if len(parts) == 0 {
+		return false
+	}
+	quoted := make([]string, len(parts))
+	for i, p := range parts {
+		quoted[i] = regexp.QuoteMeta(p)
+	}
+	pattern := `(?i)\b` + strings.Join(quoted, `\s+`) + `\b`
+	re, err := regexp.Compile(pattern)
+	if err != nil {
+		return false
+	}
+	return re.MatchString(haystack)
 }
 
 func filterByYear(in []sec.FormD, year int) []sec.FormD {
