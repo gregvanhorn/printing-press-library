@@ -18,11 +18,13 @@ import (
 
 // fundingResult is the JSON shape for `funding <co>`.
 type fundingResult struct {
-	Domain   string          `json:"domain,omitempty"`
-	Query    string          `json:"query,omitempty"`
-	Filings  []fundingFiling `json:"form_d_filings"`
-	YCEntry  *yc.Company     `json:"yc_entry,omitempty"`
-	Coverage string          `json:"coverage_note,omitempty"`
+	Domain     string           `json:"domain,omitempty"`
+	Query      string           `json:"query,omitempty"`
+	Filings    []fundingFiling  `json:"form_d_filings"`
+	YCEntry    *yc.Company      `json:"yc_entry,omitempty"`
+	Coverage   string           `json:"coverage_note,omitempty"`
+	StemsTried []string         `json:"stems_tried,omitempty"`
+	Mentions   *fundingMentions `json:"mentions,omitempty"`
 }
 
 type fundingFiling struct {
@@ -35,6 +37,26 @@ type fundingFiling struct {
 	AmountSold     int64             `json:"amount_sold,omitempty"`
 	Exemptions     []string          `json:"exemptions_claimed,omitempty"`
 	RelatedPersons []sec.FormDPerson `json:"related_persons,omitempty"`
+}
+
+// fundingMentions groups EDGAR hits by signal class when Form D is empty.
+// Subsidiary = parent's 10-K mentions (e.g. EX-21 subsidiary list).
+// Debt       = venture-debt holder's 10-Q/10-K portfolio mentions.
+// Acquisition = parent's 8-K announcing the deal.
+// Other      = anything else that mentions the subject.
+type fundingMentions struct {
+	Subsidiary  []mentionRow `json:"subsidiary,omitempty"`
+	Debt        []mentionRow `json:"debt,omitempty"`
+	Acquisition []mentionRow `json:"acquisition,omitempty"`
+	Other       []mentionRow `json:"other,omitempty"`
+	Total       int          `json:"total"`
+}
+
+type mentionRow struct {
+	Form         string `json:"form"`
+	Filer        string `json:"filer"`
+	FileDate     string `json:"file_date"`
+	AccessionURL string `json:"accession_url"`
 }
 
 func newFundingCmd(flags *rootFlags) *cobra.Command {
@@ -88,18 +110,26 @@ Exit codes:
 				return err
 			}
 
-			// Use the domain stem (e.g. "anthropic" from "anthropic.com") as
-			// the EFTS query. This matches issuer-name keyword indexing
-			// well; if it misses, the user can pass --domain with a more
-			// specific query.
-			stem := strings.SplitN(domain, ".", 2)[0]
+			// Use a small set of stem variants (e.g. junelife, "june life",
+			// "junelife inc") rather than only the bare domain stem, since
+			// EDGAR indexes legal names like "June Life Inc." as multi-token
+			// phrases. Variants run sequentially with early exit on the
+			// first non-empty result to stay polite under EDGAR fair-access.
+			variants := stemVariants(domain)
 
 			ctx, cancel := context.WithTimeout(cmd.Context(), 60*time.Second)
 			defer cancel()
 
-			filings, err := secCli.SearchAndFetchAll(ctx, stem, maxFilings)
-			if err != nil {
-				return classifyAPIError(fmt.Errorf("sec edgar: %w", err))
+			var filings []sec.FormD
+			var lastErr error
+			for _, q := range variants {
+				filings, lastErr = secCli.SearchAndFetchAll(ctx, q, maxFilings)
+				if lastErr != nil {
+					return classifyAPIError(fmt.Errorf("sec edgar: %w", lastErr))
+				}
+				if len(filings) > 0 {
+					break
+				}
 			}
 			if sinceYear > 0 {
 				filings = filterByYear(filings, sinceYear)
@@ -110,8 +140,22 @@ Exit codes:
 			ycEntry, _ := ycCli.FindByDomain(ycCtx, domain)
 
 			out := buildFundingResult(domain, filings, ycEntry)
+			out.StemsTried = variants
+
+			// Form D + YC both empty: fall back to broader EDGAR search
+			// and surface mentions binned by signal class. This is the
+			// path that lights up acquired companies (Weber 10-K EX-21),
+			// venture-debt portfolio companies (Venture Lending & Leasing
+			// 10-Q mentions), and 8-K-only acquisition announcements.
 			if len(out.Filings) == 0 && ycEntry == nil {
-				fmt.Fprintf(cmd.OutOrStdout(), "no Form D filings found for %q (looked up by stem %q at SEC EDGAR)\n", domain, stem)
+				if mentions := searchMentions(ctx, secCli, variants); mentions != nil && mentions.Total > 0 {
+					out.Mentions = mentions
+					out.Coverage = fmt.Sprintf("No Form D filings; surfaced %d EDGAR mentions across other filings (Form D coverage note still applies: US-only, pre-priced-round startups absent).", mentions.Total)
+					renderFunding(cmd, flags, out)
+					return nil
+				}
+				fmt.Fprintf(cmd.OutOrStdout(), "no SEC filings found for %q (tried stems: %s)\n", domain, strings.Join(variants, ", "))
+				fmt.Fprintf(cmd.OutOrStdout(), "Try: company-goat-pp-cli funding --domain %s with an exact issuer name, or browse https://efts.sec.gov/LATEST/search-index?q=%%22%s%%22\n", domain, urlEscape(variants[0]))
 				fmt.Fprintf(cmd.OutOrStdout(), "Coverage note: Form D is US-only. Non-US companies and pre-priced-round startups won't appear.\n")
 				os.Exit(5)
 			}
@@ -233,17 +277,37 @@ func renderFunding(cmd *cobra.Command, flags *rootFlags, r fundingResult) {
 	if r.YCEntry != nil {
 		fmt.Fprintf(w, "YC: %s (batch %s, status %s)\n", r.YCEntry.Name, r.YCEntry.Batch, r.YCEntry.Status)
 	}
-	if len(r.Filings) == 0 {
+	if len(r.Filings) > 0 {
+		fmt.Fprintf(w, "\nForm D filings (%d):\n", len(r.Filings))
+		for _, f := range r.Filings {
+			fmt.Fprintf(w, "  %s  %-40s  %s  exempt:%v  state:%s  industry:%s\n",
+				f.FilingDate, fundingTruncate(f.EntityName, 40), formatAmount(f.OfferingAmount),
+				f.Exemptions, f.State, f.IndustryGroup)
+		}
+	} else {
 		fmt.Fprintf(w, "Form D: no filings found\n")
+	}
+	if r.Mentions != nil && r.Mentions.Total > 0 {
+		fmt.Fprintf(w, "\nEDGAR mentions (%d total, broader fallback):\n", r.Mentions.Total)
+		renderMentionGroup(w, "Subsidiary signal", r.Mentions.Subsidiary)
+		renderMentionGroup(w, "Venture-debt signal", r.Mentions.Debt)
+		renderMentionGroup(w, "Acquisition signal", r.Mentions.Acquisition)
+		renderMentionGroup(w, "Other mentions", r.Mentions.Other)
+	}
+	if r.Coverage != "" {
+		fmt.Fprintf(w, "\n%s\n", r.Coverage)
+	}
+}
+
+func renderMentionGroup(w interface{ Write([]byte) (int, error) }, label string, rows []mentionRow) {
+	if len(rows) == 0 {
 		return
 	}
-	fmt.Fprintf(w, "\nForm D filings (%d):\n", len(r.Filings))
-	for _, f := range r.Filings {
-		fmt.Fprintf(w, "  %s  %-40s  %s  exempt:%v  state:%s  industry:%s\n",
-			f.FilingDate, fundingTruncate(f.EntityName, 40), formatAmount(f.OfferingAmount),
-			f.Exemptions, f.State, f.IndustryGroup)
+	fmt.Fprintf(w, "  %s (%d):\n", label, len(rows))
+	for _, row := range rows {
+		fmt.Fprintf(w, "    %s  %-8s  %-40s  %s\n",
+			row.FileDate, row.Form, fundingTruncate(row.Filer, 40), row.AccessionURL)
 	}
-	fmt.Fprintf(w, "\n%s\n", r.Coverage)
 }
 
 func formatAmount(amt int64) string {
@@ -263,6 +327,166 @@ func formatAmount(amt int64) string {
 	default:
 		return fmt.Sprintf("$%d", amt)
 	}
+}
+
+// stemVariants returns the small set of EFTS query strings to try in
+// order. The bare stem matches camel-case-tokenized companies (anthropic,
+// stripe). The space-split variant matches issuer-name phrases EDGAR
+// indexes as separate tokens (June Life). The "<stem> inc" variant
+// catches unsuffixed domains whose legal name carries Inc.
+//
+// Hyphenated stems (acme-corp) get the hyphen replaced with a space.
+// Concatenated stems (junelife) are split at the first vowel-consonant
+// boundary where both halves are at least 3 characters; this is a small
+// heuristic, not a full tokenizer, and skipping it for ambiguous cases is
+// fine because variants only run sequentially when prior ones return
+// empty.
+func stemVariants(domain string) []string {
+	stem := strings.SplitN(domain, ".", 2)[0]
+	if stem == "" {
+		return nil
+	}
+	stem = strings.ToLower(stem)
+	out := []string{stem}
+	seen := map[string]bool{stem: true}
+	add := func(v string) {
+		v = strings.ToLower(strings.TrimSpace(v))
+		if v == "" || seen[v] {
+			return
+		}
+		seen[v] = true
+		out = append(out, v)
+	}
+
+	if strings.Contains(stem, "-") {
+		add(strings.ReplaceAll(stem, "-", " "))
+	} else {
+		if split := splitAtVowelConsonantBoundary(stem); split != "" {
+			add(split)
+		}
+	}
+	add(stem + " inc")
+	return out
+}
+
+func splitAtVowelConsonantBoundary(stem string) string {
+	if len(stem) < 6 {
+		return ""
+	}
+	const vowels = "aeiouy"
+	for i := 3; i <= len(stem)-3; i++ {
+		prev := stem[i-1]
+		curr := stem[i]
+		if strings.ContainsRune(vowels, rune(prev)) && !strings.ContainsRune(vowels, rune(curr)) {
+			return stem[:i] + " " + stem[i:]
+		}
+	}
+	return ""
+}
+
+// searchMentions runs the broad-EDGAR fallback and bins hits by signal
+// class. Picks the most distinctive variant as the query (the bigram if
+// present, else the last variant which is "<stem> inc"). Returns nil
+// when the search yields no results so callers can fall through to the
+// regular empty-state path.
+func searchMentions(ctx context.Context, secCli *sec.Client, variants []string) *fundingMentions {
+	if len(variants) == 0 {
+		return nil
+	}
+	query := pickMentionQuery(variants)
+	resp, err := secCli.SearchAnyForm(ctx, query, 25)
+	if err != nil || resp == nil || len(resp.Hits) == 0 {
+		return nil
+	}
+	out := &fundingMentions{}
+	for _, hit := range resp.Hits {
+		row := mentionRow{
+			Form:         hit.Form,
+			Filer:        firstDisplayName(hit.DisplayNames),
+			FileDate:     hit.FileDate,
+			AccessionURL: accessionURL(hit),
+		}
+		switch binMention(hit, query) {
+		case "subsidiary":
+			out.Subsidiary = append(out.Subsidiary, row)
+		case "debt":
+			out.Debt = append(out.Debt, row)
+		case "acquisition":
+			out.Acquisition = append(out.Acquisition, row)
+		default:
+			out.Other = append(out.Other, row)
+		}
+		out.Total++
+	}
+	return out
+}
+
+func pickMentionQuery(variants []string) string {
+	for _, v := range variants {
+		if strings.Contains(v, " ") && !strings.HasSuffix(v, " inc") {
+			return v
+		}
+	}
+	return variants[len(variants)-1]
+}
+
+func firstDisplayName(names []string) string {
+	if len(names) == 0 {
+		return ""
+	}
+	// EFTS display names look like "Weber Inc.  (CIK 0001890586)" —
+	// strip the trailing CIK annotation and trailing whitespace.
+	name := names[0]
+	if idx := strings.Index(name, "(CIK"); idx > 0 {
+		name = name[:idx]
+	}
+	return strings.TrimSpace(name)
+}
+
+func accessionURL(hit sec.SearchHit) string {
+	if len(hit.CIKs) == 0 || hit.Accession == "" {
+		return ""
+	}
+	cik := strings.TrimLeft(hit.CIKs[0], "0")
+	if cik == "" {
+		cik = "0"
+	}
+	dashless := strings.ReplaceAll(hit.Accession, "-", "")
+	return fmt.Sprintf("https://www.sec.gov/Archives/edgar/data/%s/%s/", cik, dashless)
+}
+
+// binMention classifies an EDGAR hit by signal class. The subject query
+// is the search term that produced the hit; when the filer's display name
+// contains the subject, the hit is the company filing under itself and
+// classifies as "other".
+func binMention(hit sec.SearchHit, subjectQuery string) string {
+	filer := strings.ToLower(firstDisplayName(hit.DisplayNames))
+	subject := strings.ToLower(subjectQuery)
+
+	// Venture Lending & Leasing portfolio reports.
+	if strings.HasPrefix(filer, "venture lending & leasing") ||
+		strings.HasPrefix(filer, "venture lending and leasing") {
+		return "debt"
+	}
+
+	// Form-code prefix: "10-K", "10-K/A", "8-K", "8-K/A", etc.
+	formCode := strings.ToUpper(strings.SplitN(hit.Form, "/", 2)[0])
+	formCode = strings.SplitN(formCode, " ", 2)[0]
+
+	selfFiling := filer != "" && strings.Contains(filer, subject)
+	if !selfFiling {
+		if strings.HasPrefix(formCode, "10-K") {
+			return "subsidiary"
+		}
+		if strings.HasPrefix(formCode, "8-K") {
+			return "acquisition"
+		}
+	}
+	return "other"
+}
+
+func urlEscape(s string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(s, " ", "+"), "&", "%26")
 }
 
 // fundingTruncate is a local helper. The generated helpers.go already has
@@ -308,15 +532,21 @@ Output bins by filing year and shows offering amount totals per year.`,
 			if err != nil {
 				return err
 			}
-			stem := strings.SplitN(domain, ".", 2)[0]
+			variants := stemVariants(domain)
 
 			secCli := sec.NewClient(getContactEmail(flags))
 			ctx, cancel := context.WithTimeout(cmd.Context(), 90*time.Second)
 			defer cancel()
 
-			filings, err := secCli.SearchAndFetchAll(ctx, stem, maxFilings)
-			if err != nil {
-				return classifyAPIError(fmt.Errorf("sec edgar: %w", err))
+			var filings []sec.FormD
+			for _, q := range variants {
+				filings, err = secCli.SearchAndFetchAll(ctx, q, maxFilings)
+				if err != nil {
+					return classifyAPIError(fmt.Errorf("sec edgar: %w", err))
+				}
+				if len(filings) > 0 {
+					break
+				}
 			}
 			if sinceYear > 0 {
 				filings = filterByYear(filings, sinceYear)
