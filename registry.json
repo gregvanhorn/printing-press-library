@@ -62,7 +62,7 @@
       "name": "company-goat",
       "category": "developer-tools",
       "api": "Company GOAT",
-      "description": "Multi-source company research for small and midsize startups, with SEC Form D fundraising data hidden behind paid Crunchbase tiers.",
+      "description": "One call across seven authoritative sources to research a startup's funding history (SEC Form D), engineering velocity (GitHub), HN mentions, legal entity (US/UK), and domain age. Compares competitors side-by-side and flags inconsistencies between public claims and filings.",
       "path": "library/developer-tools/company-goat",
       "mcp": {
         "binary": "company-goat-pp-mcp",

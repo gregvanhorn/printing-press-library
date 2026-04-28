@@ -8,15 +8,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
 
 	mcplib "github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/mvanhorn/printing-press-library/library/developer-tools/company-goat/internal/cli"
 	"github.com/mvanhorn/printing-press-library/library/developer-tools/company-goat/internal/client"
 	"github.com/mvanhorn/printing-press-library/library/developer-tools/company-goat/internal/config"
+	"github.com/mvanhorn/printing-press-library/library/developer-tools/company-goat/internal/mcp/cobratree"
 	"github.com/mvanhorn/printing-press-library/library/developer-tools/company-goat/internal/store"
 )
 
@@ -26,24 +27,19 @@ func RegisterTools(s *server.MCPServer) {
 		mcplib.NewTool("filings_list",
 			mcplib.WithDescription("Fetch all SEC submissions for a given CIK (Central Index Key). Used as the seed call when resolving a company's... Returns object."),
 			mcplib.WithString("cik", mcplib.Required(), mcplib.Description("10-digit zero-padded SEC Central Index Key (e.g., 0001318605 for Tesla)")),
+			mcplib.WithReadOnlyHintAnnotation(true),
+			mcplib.WithDestructiveHintAnnotation(false),
+			mcplib.WithOpenWorldHintAnnotation(true),
 		),
-		makeAPIHandler("GET", "/submissions/CIK{cik}.json", []string{"cik"}),
-	)
-	// Sync tool — populates local database for offline search and sql queries
-	s.AddTool(
-		mcplib.NewTool("sync",
-			mcplib.WithDescription("Sync API data to local SQLite database. Run this before using search or sql tools. Supports incremental sync."),
-			mcplib.WithString("resources", mcplib.Description("Comma-separated resource types to sync (omit for all)")),
-			mcplib.WithString("since", mcplib.Description("Incremental sync since duration (e.g. 7d, 24h, 1w)")),
-			mcplib.WithBoolean("full", mcplib.Description("Full resync ignoring checkpoints")),
-		),
-		handleSync,
+		makeAPIHandler("GET", "/submissions/CIK{cik}.json", []string{"cik", }),
 	)
 	// SQL tool — ad-hoc analysis on synced data without API calls
 	s.AddTool(
 		mcplib.NewTool("sql",
 			mcplib.WithDescription("Run read-only SQL against local database. Use for ad-hoc analysis, aggregations, and joins across synced resources. Requires sync first."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("SQL query (SELECT only). Tables match resource names.")),
+			mcplib.WithReadOnlyHintAnnotation(true),
+			mcplib.WithDestructiveHintAnnotation(false),
 		),
 		handleSQL,
 	)
@@ -53,9 +49,15 @@ func RegisterTools(s *server.MCPServer) {
 	s.AddTool(
 		mcplib.NewTool("context",
 			mcplib.WithDescription("Get API domain context: resource taxonomy, auth requirements, query tips, and unique capabilities. Call this first."),
+			mcplib.WithReadOnlyHintAnnotation(true),
+			mcplib.WithDestructiveHintAnnotation(false),
 		),
 		handleContext,
 	)
+
+	// Runtime Cobra-tree mirror — exposes every user-facing command that is
+	// not already covered by a typed endpoint or framework MCP tool.
+	cobratree.RegisterAll(s, cli.RootCmd(), cobratree.SiblingCLIPath)
 }
 
 // makeAPIHandler creates a generic MCP tool handler for an API endpoint.
@@ -171,13 +173,8 @@ func dbPath() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".local", "share", "company-goat-pp-cli", "data.db")
 }
-
 // Note: MCP tools use their own dbPath() because they are in a separate package (main, not cli).
 // The CLI's defaultDBPath() in the cli package uses the same canonical path.
-
-func handleSync(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
-	return mcplib.NewToolResultText("sync not yet implemented via MCP - use the CLI: company-goat-pp-cli sync"), nil
-}
 
 func handleSQL(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
 	args := req.GetArguments()
@@ -228,17 +225,18 @@ func handleSQL(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToo
 
 func handleContext(_ context.Context, _ mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
 	ctx := map[string]any{
-		"api":          "company",
-		"description":  "Look up startups across SEC Form D, GitHub, Hacker News, Companies House, YC, Wikidata, and DNS in one command....",
-		"archetype":    "generic",
-		"tool_count":   1,
-		"tool_surface": "MCP exposes the endpoints listed under `resources` (plus sync/search/sql/context utilities when present). Items under `cli_only_capabilities` require running the companion company-goat-pp-cli binary; the MCP cannot invoke them.",
+		"api":         "company-goat",
+		"description": "Look up startups across SEC Form D, GitHub, Hacker News, Companies House, YC, Wikidata, and DNS in one command....",
+		"archetype":   "generic",
+		"tool_count":  1,
+		// tool_surface tells agents which surface a capability lives on.
+		"tool_surface": "MCP exposes typed endpoint tools plus a runtime mirror of user-facing CLI commands. Endpoint tools keep typed schemas; command-mirror tools shell out to the companion company-goat-pp-cli binary.",
 		"resources": []map[string]any{
 			{
-				"name":        "filings",
+				"name": "filings",
 				"description": "SEC EDGAR Form D filings — the primary data source for US private fundraising disclosure",
-				"endpoints":   []string{"list"},
-				"searchable":  true,
+				"endpoints": []string{"list",  },
+				"searchable": true,
 			},
 		},
 		"query_tips": []string{
@@ -248,140 +246,34 @@ func handleContext(_ context.Context, _ mcplib.CallToolRequest) (*mcplib.CallToo
 			"Use the search tool for full-text search across all synced resources. Faster than iterating list endpoints.",
 			"Prefer sql/search over repeated API calls when the data is already synced.",
 		},
-		"cli_only_capabilities": []map[string]string{
-			{"name": "Snapshot fanout across 7 sources", "command": "snapshot", "description": "Look up a company across SEC Form D, GitHub, Hacker News, Companies House, YC, Wikidata, and DNS in one command —...", "rationale": "Requires parallel coordination across 7 independent APIs with different auth, rate limits, and response shapes —...", "via": "cli"},
-			{"name": "SEC Form D fundraising lookup", "command": "funding", "description": "See structured SEC Form D filings for a US private company — offering amount, filing date, exemption claimed (Reg...", "rationale": "Most US startups raising priced rounds file Form D with the SEC. Crunchbase Free hides this; Crunchbase Pro is...", "via": "cli"},
-			{"name": "Cross-source signal consistency check", "command": "signal", "description": "Surface suspicious cross-source patterns. Example: 'Form D says raised $5M in 2024 but GitHub org has 0 commits...", "rationale": "Requires joining facts across SEC, GitHub, YC, and DNS that no single source has. Local SQLite store makes the joins...", "via": "cli"},
-			{"name": "Funding cadence over time", "command": "funding-trend", "description": "Time series of Form D filings for a company across years — shows fundraising cadence and gaps. Useful for spotting...", "rationale": "Form D filings paginated by date is painful via the SEC web UI. Pre-extracted into the local store, this becomes a...", "via": "cli"},
-			{"name": "FTS search across synced companies", "command": "search", "description": "Full-text search across companies you've synced previously. Find by industry, founder name, location, description,...", "rationale": "The local SQLite store turns the CLI into a personal research database. No other tool lets you SQL/FTS your own...", "via": "cli"},
-			{"name": "Side-by-side comparison", "command": "compare", "description": "Two snapshots aligned column-by-column for direct comparison. Free in this CLI; paid feature elsewhere.", "rationale": "Crunchbase compare is paid-tier; we get it free because we already have all the data locally after sync.", "via": "cli"},
-			{"name": "Form D related-person graph", "command": "funding --who", "description": "Show every Form D filing that names a given person (officer, large holder). Reveals serial founders, repeat...", "rationale": "Form D filings list related persons; aggregating by person across filings is something neither Crunchbase nor...", "via": "cli"},
+		// Command-mirror capabilities are exposed through MCP by shelling out
+		// to the companion CLI binary.
+		"command_mirror_capabilities": []map[string]string{
+			{"name": "Snapshot fanout across 7 sources", "command": "snapshot", "description": "Look up a company across SEC Form D, GitHub, Hacker News, Companies House, YC, Wikidata, and DNS in one command —...", "rationale": "", "via": "mcp-command-mirror"},
+			{"name": "SEC Form D fundraising lookup", "command": "funding", "description": "See structured SEC Form D filings for a US private company — offering amount, filing date, exemption claimed (Reg...", "rationale": "", "via": "mcp-command-mirror"},
+			{"name": "Cross-source signal consistency check", "command": "signal", "description": "Surface suspicious cross-source patterns. Example: 'Form D says raised $5M in 2024 but GitHub org has 0 commits...", "rationale": "", "via": "mcp-command-mirror"},
+			{"name": "Funding cadence over time", "command": "funding-trend", "description": "Time series of Form D filings for a company across years — shows fundraising cadence and gaps. Useful for spotting...", "rationale": "", "via": "mcp-command-mirror"},
+			{"name": "FTS search across synced companies", "command": "search", "description": "Search the YC directory by free text + --batch and --industry filters. Free-text matches against name, one-liner...", "rationale": "", "via": "mcp-command-mirror"},
+			{"name": "Side-by-side comparison", "command": "compare", "description": "Two snapshots aligned column-by-column for direct comparison. Free in this CLI; paid feature elsewhere.", "rationale": "", "via": "mcp-command-mirror"},
+			{"name": "Form D related-person graph", "command": "funding --who", "description": "Show every Form D filing that names a given person (officer, large holder). Reveals serial founders, repeat...", "rationale": "", "via": "mcp-command-mirror"},
 		},
 		"playbook": []map[string]string{
-			{"topic": "Snapshot fanout across 7 sources", "insight": "Requires parallel coordination across 7 independent APIs with different auth, rate limits, and response shapes — no single source can answer this and no existing CLI fans across them."},
-			{"topic": "SEC Form D fundraising lookup", "insight": "Most US startups raising priced rounds file Form D with the SEC. Crunchbase Free hides this; Crunchbase Pro is thousands/year. We extract directly from the SEC's free public filings."},
-			{"topic": "Cross-source signal consistency check", "insight": "Requires joining facts across SEC, GitHub, YC, and DNS that no single source has. Local SQLite store makes the joins cheap."},
-			{"topic": "Funding cadence over time", "insight": "Form D filings paginated by date is painful via the SEC web UI. Pre-extracted into the local store, this becomes a one-line query."},
-			{"topic": "FTS search across synced companies", "insight": "The local SQLite store turns the CLI into a personal research database. No other tool lets you SQL/FTS your own research history offline."},
-			{"topic": "Side-by-side comparison", "insight": "Crunchbase compare is paid-tier; we get it free because we already have all the data locally after sync."},
-			{"topic": "Form D related-person graph", "insight": "Form D filings list related persons; aggregating by person across filings is something neither Crunchbase nor PitchBook free tiers expose."},
+			{"topic": "Snapshot fanout across 7 sources", "insight": ""},
+			{"topic": "SEC Form D fundraising lookup", "insight": ""},
+			{"topic": "Cross-source signal consistency check", "insight": ""},
+			{"topic": "Funding cadence over time", "insight": ""},
+			{"topic": "FTS search across synced companies", "insight": ""},
+			{"topic": "Side-by-side comparison", "insight": ""},
+			{"topic": "Form D related-person graph", "insight": ""},
 		},
 	}
 	data, _ := json.MarshalIndent(ctx, "", "  ")
 	return mcplib.NewToolResultText(string(data)), nil
 }
 
-// RegisterNovelFeatureTools registers MCP tools that shell out to the
-// companion CLI binary. Empty body when the spec has no novel features.
+// RegisterNovelFeatureTools is kept as a compatibility no-op for older MCP
+// mains. New generated mains call RegisterTools only; RegisterTools now
+// includes the runtime Cobra-tree mirror.
 func RegisterNovelFeatureTools(s *server.MCPServer) {
-	s.AddTool(
-		mcplib.NewTool("snapshot",
-			mcplib.WithDescription("Look up a company across SEC Form D, GitHub, Hacker News, Companies House, YC, Wikidata, and DNS in one command — rendered as a unified terminal summary in seconds."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("snapshot"),
-	)
-	s.AddTool(
-		mcplib.NewTool("funding",
-			mcplib.WithDescription("See structured SEC Form D filings for a US private company — offering amount, filing date, exemption claimed (Reg D 506(b) vs 506(c)), related entities, and state of incorporation."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("funding"),
-	)
-	s.AddTool(
-		mcplib.NewTool("signal",
-			mcplib.WithDescription("Surface suspicious cross-source patterns. Example: 'Form D says raised $5M in 2024 but GitHub org has 0 commits since 2022' or 'YC entry says Active but website domain expired'."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("signal"),
-	)
-	s.AddTool(
-		mcplib.NewTool("funding_trend",
-			mcplib.WithDescription("Time series of Form D filings for a company across years — shows fundraising cadence and gaps. Useful for spotting 'they haven't raised since 2022' silently."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("funding-trend"),
-	)
-	s.AddTool(
-		mcplib.NewTool("search",
-			mcplib.WithDescription("Search the YC directory by free text + --batch and --industry filters. Free-text matches against name, one-liner description, industry, and location."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("search"),
-	)
-	s.AddTool(
-		mcplib.NewTool("compare",
-			mcplib.WithDescription("Two snapshots aligned column-by-column for direct comparison. Free in this CLI; paid feature elsewhere."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("compare"),
-	)
-	s.AddTool(
-		mcplib.NewTool("funding_who",
-			mcplib.WithDescription("Show every Form D filing that names a given person (officer, large holder). Reveals serial founders, repeat advisors, prolific investors."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("funding --who"),
-	)
-}
-
-// siblingCLIPath resolves the companion CLI via sibling-of-executable,
-// COMPANY_GOAT_CLI_PATH env var, then PATH.
-func siblingCLIPath() (string, error) {
-	const cliName = "company-goat-pp-cli"
-	if exe, err := os.Executable(); err == nil {
-		candidate := filepath.Join(filepath.Dir(exe), cliName)
-		if _, err := os.Stat(candidate); err == nil {
-			return candidate, nil
-		}
-	}
-	if v := os.Getenv("COMPANY_GOAT_CLI_PATH"); v != "" {
-		return v, nil
-	}
-	return exec.LookPath(cliName)
-}
-
-// shellOutToCLI returns an MCP tool handler that runs commandSpec against
-// the companion CLI. Resolves the binary path and pre-splits commandSpec
-// at registration so the per-call work is just user-arg split + exec.
-func shellOutToCLI(commandSpec string) server.ToolHandlerFunc {
-	cliPath, lookupErr := siblingCLIPath()
-	prefixArgs := splitShellArgs(commandSpec)
-	return func(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
-		if lookupErr != nil {
-			return mcplib.NewToolResultError(fmt.Sprintf("companion CLI binary not found: %v\nTried sibling lookup, COMPANY_GOAT_CLI_PATH env var, and PATH.", lookupErr)), nil
-		}
-		userArgs, _ := req.GetArguments()["args"].(string)
-		finalArgs := append(append([]string{}, prefixArgs...), splitShellArgs(userArgs)...)
-		cmd := exec.CommandContext(ctx, cliPath, finalArgs...)
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			return mcplib.NewToolResultError(string(out)), nil
-		}
-		return mcplib.NewToolResultText(string(out)), nil
-	}
-}
-
-// splitShellArgs whitespace-splits with double-quoted-token preservation.
-func splitShellArgs(s string) []string {
-	var tokens []string
-	var cur []rune
-	inQuote := false
-	for _, r := range s {
-		switch {
-		case r == '"':
-			inQuote = !inQuote
-		case (r == ' ' || r == '\t') && !inQuote:
-			if len(cur) > 0 {
-				tokens = append(tokens, string(cur))
-				cur = cur[:0]
-			}
-		default:
-			cur = append(cur, r)
-		}
-	}
-	if len(cur) > 0 {
-		tokens = append(tokens, string(cur))
-	}
-	return tokens
+	_ = s
 }

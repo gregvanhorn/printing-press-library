@@ -19,16 +19,24 @@ import (
 
 // fundingResult is the JSON shape for `funding <co>`.
 type fundingResult struct {
-	Domain     string           `json:"domain,omitempty"`
-	Query      string           `json:"query,omitempty"`
-	Filings    []fundingFiling  `json:"form_d_filings"`
-	YCEntry    *yc.Company      `json:"yc_entry,omitempty"`
-	Coverage   string           `json:"coverage_note,omitempty"`
-	StemsTried []string         `json:"stems_tried,omitempty"`
-	Mentions   *fundingMentions `json:"mentions,omitempty"`
+	Domain       string           `json:"domain,omitempty"`
+	Query        string           `json:"query,omitempty"`
+	Filings      []fundingFiling  `json:"form_d_filings"`
+	CIKSummaries []cikSummary     `json:"cik_summaries,omitempty"`
+	// IsAmbiguous is true when the name search matched filings spanning
+	// more than one SEC CIK. Common false-positive sources: VC funds and
+	// long-dormant Delaware shell corps that share a stem with the
+	// company you actually meant. Agents should consult cik_summaries
+	// and re-call with --cik <id> to disambiguate.
+	IsAmbiguous bool             `json:"is_ambiguous,omitempty"`
+	YCEntry     *yc.Company      `json:"yc_entry,omitempty"`
+	Coverage    string           `json:"coverage_note,omitempty"`
+	StemsTried  []string         `json:"stems_tried,omitempty"`
+	Mentions    *fundingMentions `json:"mentions,omitempty"`
 }
 
 type fundingFiling struct {
+	CIK            string            `json:"cik"`
 	FilingDate     string            `json:"filing_date"`
 	Accession      string            `json:"accession"`
 	EntityName     string            `json:"entity_name"`
@@ -38,6 +46,20 @@ type fundingFiling struct {
 	AmountSold     int64             `json:"amount_sold,omitempty"`
 	Exemptions     []string          `json:"exemptions_claimed,omitempty"`
 	RelatedPersons []sec.FormDPerson `json:"related_persons,omitempty"`
+}
+
+// cikSummary aggregates filings by CIK so callers can disambiguate when
+// a name search returns hits across unrelated entities. The default
+// EDGAR full-text search is name-based, and "Notion" matches both
+// Notion Labs and Notion Capital VC. Without a per-CIK summary the
+// caller has no signal that the result mixes entities.
+type cikSummary struct {
+	CIK              string `json:"cik"`
+	EntityName       string `json:"entity_name"`
+	State            string `json:"state_of_inc,omitempty"`
+	YearOfInc        string `json:"year_of_inc,omitempty"`
+	FilingCount      int    `json:"filing_count"`
+	LatestFilingDate string `json:"latest_filing_date,omitempty"`
 }
 
 // fundingMentions groups EDGAR hits by signal class when Form D is empty.
@@ -65,6 +87,7 @@ func newFundingCmd(flags *rootFlags) *cobra.Command {
 	var who string
 	var maxFilings int
 	var sinceYear int
+	var cikFilter string
 
 	cmd := &cobra.Command{
 		Use:   "funding [co]",
@@ -135,6 +158,9 @@ Exit codes:
 			if sinceYear > 0 {
 				filings = filterByYear(filings, sinceYear)
 			}
+			if cikFilter != "" {
+				filings = filterFilingsByCIK(filings, cikFilter)
+			}
 			ycCli := yc.NewClient()
 			ycCtx, ycCancel := context.WithTimeout(cmd.Context(), 30*time.Second)
 			defer ycCancel()
@@ -169,6 +195,7 @@ Exit codes:
 	cmd.Flags().StringVar(&who, "who", "", "Show every SEC filing naming this person: Form D related-person matches (officer, director, promoter) plus EDGAR mentions across S-1, 10-K, DEF 14A, etc. (e.g. \"Patrick Collison\")")
 	cmd.Flags().IntVar(&maxFilings, "max", 5, "Maximum filings to fetch and parse")
 	cmd.Flags().IntVar(&sinceYear, "since", 0, "Filter to filings on or after this year")
+	cmd.Flags().StringVar(&cikFilter, "cik", "", "Filter results to a specific SEC CIK (e.g. 0001999999). Use after running funding without --cik to disambiguate when multiple entities matched the name.")
 	return cmd
 }
 
@@ -339,11 +366,14 @@ func filterByYear(in []sec.FormD, year int) []sec.FormD {
 }
 
 func buildFundingResult(domain string, filings []sec.FormD, ycEntry *yc.Company) fundingResult {
+	summaries := summarizeByCIK(filings)
 	r := fundingResult{
-		Domain:   domain,
-		Filings:  fundingFilingsFromSEC(filings),
-		YCEntry:  ycEntry,
-		Coverage: "Form D is US-only. Non-US companies and pre-priced-round startups won't appear.",
+		Domain:       domain,
+		Filings:      fundingFilingsFromSEC(filings),
+		CIKSummaries: summaries,
+		IsAmbiguous:  len(summaries) > 1,
+		YCEntry:      ycEntry,
+		Coverage:     "Form D is US-only. Non-US companies and pre-priced-round startups won't appear.",
 	}
 	return r
 }
@@ -352,6 +382,7 @@ func fundingFilingsFromSEC(in []sec.FormD) []fundingFiling {
 	out := make([]fundingFiling, 0, len(in))
 	for _, fd := range in {
 		out = append(out, fundingFiling{
+			CIK:            fd.CIK,
 			FilingDate:     fd.FilingDate,
 			Accession:      fd.Accession,
 			EntityName:     fd.EntityName,
@@ -368,6 +399,60 @@ func fundingFilingsFromSEC(in []sec.FormD) []fundingFiling {
 	return out
 }
 
+// summarizeByCIK groups filings by issuer CIK so the caller can spot
+// when a name search dragged in unrelated entities. Sorted by latest
+// filing date descending so the most-recently-active entity appears
+// first (commonly the one the agent meant).
+func summarizeByCIK(filings []sec.FormD) []cikSummary {
+	type acc struct {
+		EntityName string
+		State      string
+		YearOfInc  string
+		Count      int
+		LatestDate string
+	}
+	by := map[string]*acc{}
+	for _, fd := range filings {
+		a, ok := by[fd.CIK]
+		if !ok {
+			a = &acc{EntityName: fd.EntityName, State: fd.State, YearOfInc: fd.YearOfInc}
+			by[fd.CIK] = a
+		}
+		a.Count++
+		if fd.FilingDate > a.LatestDate {
+			a.LatestDate = fd.FilingDate
+		}
+	}
+	out := make([]cikSummary, 0, len(by))
+	for cik, a := range by {
+		out = append(out, cikSummary{
+			CIK:              cik,
+			EntityName:       a.EntityName,
+			State:            a.State,
+			YearOfInc:        a.YearOfInc,
+			FilingCount:      a.Count,
+			LatestFilingDate: a.LatestDate,
+		})
+	}
+	sort.SliceStable(out, func(i, j int) bool { return out[i].LatestFilingDate > out[j].LatestFilingDate })
+	return out
+}
+
+// filterFilingsByCIK returns only the filings whose CIK matches the
+// requested value. Leading zeros are tolerated on both sides — SEC EDGAR
+// pads CIKs to 10 digits, but humans copy-pasting may drop them.
+func filterFilingsByCIK(filings []sec.FormD, cik string) []sec.FormD {
+	want := strings.TrimLeft(cik, "0")
+	out := make([]sec.FormD, 0, len(filings))
+	for _, fd := range filings {
+		got := strings.TrimLeft(fd.CIK, "0")
+		if got == want {
+			out = append(out, fd)
+		}
+	}
+	return out
+}
+
 func renderFunding(cmd *cobra.Command, flags *rootFlags, r fundingResult) {
 	w := cmd.OutOrStdout()
 	asJSON := flags.asJSON || !isTerminal(w)
@@ -379,11 +464,23 @@ func renderFunding(cmd *cobra.Command, flags *rootFlags, r fundingResult) {
 	if r.YCEntry != nil {
 		fmt.Fprintf(w, "YC: %s (batch %s, status %s)\n", r.YCEntry.Name, r.YCEntry.Batch, r.YCEntry.Status)
 	}
+	if r.IsAmbiguous {
+		fmt.Fprintf(w, "\n⚠ Ambiguous: %d distinct SEC entities matched. The Form D rows below may mix unrelated companies. Use --cik <id> to disambiguate.\n", len(r.CIKSummaries))
+		fmt.Fprintf(w, "  Matched entities (most-recently-active first):\n")
+		for _, s := range r.CIKSummaries {
+			yr := ""
+			if s.YearOfInc != "" {
+				yr = " inc:" + s.YearOfInc
+			}
+			fmt.Fprintf(w, "    CIK %s  %-40s  state:%s%s  filings:%d  latest:%s\n",
+				s.CIK, fundingTruncate(s.EntityName, 40), s.State, yr, s.FilingCount, s.LatestFilingDate)
+		}
+	}
 	if len(r.Filings) > 0 {
 		fmt.Fprintf(w, "\nForm D filings (%d):\n", len(r.Filings))
 		for _, f := range r.Filings {
-			fmt.Fprintf(w, "  %s  %-40s  %s  exempt:%v  state:%s  industry:%s\n",
-				f.FilingDate, fundingTruncate(f.EntityName, 40), formatAmount(f.OfferingAmount),
+			fmt.Fprintf(w, "  %s  CIK %s  %-40s  %s  exempt:%v  state:%s  industry:%s\n",
+				f.FilingDate, f.CIK, fundingTruncate(f.EntityName, 40), formatAmount(f.OfferingAmount),
 				f.Exemptions, f.State, f.IndustryGroup)
 		}
 	} else {

@@ -124,16 +124,18 @@ Use this to gauge launch story strength, find the canonical Show HN post for a p
 func newMentionsCmd(flags *rootFlags) *cobra.Command {
 	var t targetFlags
 	var maxHits int
+	var topStories int
 
 	cmd := &cobra.Command{
 		Use:   "mentions [co]",
-		Short: "Hacker News mention timeline: monthly histogram of mentions over time via Algolia full-text search.",
-		Long: `mentions searches HN's full-text Algolia index for any story containing the resolved company name. Results are bucketed by year-month for a quick "is this still talked about?" view.
+		Short: "Hacker News mention timeline plus the top N stories by points, via Algolia full-text search.",
+		Long: `mentions searches HN's full-text Algolia index for any story containing the resolved company name. Returns two views in one call: a year-month histogram for a quick "is this still talked about?" view, and the top N stories sorted by points so an agent can dive into the most-discussed mentions without a second query.
 
-With --json, returns the raw histogram as a sorted array of {month, count} pairs.`,
+The Show HN flavor lives under the launches command; mentions covers all stories — third-party reviews, debate threads, Ask HNs, polls.`,
 		Example: strings.Trim(`
   company-goat-pp-cli mentions stripe
-  company-goat-pp-cli mentions anthropic --json
+  company-goat-pp-cli mentions anthropic --top 20 --json
+  company-goat-pp-cli mentions "june oven" --top 15
 `, "\n"),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if dryRunOK(cmd, flags) {
@@ -144,6 +146,9 @@ With --json, returns the raw histogram as a sorted array of {month, count} pairs
 			}
 			if maxHits <= 0 {
 				maxHits = 100
+			}
+			if topStories < 0 {
+				topStories = 0
 			}
 			domain, err := runResolveOrExit(cmd, flags, args, t)
 			if err != nil {
@@ -176,9 +181,31 @@ With --json, returns the raw histogram as a sorted array of {month, count} pairs
 				months = append(months, m)
 			}
 			sort.Strings(months)
-			out := make([]bucket, 0, len(months))
+			timeline := make([]bucket, 0, len(months))
 			for _, m := range months {
-				out = append(out, bucket{Month: m, Count: counts[m]})
+				timeline = append(timeline, bucket{Month: m, Count: counts[m]})
+			}
+
+			// Top stories — by-date search returns chronological hits; resort by
+			// points so the agent's first stories are the most-discussed mentions.
+			// launchEntry is reused here so the JSON shape matches the launches
+			// command's stories block.
+			ranked := make([]launchEntry, 0, len(resp.Hits))
+			for _, h := range resp.Hits {
+				ranked = append(ranked, launchEntry{
+					Title:     h.Title,
+					URL:       h.URL,
+					Author:    h.Author,
+					Points:    h.Points,
+					Comments:  h.NumComments,
+					CreatedAt: h.CreatedAt,
+					StoryID:   h.StoryID,
+					HNURL:     fmt.Sprintf("https://news.ycombinator.com/item?id=%d", h.StoryID),
+				})
+			}
+			sort.SliceStable(ranked, func(i, j int) bool { return ranked[i].Points > ranked[j].Points })
+			if topStories > 0 && len(ranked) > topStories {
+				ranked = ranked[:topStories]
 			}
 
 			w := cmd.OutOrStdout()
@@ -187,22 +214,34 @@ With --json, returns the raw histogram as a sorted array of {month, count} pairs
 				return flags.printJSON(cmd, map[string]any{
 					"domain":         domain,
 					"query":          query,
-					"timeline":       out,
+					"timeline":       timeline,
+					"top_stories":    ranked,
 					"total_mentions": resp.NbHits,
 					"sampled_hits":   len(resp.Hits),
 				})
 			}
 			fmt.Fprintf(w, "HN mentions for %q (sampled %d of %d total):\n\n", domain, len(resp.Hits), resp.NbHits)
-			if len(out) == 0 {
+			if len(timeline) == 0 {
 				fmt.Fprintln(w, "no mentions found")
 				return nil
 			}
-			for _, b := range out {
+			for _, b := range timeline {
 				bar := strings.Repeat("█", b.Count)
 				if len(bar) > 40 {
 					bar = bar[:40] + "..."
 				}
 				fmt.Fprintf(w, "  %s  %3d  %s\n", b.Month, b.Count, bar)
+			}
+			if len(ranked) > 0 {
+				fmt.Fprintf(w, "\nTop %d stories by points:\n\n", len(ranked))
+				for _, e := range ranked {
+					yr := ""
+					if len(e.CreatedAt) >= 4 {
+						yr = e.CreatedAt[:4]
+					}
+					fmt.Fprintf(w, "  %s  %4d↑  %3d💬  %s\n", yr, e.Points, e.Comments, fundingTruncate(e.Title, 80))
+					fmt.Fprintf(w, "    %s\n", e.HNURL)
+				}
 			}
 			return nil
 		},
@@ -210,5 +249,6 @@ With --json, returns the raw histogram as a sorted array of {month, count} pairs
 	cmd.Flags().StringVar(&t.Domain, "domain", "", "Skip name resolution and use this domain (e.g. stripe.com)")
 	cmd.Flags().IntVar(&t.Pick, "pick", 0, "Pick candidate N (1-indexed) from a previous ambiguous resolve")
 	cmd.Flags().IntVar(&maxHits, "max", 100, "Maximum hits to sample for the timeline (max 1000)")
+	cmd.Flags().IntVar(&topStories, "top", 5, "Top N stories by points to include alongside the timeline (0 = timeline only)")
 	return cmd
 }

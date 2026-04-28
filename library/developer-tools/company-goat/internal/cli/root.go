@@ -46,10 +46,39 @@ type rootFlags struct {
 	deliverSink DeliverSink
 }
 
+// RootCmd returns the Cobra command tree without executing it. The MCP server
+// uses this to mirror every user-facing command as an agent tool.
+func RootCmd() *cobra.Command {
+	var flags rootFlags
+	return newRootCmd(&flags)
+}
+
 // Execute runs the CLI in non-interactive mode: never prompts, all values via flags or stdin.
 func Execute() error {
 	var flags rootFlags
+	rootCmd := newRootCmd(&flags)
 
+	err := rootCmd.Execute()
+	if err != nil && strings.Contains(err.Error(), "unknown flag") {
+		msg := err.Error()
+		// Extract the flag name from the error message (e.g., "unknown flag: --foob")
+		if idx := strings.Index(msg, "unknown flag: "); idx >= 0 {
+			flagStr := strings.TrimSpace(msg[idx+len("unknown flag: "):])
+			if suggestion := suggestFlag(flagStr, rootCmd); suggestion != "" {
+				return fmt.Errorf("%w\nhint: did you mean --%s?", err, suggestion)
+			}
+		}
+	}
+	if err == nil && flags.deliverBuf != nil {
+		if derr := Deliver(flags.deliverSink, flags.deliverBuf.Bytes(), flags.compact); derr != nil {
+			fmt.Fprintf(os.Stderr, "warning: deliver to %s:%s failed: %v\n", flags.deliverSink.Scheme, flags.deliverSink.Target, derr)
+			return derr
+		}
+	}
+	return err
+}
+
+func newRootCmd(flags *rootFlags) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "company-goat-pp-cli",
 		Short: `Multi-source company research for small and midsize startups, with SEC Form D fundraising data hidden behind paid Crunchbase tiers.`,
@@ -145,53 +174,56 @@ See README.md or the bundled SKILL.md for recipes.`,
 		}
 		return nil
 	}
-	rootCmd.AddCommand(newDoctorCmd(&flags))
+	rootCmd.AddCommand(newDoctorCmd(flags))
 	rootCmd.AddCommand(newAgentContextCmd(rootCmd))
-	rootCmd.AddCommand(newProfileCmd(&flags))
-	rootCmd.AddCommand(newFeedbackCmd(&flags))
-	rootCmd.AddCommand(newWhichCmd(&flags))
-	rootCmd.AddCommand(newExportCmd(&flags))
-	rootCmd.AddCommand(newImportCmd(&flags))
-	rootCmd.AddCommand(newSyncCmd(&flags))
-	rootCmd.AddCommand(newWorkflowCmd(&flags))
-	rootCmd.AddCommand(newAPICmd(&flags))
-	rootCmd.AddCommand(newFilingsPromotedCmd(&flags))
+	rootCmd.AddCommand(newProfileCmd(flags))
+	rootCmd.AddCommand(newFeedbackCmd(flags))
+	rootCmd.AddCommand(newWhichCmd(flags))
+	rootCmd.AddCommand(newExportCmd(flags))
+	rootCmd.AddCommand(newImportCmd(flags))
+	rootCmd.AddCommand(newSyncCmd(flags))
+	rootCmd.AddCommand(newWorkflowCmd(flags))
+	rootCmd.AddCommand(newAPICmd(flags))
+	rootCmd.AddCommand(newFilingsPromotedCmd(flags))
 	rootCmd.AddCommand(newVersionCliCmd())
 
 	// Hand-written novel commands.
-	rootCmd.AddCommand(newResolveCmd(&flags))
-	rootCmd.AddCommand(newFundingCmd(&flags))
-	rootCmd.AddCommand(newFundingTrendCmd(&flags))
-	rootCmd.AddCommand(newEngineeringCmd(&flags))
-	rootCmd.AddCommand(newLaunchesCmd(&flags))
-	rootCmd.AddCommand(newMentionsCmd(&flags))
-	rootCmd.AddCommand(newLegalCmd(&flags))
-	rootCmd.AddCommand(newYCCmd(&flags))
-	rootCmd.AddCommand(newWikiCmd(&flags))
-	rootCmd.AddCommand(newDomainCmd(&flags))
-	rootCmd.AddCommand(newSnapshotCmd(&flags))
-	rootCmd.AddCommand(newCompareCmd(&flags))
-	rootCmd.AddCommand(newSignalCmd(&flags))
-	rootCmd.AddCommand(newCompanySearchCmd(&flags))
+	rootCmd.AddCommand(newResolveCmd(flags))
+	rootCmd.AddCommand(newFundingCmd(flags))
+	rootCmd.AddCommand(newFundingTrendCmd(flags))
+	rootCmd.AddCommand(newEngineeringCmd(flags))
+	rootCmd.AddCommand(newLaunchesCmd(flags))
+	rootCmd.AddCommand(newMentionsCmd(flags))
+	rootCmd.AddCommand(newLegalCmd(flags))
+	rootCmd.AddCommand(newYCCmd(flags))
+	rootCmd.AddCommand(newWikiCmd(flags))
+	rootCmd.AddCommand(newDomainCmd(flags))
+	rootCmd.AddCommand(newSnapshotCmd(flags))
+	rootCmd.AddCommand(newCompareCmd(flags))
+	rootCmd.AddCommand(newSignalCmd(flags))
+	rootCmd.AddCommand(newCompanySearchCmd(flags))
 
-	err := rootCmd.Execute()
-	if err != nil && strings.Contains(err.Error(), "unknown flag") {
-		msg := err.Error()
-		// Extract the flag name from the error message (e.g., "unknown flag: --foob")
-		if idx := strings.Index(msg, "unknown flag: "); idx >= 0 {
-			flagStr := strings.TrimSpace(msg[idx+len("unknown flag: "):])
-			if suggestion := suggestFlag(flagStr, rootCmd); suggestion != "" {
-				return fmt.Errorf("%w\nhint: did you mean --%s?", err, suggestion)
+	// Read-only novel commands. Each command is a pure lookup — SEC EDGAR,
+	// GitHub, Wikidata, HN search, RDAP — and doesn't mutate external
+	// state. Tagged here rather than at command construction because each
+	// is hand-authored and predates the `mcp:read-only` annotation. The
+	// runtime walker reads this at MCP-server startup and attaches
+	// readOnlyHint=true to the resulting tool, so hosts like Claude
+	// Desktop don't bucket lookups under "write/delete tools".
+	for _, path := range [][]string{
+		{"compare"}, {"domain"}, {"engineering"}, {"funding"}, {"funding-trend"},
+		{"launches"}, {"legal"}, {"mentions"}, {"resolve"}, {"signal"}, {"snapshot"},
+		{"wiki"}, {"yc"}, {"search"}, {"workflow", "status"},
+	} {
+		if cmd, _, err := rootCmd.Find(path); err == nil && cmd != nil {
+			if cmd.Annotations == nil {
+				cmd.Annotations = make(map[string]string)
 			}
+			cmd.Annotations["mcp:read-only"] = "true"
 		}
 	}
-	if err == nil && flags.deliverBuf != nil {
-		if derr := Deliver(flags.deliverSink, flags.deliverBuf.Bytes(), flags.compact); derr != nil {
-			fmt.Fprintf(os.Stderr, "warning: deliver to %s:%s failed: %v\n", flags.deliverSink.Scheme, flags.deliverSink.Target, derr)
-			return derr
-		}
-	}
-	return err
+
+	return rootCmd
 }
 
 func ExitCode(err error) int {

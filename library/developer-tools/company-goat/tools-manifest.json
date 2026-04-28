@@ -1,5 +1,5 @@
 {
-  "api_name": "company",
+  "api_name": "company-goat",
   "base_url": "https://data.sec.gov",
   "description": "Look up startups across SEC Form D, GitHub, Hacker News, Companies House, YC, Wikidata, and DNS in one command. Built for scouts, founders, BD, and AI agents researching small/midsize startups.",
   "mcp_ready": "full",

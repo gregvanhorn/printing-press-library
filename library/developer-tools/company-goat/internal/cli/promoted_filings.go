@@ -19,6 +19,7 @@ func newFilingsPromotedCmd(flags *rootFlags) *cobra.Command {
 		Short:   "Fetch all SEC submissions for a given CIK (Central Index Key). Used as the seed call when resolving a company's...",
 		Long:    "Shortcut for 'filings list'. Fetch all SEC submissions for a given CIK (Central Index Key). Used as the seed call when resolving a company's...",
 		Example: "  company-goat-pp-cli filings",
+		Annotations: map[string]string{"pp:endpoint": "filings.list"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("cik") && !flags.dryRun {
 				return fmt.Errorf("required flag \"%s\" not set", "cik")
