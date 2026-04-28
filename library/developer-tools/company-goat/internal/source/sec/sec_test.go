@@ -132,6 +132,108 @@ func TestSearchAndFetchAllPropagatesRateLimitFromFilingFetch(t *testing.T) {
 	}
 }
 
+func TestSearchAnyFormOmitsFormsFilter(t *testing.T) {
+	var capturedURL string
+	c := NewClient("test@example.com")
+	c.limiter = nil
+	c.sleep = func(context.Context, time.Duration) error { return nil }
+	c.HTTP = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		capturedURL = req.URL.String()
+		body := `{
+			"hits": {
+				"total": {"value": 3},
+				"hits": [
+					{"_id":"0000000001-21-000001:primary_doc.xml","_source":{"ciks":["0000000001"],"form":"10-K","file_date":"2021-12-14","display_names":["Weber Inc."],"adsh":"0000000001-21-000001"}},
+					{"_id":"0000000002-19-000001:primary_doc.xml","_source":{"ciks":["0000000002"],"form":"10-Q","file_date":"2019-08-14","display_names":["Venture Lending & Leasing VII, Inc."],"adsh":"0000000002-19-000001"}},
+					{"_id":"0000000003-21-000001:primary_doc.xml","_source":{"ciks":["0000000003"],"form":"8-K","file_date":"2021-11-18","display_names":["Weber Inc."],"adsh":"0000000003-21-000001"}}
+				]
+			}
+		}`
+		return response(200, body), nil
+	})}
+
+	resp, err := c.SearchAnyForm(context.Background(), "June Life Inc", 25)
+	if err != nil {
+		t.Fatalf("SearchAnyForm returned error: %v", err)
+	}
+	if strings.Contains(capturedURL, "forms=") {
+		t.Fatalf("expected no forms= filter in URL, got %s", capturedURL)
+	}
+	if !strings.Contains(capturedURL, "q=%22June+Life+Inc%22") {
+		t.Fatalf("expected quoted query in URL, got %s", capturedURL)
+	}
+	if resp.Total != 3 {
+		t.Fatalf("expected total=3, got %d", resp.Total)
+	}
+	if len(resp.Hits) != 3 {
+		t.Fatalf("expected 3 hits, got %d", len(resp.Hits))
+	}
+	gotForms := []string{resp.Hits[0].Form, resp.Hits[1].Form, resp.Hits[2].Form}
+	wantForms := []string{"10-K", "10-Q", "8-K"}
+	for i, got := range gotForms {
+		if got != wantForms[i] {
+			t.Fatalf("hit %d form: got %q, want %q", i, got, wantForms[i])
+		}
+	}
+}
+
+func TestSearchAnyFormEmptyResults(t *testing.T) {
+	c := NewClient("test@example.com")
+	c.limiter = nil
+	c.sleep = func(context.Context, time.Duration) error { return nil }
+	c.HTTP = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		return response(200, `{"hits":{"total":{"value":0},"hits":[]}}`), nil
+	})}
+
+	resp, err := c.SearchAnyForm(context.Background(), "no-such-issuer-12345", 10)
+	if err != nil {
+		t.Fatalf("SearchAnyForm returned error: %v", err)
+	}
+	if resp == nil {
+		t.Fatal("expected non-nil response, got nil")
+	}
+	if resp.Total != 0 || len(resp.Hits) != 0 {
+		t.Fatalf("expected empty response, got total=%d hits=%d", resp.Total, len(resp.Hits))
+	}
+}
+
+func TestSearchFormDStillIncludesFormsFilter(t *testing.T) {
+	// Refactor parity: SearchFormD must continue passing forms=D after the
+	// shared searchEFTS extraction.
+	var capturedURL string
+	c := NewClient("test@example.com")
+	c.limiter = nil
+	c.sleep = func(context.Context, time.Duration) error { return nil }
+	c.HTTP = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		capturedURL = req.URL.String()
+		return response(200, `{"hits":{"total":{"value":0},"hits":[]}}`), nil
+	})}
+
+	if _, err := c.SearchFormD(context.Background(), "stripe", 10); err != nil {
+		t.Fatalf("SearchFormD returned error: %v", err)
+	}
+	if !strings.Contains(capturedURL, "forms=D") {
+		t.Fatalf("expected forms=D in URL after refactor, got %s", capturedURL)
+	}
+}
+
+func TestSearchEFTSDecodeFailureReportsContext(t *testing.T) {
+	c := NewClient("test@example.com")
+	c.limiter = nil
+	c.sleep = func(context.Context, time.Duration) error { return nil }
+	c.HTTP = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		return response(200, `{not valid json`), nil
+	})}
+
+	_, err := c.SearchAnyForm(context.Background(), "any", 10)
+	if err == nil {
+		t.Fatal("expected decode error, got nil")
+	}
+	if !strings.Contains(err.Error(), "decode efts response") {
+		t.Fatalf("error should mention 'decode efts response', got: %v", err)
+	}
+}
+
 func response(status int, body string) *http.Response {
 	return &http.Response{
 		StatusCode: status,

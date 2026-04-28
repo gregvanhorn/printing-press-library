@@ -198,6 +198,25 @@ type SearchResponse struct {
 // by relevance (best matches first). hitsPerPage caps each page (max 100
 // per SEC, default 10). Returns at most hitsPerPage results.
 func (c *Client) SearchFormD(ctx context.Context, query string, hitsPerPage int) (*SearchResponse, error) {
+	return c.searchEFTS(ctx, query, "D", hitsPerPage)
+}
+
+// SearchAnyForm runs the same EFTS full-text search as SearchFormD but
+// without the form filter, so callers see hits across every form type
+// (10-K, 10-Q, 8-K, S-1, DEF 14A, ...). The Form field on each SearchHit
+// tells callers which type they got, so the funding command can bin
+// mentions by signal class (subsidiary, debt, acquisition, other).
+//
+// Used as the fallback search after Form D variants are exhausted; do not
+// use as a primary search path because the result set is much noisier.
+func (c *Client) SearchAnyForm(ctx context.Context, query string, hitsPerPage int) (*SearchResponse, error) {
+	return c.searchEFTS(ctx, query, "", hitsPerPage)
+}
+
+// searchEFTS is the shared request builder for SearchFormD and SearchAnyForm.
+// formsFilter is a comma-separated form list passed to EFTS as the forms
+// query parameter, or "" to search across all form types.
+func (c *Client) searchEFTS(ctx context.Context, query, formsFilter string, hitsPerPage int) (*SearchResponse, error) {
 	if query == "" {
 		return nil, errors.New("query is empty")
 	}
@@ -211,7 +230,9 @@ func (c *Client) SearchFormD(ctx context.Context, query string, hitsPerPage int)
 	u, _ := url.Parse("https://efts.sec.gov/LATEST/search-index")
 	q := u.Query()
 	q.Set("q", `"`+query+`"`)
-	q.Set("forms", "D")
+	if formsFilter != "" {
+		q.Set("forms", formsFilter)
+	}
 	q.Set("hits", strconv.Itoa(hitsPerPage))
 	u.RawQuery = q.Encode()
 
