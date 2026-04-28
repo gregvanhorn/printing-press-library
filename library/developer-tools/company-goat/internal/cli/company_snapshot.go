@@ -154,10 +154,29 @@ func runSnapshotSource(ctx context.Context, src, domain string, deps snapshotDep
 			out.Note = "no Form D filings found"
 			return out
 		}
-		out.Data = map[string]any{
+		// Surface CIK ambiguity so the calling agent can disambiguate via
+		// other tools (wiki founders, engineering signal, world knowledge)
+		// or re-call funding with --cik. We deliberately do NOT auto-pick:
+		// "Notion" matches both Notion Labs (Corp) and Notion Capital (LP)
+		// and the right answer depends on the user's intent, which the CLI
+		// can't see. latest_filing is still populated for backward compat
+		// when unambiguous; null when ambiguous so consumers don't treat a
+		// dragnet match as authoritative.
+		summaries := summarizeByCIK(filings)
+		isAmbiguous := len(summaries) > 1
+		data := map[string]any{
 			"form_d_filings_count": len(filings),
-			"latest_filing":        filings[0],
+			"is_ambiguous":         isAmbiguous,
+			"cik_summaries":        summaries,
 		}
+		if !isAmbiguous {
+			data["latest_filing"] = filings[0]
+		} else {
+			data["latest_filing"] = nil
+			data["note"] = "Multiple SEC entities matched the name. Use cik_summaries to pick the right one and re-run `funding <name> --cik <id>`."
+			out.Status = "ambiguous"
+		}
+		out.Data = data
 	case "legal":
 		// US first via SEC.
 		secCli := sec.NewClient(deps.email)
@@ -351,7 +370,19 @@ func renderSnapshotSection(w fmt_w, s SourceSnapshot) {
 		if c, ok := d["form_d_filings_count"]; ok {
 			fmt.Fprintf(w, "   Form D filings: %v\n", c)
 		}
-		if lf, ok := d["latest_filing"].(sec.FormD); ok {
+		if amb, _ := d["is_ambiguous"].(bool); amb {
+			fmt.Fprintf(w, "   ⚠ Ambiguous — name matched multiple SEC entities. Re-call funding with --cik <id>:\n")
+			if summaries, ok := d["cik_summaries"].([]cikSummary); ok {
+				for _, s := range summaries {
+					yr := ""
+					if s.YearOfInc != "" {
+						yr = " inc:" + s.YearOfInc
+					}
+					fmt.Fprintf(w, "     CIK %s  %-40s  state:%s%s  filings:%d  latest:%s\n",
+						s.CIK, fundingTruncate(s.EntityName, 40), s.State, yr, s.FilingCount, s.LatestFilingDate)
+				}
+			}
+		} else if lf, ok := d["latest_filing"].(sec.FormD); ok {
 			fmt.Fprintf(w, "   Latest:  %s  %s  %s\n", lf.FilingDate, fundingTruncate(lf.EntityName, 40), formatAmount(lf.OfferingAmount))
 		}
 	case "legal":
@@ -504,6 +535,14 @@ func renderCompare(w fmt_w, a, b CompanySnapshot) {
 func snapLine(s CompanySnapshot, src string) string {
 	for _, ss := range s.Sources {
 		if ss.Source == src {
+			if ss.Status == "ambiguous" {
+				// Don't synthesize a side-by-side number when funding
+				// matched multiple SEC entities — the comparison would
+				// average across unrelated companies. The agent reading
+				// the per-side snapshot output sees cik_summaries; this
+				// column just signals "data quality issue here."
+				return "ambiguous (multiple CIKs)"
+			}
 			if ss.Status != "ok" {
 				return ss.Status
 			}
@@ -628,6 +667,17 @@ func computeSignals(s CompanySnapshot) []Signal {
 
 	funding := bySource["funding"]
 	eng := bySource["engineering"]
+	// Funding ambiguity is itself a signal: every other check that
+	// references the funding row is unreliable when the SEC name search
+	// matched multiple unrelated entities. Surface it once so the agent
+	// can decide whether to disambiguate before drawing conclusions.
+	if funding.Status == "ambiguous" {
+		summaries, _ := funding.Data["cik_summaries"].([]cikSummary)
+		out = append(out, Signal{
+			Title:  "Form D match is ambiguous",
+			Detail: fmt.Sprintf("Name search returned filings across %d distinct SEC entities. Other-source signals (engineering, mentions) may not refer to the same company. Re-call funding with --cik <id> to disambiguate before trusting this row.", len(summaries)),
+		})
+	}
 	if funding.Status == "ok" && eng.Status == "ok" {
 		// Check Form D recent year vs no recent github activity (best-effort).
 		if lf, ok := funding.Data["latest_filing"].(sec.FormD); ok {
