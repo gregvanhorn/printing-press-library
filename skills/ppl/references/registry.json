@@ -100,20 +100,24 @@
       }
     },
     {
-      "name": "dominos-pp-cli",
+      "name": "dominos",
       "category": "commerce",
       "api": "Dominos Pizza",
-      "description": "Order pizza, browse menus, track deliveries, and manage rewards from the terminal",
-      "path": "library/commerce/dominos-pp-cli",
+      "description": "Order pizza, browse menus, optimize deals, and track delivery from the terminal - with a local SQLite store for reorder, analytics, and cross-store price comparison.",
+      "path": "library/commerce/dominos",
       "mcp": {
-        "binary": "dominos-mcp",
+        "binary": "dominos-pp-mcp",
         "transport": "stdio",
-        "tool_count": 20,
-        "auth_type": "composed",
+        "tool_count": 19,
+        "public_tool_count": 0,
+        "auth_type": "api_key",
         "env_vars": [
           "DOMINOS_TOKEN"
         ],
-        "mcp_ready": "full"
+        "mcp_ready": "full",
+        "manifest_checksum": "sha256:2f16deacbf93ca90be585648f41a6004b375822d1b7cd1dedd0d868db39bf03c",
+        "spec_format": "internal",
+        "manifest_url": "library/commerce/dominos/tools-manifest.json"
       }
     },
     {
