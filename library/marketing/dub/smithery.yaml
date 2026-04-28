@@ -1,8 +1,0 @@
-name: dub-pp-mcp
-description: dub API
-startCommand:
-    command: go run ./cmd/dub-pp-mcp
-env:
-    DUB_TOKEN:
-        description: dub API credential
-        required: true

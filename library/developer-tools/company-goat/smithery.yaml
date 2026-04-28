@@ -1,4 +1,0 @@
-name: company-goat-pp-mcp
-description: company API
-startCommand:
-    command: go run ./cmd/company-goat-pp-mcp

@@ -1,4 +1,0 @@
-name: producthunt-pp-mcp
-description: producthunt API
-startCommand:
-    command: go run ./cmd/producthunt-pp-mcp

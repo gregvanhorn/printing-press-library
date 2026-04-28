@@ -1,4 +1,0 @@
-name: allrecipes-pp-mcp
-description: allrecipes API
-startCommand:
-    command: go run ./cmd/allrecipes-pp-mcp

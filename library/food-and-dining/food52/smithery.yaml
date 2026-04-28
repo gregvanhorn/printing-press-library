@@ -1,4 +1,0 @@
-name: food52-pp-mcp
-description: food52 API
-startCommand:
-    command: go run ./cmd/food52-pp-mcp
