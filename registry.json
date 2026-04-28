@@ -12,7 +12,7 @@
       "name": "allrecipes",
       "category": "food-and-dining",
       "api": "Allrecipes",
-      "description": "Allrecipes Pocket \u2014 every Allrecipes recipe in your terminal: cached as data, with pantry-aware search, Bayesian-smoothed ranking, multi-recipe grocery lists, and clean markdown export.",
+      "description": "Allrecipes Pocket — every Allrecipes recipe in your terminal: cached as data, with pantry-aware search, Bayesian-smoothed ranking, multi-recipe grocery lists, and clean markdown export.",
       "path": "library/food-and-dining/allrecipes",
       "mcp": {
         "binary": "allrecipes-pp-mcp",
@@ -22,9 +22,7 @@
         "auth_type": "none",
         "env_vars": [],
         "mcp_ready": "full",
-        "manifest_checksum": "sha256:a42ccb6007f505c234a847bb4689a1b270989f67512ab45047172769fef7f81d",
-        "spec_format": "internal",
-        "manifest_url": "library/food-and-dining/allrecipes/tools-manifest.json"
+        "spec_format": "internal"
       }
     },
     {
@@ -57,9 +55,7 @@
           "CAL_COM_TOKEN"
         ],
         "mcp_ready": "full",
-        "spec_format": "openapi3",
-        "manifest_url": "library/productivity/cal-com/tools-manifest.json",
-        "manifest_checksum": "sha256:eec1da022af24682f1dd1cce35c0fabad43bd58a08344fedd758f776d212e2fd"
+        "spec_format": "openapi3"
       }
     },
     {
@@ -75,9 +71,7 @@
         "public_tool_count": 0,
         "auth_type": "none",
         "env_vars": [],
-        "mcp_ready": "full",
-        "manifest_url": "library/developer-tools/company-goat/tools-manifest.json",
-        "manifest_checksum": "sha256:b43efc9c70968bb1c9556313756d1e2ea1230c70ac8991e8db0bdefcf9365b6d"
+        "mcp_ready": "full"
       }
     },
     {
@@ -115,9 +109,7 @@
           "DOMINOS_TOKEN"
         ],
         "mcp_ready": "full",
-        "manifest_checksum": "sha256:2f16deacbf93ca90be585648f41a6004b375822d1b7cd1dedd0d868db39bf03c",
-        "spec_format": "internal",
-        "manifest_url": "library/commerce/dominos/tools-manifest.json"
+        "spec_format": "internal"
       }
     },
     {
@@ -136,9 +128,7 @@
           "DUB_TOKEN"
         ],
         "mcp_ready": "full",
-        "manifest_checksum": "sha256:91c4a4d3c43852b3c22ca06f06c4eb3aafd3f5770200e04485cd0e37100b6685",
-        "spec_format": "openapi3",
-        "manifest_url": "library/marketing/dub/tools-manifest.json"
+        "spec_format": "openapi3"
       }
     },
     {
@@ -179,7 +169,7 @@
       "name": "food52",
       "category": "food-and-dining",
       "api": "Food52",
-      "description": "Search, browse, and read Food52 from your terminal \u2014 with offline FTS, pantry matching, recipe scaling, and the editorial signals other tools throw away.",
+      "description": "Search, browse, and read Food52 from your terminal — with offline FTS, pantry matching, recipe scaling, and the editorial signals other tools throw away.",
       "path": "library/food-and-dining/food52",
       "mcp": {
         "binary": "food52-pp-mcp",
@@ -189,16 +179,14 @@
         "auth_type": "none",
         "env_vars": [],
         "mcp_ready": "full",
-        "manifest_checksum": "sha256:0aac560f4b5fdefe708cab36ed80612a83f168af3f5903946b6e03963df288e4",
-        "spec_format": "internal",
-        "manifest_url": "library/food-and-dining/food52/tools-manifest.json"
+        "spec_format": "internal"
       }
     },
     {
       "name": "hackernews",
       "category": "media-and-entertainment",
       "api": "Hacker News",
-      "description": "Hacker News from your terminal \u2014 with a local store, full-text search, and agent-native output no other HN tool has",
+      "description": "Hacker News from your terminal — with a local store, full-text search, and agent-native output no other HN tool has",
       "path": "library/media-and-entertainment/hackernews",
       "mcp": {
         "binary": "hackernews-pp-mcp",
@@ -208,9 +196,7 @@
         "auth_type": "none",
         "env_vars": [],
         "mcp_ready": "full",
-        "manifest_checksum": "sha256:9f97d59d6e2eda3c5cd3672fb7b0d682e3e4a14cc6cd9b0959c2b7831996b22e",
-        "spec_format": "internal",
-        "manifest_url": "library/media-and-entertainment/hackernews/tools-manifest.json"
+        "spec_format": "internal"
       }
     },
     {
@@ -253,9 +239,7 @@
           "KALSHI_API_KEY"
         ],
         "mcp_ready": "full",
-        "manifest_checksum": "sha256:85ba3641afafdec77e1b40d5961291352a80632baa40b9f8000482f6bb3726a7",
-        "spec_format": "openapi3",
-        "manifest_url": "library/payments/kalshi/tools-manifest.json"
+        "spec_format": "openapi3"
       }
     },
     {
@@ -299,7 +283,7 @@
       "name": "pagliacci-pizza",
       "category": "food-and-dining",
       "api": "Pagliacci Pizza",
-      "description": "Order Seattle's favorite pizza from the terminal \u2014 every endpoint, plus discount stacking, slice rotation across stores, and a local order history nobody else has.",
+      "description": "Order Seattle's favorite pizza from the terminal — every endpoint, plus discount stacking, slice rotation across stores, and a local order history nobody else has.",
       "path": "library/food-and-dining/pagliacci-pizza",
       "mcp": {
         "binary": "pagliacci-pp-mcp",
@@ -309,8 +293,6 @@
         "auth_type": "composed",
         "env_vars": [],
         "mcp_ready": "cli-only",
-        "manifest_url": "library/food-and-dining/pagliacci-pizza/tools-manifest.json",
-        "manifest_checksum": "sha256:6175d160c89f8d4be2c27df591bd430445375234aa739ea6dd7e7bdf78c7d474",
         "spec_format": "internal"
       }
     },
@@ -344,16 +326,14 @@
         "auth_type": "none",
         "env_vars": [],
         "mcp_ready": "full",
-        "manifest_checksum": "sha256:96bc481c9a47f57eeb494f39dcfc75265894eca19b675964ab61a4a1025b10bc",
-        "spec_format": "openapi3",
-        "manifest_url": "library/developer-tools/postman-explore/tools-manifest.json"
+        "spec_format": "openapi3"
       }
     },
     {
       "name": "producthunt",
       "category": "marketing",
       "api": "Product Hunt",
-      "description": "Token-free Product Hunt CLI \u2014 browse today's featured launches, sync locally, and compose views the website itself doesn't expose.",
+      "description": "Token-free Product Hunt CLI — browse today's featured launches, sync locally, and compose views the website itself doesn't expose.",
       "path": "library/marketing/producthunt",
       "mcp": {
         "binary": "producthunt-pp-mcp",
@@ -363,16 +343,14 @@
         "auth_type": "none",
         "env_vars": [],
         "mcp_ready": "full",
-        "manifest_checksum": "sha256:e5d352f3f91743a3837b006628a21b1674b0d9afba0af9464c8ccacabe21faea",
-        "spec_format": "internal",
-        "manifest_url": "library/marketing/producthunt/tools-manifest.json"
+        "spec_format": "internal"
       }
     },
     {
       "name": "recipe-goat",
       "category": "food-and-dining",
       "api": "Cross-site recipe aggregator (37 trusted sites: King Arthur, Serious Eats, Smitten Kitchen, AllRecipes, Food52, BBC Food, EatingWell, Food Network, and 29 more) + USDA FoodData Central",
-      "description": "Find the best version of any recipe across 37 trusted sites \u2014 trust-aware ranking weights real reader signal at 80% and editorial trust at 15% (curated chef/baker sites win tie-break over crowdsourced aggregators). Builds a local SQLite cookbook with pantry match, meal plans, cook log, substitutions, and USDA-backed nutrition backfill. Powered by Surf-Chrome HTTP transport \u2014 bypasses TLS-fingerprint bot detection that previously blocked Dotdash properties.",
+      "description": "Find the best version of any recipe across 37 trusted sites — trust-aware ranking weights real reader signal at 80% and editorial trust at 15% (curated chef/baker sites win tie-break over crowdsourced aggregators). Builds a local SQLite cookbook with pantry match, meal plans, cook log, substitutions, and USDA-backed nutrition backfill. Powered by Surf-Chrome HTTP transport — bypasses TLS-fingerprint bot detection that previously blocked Dotdash properties.",
       "path": "library/food-and-dining/recipe-goat",
       "mcp": {
         "binary": "recipe-goat-pp-mcp",
@@ -383,9 +361,7 @@
           "USDA_FDC_API_KEY"
         ],
         "mcp_ready": "full",
-        "manifest_checksum": "sha256:53a55af50647137cf7df0c57a65ba4b4458d4364b545dad54045e7faeade93fb",
-        "spec_format": "internal",
-        "manifest_url": "library/food-and-dining/recipe-goat/tools-manifest.json"
+        "spec_format": "internal"
       }
     },
     {
@@ -421,9 +397,7 @@
           "STEAM_WEB_API_KEY"
         ],
         "mcp_ready": "full",
-        "manifest_checksum": "sha256:d0020c2f50dfa9be7cd655e89d027dcde08aa868ac992b5cddf1e258ad745a2f",
-        "spec_format": "openapi3",
-        "manifest_url": "library/media-and-entertainment/steam-web/tools-manifest.json"
+        "spec_format": "openapi3"
       }
     },
     {
@@ -463,7 +437,7 @@
       "name": "yahoo-finance",
       "category": "commerce",
       "api": "Yahoo Finance",
-      "description": "Quotes, charts, fundamentals, options chains, and a local portfolio/watchlist tracker against Yahoo Finance \u2014 no API key, with Chrome-session fallback for rate-limited IPs",
+      "description": "Quotes, charts, fundamentals, options chains, and a local portfolio/watchlist tracker against Yahoo Finance — no API key, with Chrome-session fallback for rate-limited IPs",
       "path": "library/commerce/yahoo-finance",
       "mcp": {
         "binary": "yahoo-finance-pp-mcp",
@@ -473,9 +447,7 @@
         "auth_type": "none",
         "env_vars": [],
         "mcp_ready": "full",
-        "manifest_checksum": "",
-        "spec_format": "internal",
-        "manifest_url": ""
+        "spec_format": "internal"
       }
     }
   ]
