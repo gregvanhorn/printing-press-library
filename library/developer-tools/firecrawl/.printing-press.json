@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-04-26T16:17:56.721376Z",
+  "printing_press_version": "2.3.7",
+  "api_name": "firecrawl",
+  "cli_name": "firecrawl-pp-cli",
+  "spec_path": "/tmp/firecrawl.spec",
+  "spec_format": "openapi3",
+  "spec_checksum": "sha256:22f33583990d97666415c9cd3da8afe22ecee96944cc34f8988454ec5d53e140",
+  "mcp_binary": "firecrawl-pp-mcp",
+  "mcp_tool_count": 20,
+  "mcp_ready": "full",
+  "api_version": "1.0.0",
+  "auth_type": "bearer_token",
+  "auth_env_vars": [
+    "FIRECRAWL_TOKEN"
+  ],
+  "category": "developer-tools",
+  "spec_source": "official",
+  "spec_url": "https://raw.githubusercontent.com/mendableai/firecrawl/main/apps/api/openapi.json",
+  "novel_features": [
+    {
+      "name": "Single-page scrape",
+      "command": "scrape",
+      "description": "Scrape a URL into agent-friendly output with Firecrawl authentication and Printing Press JSON/compact controls."
+    },
+    {
+      "name": "Multi-page crawl",
+      "command": "crawl urls",
+      "description": "Start a Firecrawl crawl job from a base URL with depth, limit, sitemap, and path controls."
+    },
+    {
+      "name": "URL map discovery",
+      "command": "map",
+      "description": "Map discoverable URLs for a site as a lightweight pre-crawl discovery workflow."
+    },
+    {
+      "name": "Batch scrape and extract",
+      "command": "batch scrape-and-extract-from-urls",
+      "description": "Submit multiple URLs for scrape/extract jobs with cache, PDF, content, tag, proxy, and batch controls."
+    },
+    {
+      "name": "Structured extraction",
+      "command": "extract data",
+      "description": "Run Firecrawl extraction over URLs with prompt-driven structured data options."
+    }
+  ]
+}
