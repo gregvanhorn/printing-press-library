@@ -16,17 +16,17 @@ func newFeedPromotedCmd(flags *rootFlags) *cobra.Command {
 	var flagMonth int
 
 	cmd := &cobra.Command{
-		Use:   "feed <day>",
-		Short: "Events on this day",
-		Long:  "Shortcut for 'feed get-on-this-day'. Events on this day",
-		Example: "  wikipedia-pp-cli feed",
+		Use:         "feed <day>",
+		Short:       "Get Wikipedia's 'On This Day' feed (events, births, deaths, holidays) for a given month and day",
+		Long:        "Returns Wikipedia's curated 'On This Day' entries for a calendar date (month + day). The --type flag narrows to a single category: events, births, deaths, holidays, selected, or all.",
+		Example:     "  wikipedia-pp-cli feed --month 4 28 --type events",
 		Annotations: map[string]string{"pp:endpoint": "feed.get-on-this-day"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("month") && !flags.dryRun {
 				return fmt.Errorf("required flag \"%s\" not set", "month")
 			}
 			if cmd.Flags().Changed("type") {
-				allowedType := []string{ "all", "selected", "births", "deaths", "events", "holidays" }
+				allowedType := []string{"all", "selected", "births", "deaths", "events", "holidays"}
 				validType := false
 				for _, v := range allowedType {
 					if flagType == v {

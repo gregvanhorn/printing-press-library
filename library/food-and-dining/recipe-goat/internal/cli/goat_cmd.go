@@ -35,8 +35,9 @@ func newGoatCmd(flags *rootFlags) *cobra.Command {
 		saveAll  bool
 	)
 	cmd := &cobra.Command{
-		Use:   "goat <query>",
-		Short: "Cross-site recipe ranker — fetch and rank the best version of any dish",
+		Use:         "goat <query>",
+		Short:       "Cross-site recipe ranker — fetch and rank the best version of any dish",
+		Annotations: map[string]string{"mcp:read-only": "true"},
 		Long: `Search across curated recipe sites, fetch each candidate, then rank by
 a weighted score of rating, review volume, site trust, and recency.
 
