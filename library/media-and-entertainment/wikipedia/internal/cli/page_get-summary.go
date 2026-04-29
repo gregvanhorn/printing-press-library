@@ -18,6 +18,7 @@ func newPageGetSummaryCmd(flags *rootFlags) *cobra.Command {
 		Use:   "get-summary <title>",
 		Short: "Get article summary",
 		Example: "  wikipedia-pp-cli page get-summary example-resource",
+		Annotations: map[string]string{"pp:endpoint": "page.get-summary"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return cmd.Help()

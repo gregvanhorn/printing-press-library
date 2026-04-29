@@ -25,9 +25,10 @@ func newTrendingCmd(flags *rootFlags) *cobra.Command {
 		limit      int
 	)
 	cmd := &cobra.Command{
-		Use:     "trending",
-		Short:   "Show the top recipes currently featured on each site's homepage",
-		Example: "  recipe-goat-pp-cli trending --site budgetbytes,recipetineats --limit 5",
+		Use:         "trending",
+		Short:       "Show the top recipes currently featured on each site's homepage",
+		Example:     "  recipe-goat-pp-cli trending --site budgetbytes,recipetineats --limit 5",
+		Annotations: map[string]string{"mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			sites := siteHostsFromCSV(siteFilter)
 			// Dry-run skips the homepage fan-out: useful for CI / structural

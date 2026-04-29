@@ -1,24 +1,21 @@
 {
-  "dir": ".",
-  "spec_path": "/Users/tmchow/printing-press/.runstate/fizzy-moseying-frost-c63a1182/runs/20260426-002121/research/recipe-goat-spec.yaml",
-  "verdict": "PASS",
+  "dir": "/Users/tmchow/Code/printing-press-library/library/food-and-dining/recipe-goat",
+  "verdict": "WARN",
   "path_check": {
     "tested": 0,
     "valid": 0,
-    "valid_pct": 0,
-    "skipped": true,
-    "detail": "synthetic spec: path validity not applicable"
+    "valid_pct": 0
   },
   "auth_check": {
     "spec_scheme": "",
-    "generated_format": "unknown",
+    "generated_format": "",
     "match": true,
-    "detail": "spec not provided or no bot/bearer scheme detected"
+    "detail": "spec not provided; auth protocol check skipped"
   },
   "browser_session_check": {
     "required": false,
     "pass": true,
-    "detail": "browser-session auth not required"
+    "detail": "spec not provided; browser-session auth check skipped"
   },
   "dead_flags": {
     "total": 17,
@@ -60,10 +57,35 @@
     "found": 0,
     "skipped": true
   },
+  "mcp_surface_parity": {
+    "state": "runtime_walking",
+    "pass": true,
+    "detail": "MCP surface mirrors the Cobra tree at runtime"
+  },
   "reimplementation_check": {
     "checked": 0,
     "exempted_via_store": 0,
     "skipped": true
+  },
+  "source_client_check": {
+    "checked": 10,
+    "findings": [
+      {
+        "package": "recipes",
+        "file": "internal/recipes/archive.go",
+        "reason": "outbound HTTP without rate limiter (cliutil.AdaptiveLimiter or equivalent)"
+      },
+      {
+        "package": "recipes",
+        "file": "internal/recipes/fetch.go",
+        "reason": "outbound HTTP without rate limiter (cliutil.AdaptiveLimiter or equivalent)"
+      },
+      {
+        "package": "recipes",
+        "file": "internal/recipes/nutrition.go",
+        "reason": "outbound HTTP without rate limiter or typed 429 handling"
+      }
+    ]
   },
   "test_presence": {
     "checked": 1
@@ -71,5 +93,7 @@
   "naming_check": {
     "checked": 30
   },
-  "issues": null
+  "issues": [
+    "3 source client file(s) without rate-limit handling: internal/recipes/archive.go — outbound HTTP without rate limiter (cliutil.AdaptiveLimiter or equivalent); internal/recipes/fetch.go — outbound HTTP without rate limiter (cliutil.AdaptiveLimiter or equivalent); internal/recipes/nutrition.go — outbound HTTP without rate limiter or typed 429 handling"
+  ]
 }

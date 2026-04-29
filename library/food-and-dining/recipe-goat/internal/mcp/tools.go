@@ -8,50 +8,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 
 	mcplib "github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/mvanhorn/printing-press-library/library/food-and-dining/recipe-goat/internal/cli"
+	"github.com/mvanhorn/printing-press-library/library/food-and-dining/recipe-goat/internal/cliutil"
 	"github.com/mvanhorn/printing-press-library/library/food-and-dining/recipe-goat/internal/client"
 	"github.com/mvanhorn/printing-press-library/library/food-and-dining/recipe-goat/internal/config"
+	"github.com/mvanhorn/printing-press-library/library/food-and-dining/recipe-goat/internal/mcp/cobratree"
 	"github.com/mvanhorn/printing-press-library/library/food-and-dining/recipe-goat/internal/store"
 )
-
-// looksLikeAuthError checks if an error message body contains auth-related keywords.
-func looksLikeAuthError(msg string) bool {
-	lower := strings.ToLower(msg)
-	patterns := []string{
-		`\bkey\b`,
-		`\btoken\b`,
-		`\bunauthorized\b`,
-		`\bapi_key\b`,
-		`missing.{0,20}key`,
-		`required.{0,20}key`,
-		`\bforbidden\b`,
-		`\bauthenticat`,
-		`\bcredential`,
-	}
-	for _, p := range patterns {
-		if matched, _ := regexp.MatchString(p, lower); matched {
-			return true
-		}
-	}
-	return false
-}
-
-// sanitizeErrorBody truncates and strips credential-shaped strings from error output.
-func sanitizeErrorBody(msg string) string {
-	if len(msg) > 200 {
-		msg = msg[:200] + "..."
-	}
-	credPatterns := regexp.MustCompile(`(?i)(sk-[a-zA-Z0-9]{8,}|sk_live_[a-zA-Z0-9]+|Bearer\s+[a-zA-Z0-9._\-]+|key=[a-zA-Z0-9._\-]+)`)
-	msg = credPatterns.ReplaceAllString(msg, "[REDACTED]")
-	return msg
-}
 
 // RegisterTools registers all API operations as MCP tools.
 func RegisterTools(s *server.MCPServer) {
@@ -60,8 +29,11 @@ func RegisterTools(s *server.MCPServer) {
 			mcplib.WithDescription("Get a specific food by FDC ID Returns Food."),
 			mcplib.WithString("fdc_id", mcplib.Required(), mcplib.Description("FoodData Central ID")),
 			mcplib.WithString("nutrients", mcplib.Description("Comma-separated nutrient IDs to return")),
+			mcplib.WithReadOnlyHintAnnotation(true),
+			mcplib.WithDestructiveHintAnnotation(false),
+			mcplib.WithOpenWorldHintAnnotation(true),
 		),
-		makeAPIHandler("GET", "/food/{fdc_id}", []string{"fdc_id"}),
+		makeAPIHandler("GET", "/food/{fdc_id}", []string{"fdc_id", }),
 	)
 	s.AddTool(
 		mcplib.NewTool("foods_list",
@@ -69,8 +41,11 @@ func RegisterTools(s *server.MCPServer) {
 			mcplib.WithString("pageSize", mcplib.Description("Results per page (1–200)")),
 			mcplib.WithString("pageNumber", mcplib.Description("Page number (1-indexed)")),
 			mcplib.WithString("dataType", mcplib.Description("Comma-separated list: Foundation,SR Legacy,Branded,Survey (FNDDS)")),
+			mcplib.WithReadOnlyHintAnnotation(true),
+			mcplib.WithDestructiveHintAnnotation(false),
+			mcplib.WithOpenWorldHintAnnotation(true),
 		),
-		makeAPIHandler("GET", "/foods/list", []string{}),
+		makeAPIHandler("GET", "/foods/list", []string{ }),
 	)
 	s.AddTool(
 		mcplib.NewTool("foods_search",
@@ -79,24 +54,19 @@ func RegisterTools(s *server.MCPServer) {
 			mcplib.WithString("pageSize", mcplib.Description("Results per page (1–200)")),
 			mcplib.WithString("pageNumber", mcplib.Description("Page number (1-indexed)")),
 			mcplib.WithString("dataType", mcplib.Description("Comma-separated list: Foundation,SR Legacy,Branded,Survey (FNDDS)")),
+			mcplib.WithReadOnlyHintAnnotation(true),
+			mcplib.WithDestructiveHintAnnotation(false),
+			mcplib.WithOpenWorldHintAnnotation(true),
 		),
-		makeAPIHandler("GET", "/foods/search", []string{}),
-	)
-	// Sync tool — populates local database for offline search and sql queries
-	s.AddTool(
-		mcplib.NewTool("sync",
-			mcplib.WithDescription("Sync API data to local SQLite database. Run this before using search or sql tools. Supports incremental sync."),
-			mcplib.WithString("resources", mcplib.Description("Comma-separated resource types to sync (omit for all)")),
-			mcplib.WithString("since", mcplib.Description("Incremental sync since duration (e.g. 7d, 24h, 1w)")),
-			mcplib.WithBoolean("full", mcplib.Description("Full resync ignoring checkpoints")),
-		),
-		handleSync,
+		makeAPIHandler("GET", "/foods/search", []string{ }),
 	)
 	// SQL tool — ad-hoc analysis on synced data without API calls
 	s.AddTool(
 		mcplib.NewTool("sql",
 			mcplib.WithDescription("Run read-only SQL against local database. Use for ad-hoc analysis, aggregations, and joins across synced resources. Requires sync first."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("SQL query (SELECT only). Tables match resource names.")),
+			mcplib.WithReadOnlyHintAnnotation(true),
+			mcplib.WithDestructiveHintAnnotation(false),
 		),
 		handleSQL,
 	)
@@ -106,9 +76,15 @@ func RegisterTools(s *server.MCPServer) {
 	s.AddTool(
 		mcplib.NewTool("context",
 			mcplib.WithDescription("Get API domain context: resource taxonomy, auth requirements, query tips, and unique capabilities. Call this first."),
+			mcplib.WithReadOnlyHintAnnotation(true),
+			mcplib.WithDestructiveHintAnnotation(false),
 		),
 		handleContext,
 	)
+
+	// Runtime Cobra-tree mirror — exposes every user-facing command that is
+	// not already covered by a typed endpoint or framework MCP tool.
+	cobratree.RegisterAll(s, cli.RootCmd(), cobratree.SiblingCLIPath)
 }
 
 // makeAPIHandler creates a generic MCP tool handler for an API endpoint.
@@ -171,18 +147,18 @@ func makeAPIHandler(method, pathTemplate string, positionalParams []string) serv
 			switch {
 			case strings.Contains(msg, "HTTP 409"):
 				return mcplib.NewToolResultText("already exists (no-op)"), nil
-			case strings.Contains(msg, "HTTP 400") && looksLikeAuthError(msg):
-				return mcplib.NewToolResultError("authentication error: " + sanitizeErrorBody(msg) +
+			case strings.Contains(msg, "HTTP 400") && cliutil.LooksLikeAuthError(msg):
+				return mcplib.NewToolResultError("authentication error: " + cliutil.SanitizeErrorBody(msg) +
 					"\nhint: the API rejected the request — this usually means auth is missing or invalid." +
 					"\n      Set your API key: export USDA_FDC_API_KEY=<your-key>" +
 					"\n      Run 'recipe-goat-pp-cli doctor' to check auth status."), nil
 			case strings.Contains(msg, "HTTP 401"):
-				return mcplib.NewToolResultError("authentication failed: " + sanitizeErrorBody(msg) +
+				return mcplib.NewToolResultError("authentication failed: " + cliutil.SanitizeErrorBody(msg) +
 					"\nhint: check your API key." +
 					"\n      Set it with: export USDA_FDC_API_KEY=<your-key>" +
 					"\n      Run 'recipe-goat-pp-cli doctor' to check auth status."), nil
 			case strings.Contains(msg, "HTTP 403"):
-				return mcplib.NewToolResultError("permission denied: " + sanitizeErrorBody(msg) +
+				return mcplib.NewToolResultError("permission denied: " + cliutil.SanitizeErrorBody(msg) +
 					"\nhint: your credentials are valid but lack access to this resource." +
 					"\n      Set it with: export USDA_FDC_API_KEY=<your-key>" +
 					"\n      Run 'recipe-goat-pp-cli doctor' to check auth status."), nil
@@ -231,13 +207,8 @@ func dbPath() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, ".local", "share", "recipe-goat-pp-cli", "data.db")
 }
-
 // Note: MCP tools use their own dbPath() because they are in a separate package (main, not cli).
 // The CLI's defaultDBPath() in the cli package uses the same canonical path.
-
-func handleSync(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
-	return mcplib.NewToolResultText("sync not yet implemented via MCP - use the CLI: recipe-goat-pp-cli sync"), nil
-}
 
 func handleSQL(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
 	args := req.GetArguments()
@@ -288,22 +259,23 @@ func handleSQL(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToo
 
 func handleContext(_ context.Context, _ mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
 	ctx := map[string]any{
-		"api":          "recipe-goat",
-		"description":  "Recipe GOAT — find the best version of any recipe across 37 trusted sites, with offline cookbook, pantry match,...",
-		"archetype":    "generic",
-		"tool_count":   3,
-		"tool_surface": "MCP exposes the endpoints listed under `resources` (plus sync/search/sql/context utilities when present). Items under `cli_only_capabilities` require running the companion recipe-goat-pp-cli binary; the MCP cannot invoke them.",
+		"api":         "recipe-goat",
+		"description": "Recipe GOAT — find the best version of any recipe across 37 trusted sites, with offline cookbook, pantry match,...",
+		"archetype":   "generic",
+		"tool_count":  3,
+		// tool_surface tells agents which surface a capability lives on.
+		"tool_surface": "MCP exposes typed endpoint tools plus a runtime mirror of user-facing CLI commands. Endpoint tools keep typed schemas; command-mirror tools shell out to the companion recipe-goat-pp-cli binary.",
 		"auth": map[string]any{
-			"type":     "api_key",
-			"env_vars": []string{"USDA_FDC_API_KEY"},
+			"type": "api_key",
+			"env_vars": []string{"USDA_FDC_API_KEY",  },
 		},
 		"resources": []map[string]any{
 			{
-				"name":        "foods",
+				"name": "foods",
 				"description": "USDA FoodData Central — ingredient nutrition lookups",
-				"endpoints":   []string{"get", "list", "search"},
-				"syncable":    true,
-				"searchable":  true,
+				"endpoints": []string{"get", "list", "search",  },
+				"syncable": true,
+				"searchable": true,
 			},
 		},
 		"query_tips": []string{
@@ -313,167 +285,40 @@ func handleContext(_ context.Context, _ mcplib.CallToolRequest) (*mcplib.CallToo
 			"Use the search tool for full-text search across all synced resources. Faster than iterating list endpoints.",
 			"Prefer sql/search over repeated API calls when the data is already synced.",
 		},
-		"cli_only_capabilities": []map[string]string{
-			{"name": "Best-version ranker", "command": "goat", "description": "Query any dish across 37 recipe sites and rank results by normalized rating × review count × author trust...", "rationale": "No existing tool ranks recipes across sites. recipe-scrapers extracts one URL at a time; Paprika/Mealie import one...", "via": "cli"},
-			{"name": "Substitution lookup", "command": "sub", "description": "Aggregate ingredient substitutions from King Arthur, Serious Eats, AllRecipes reviews, and Budget Bytes. Ranked by...", "rationale": "Substitutions are tribal knowledge scattered across per-ingredient pages; no unified tool aggregates them.", "via": "cli"},
-			{"name": "Pantry match", "command": "cookbook match", "description": "Find recipes in the local cookbook that you can make right now with listed ingredients, or with ≤N missing...", "rationale": "Requires local pantry + canonicalized ingredient store. No web tool has your pantry data.", "via": "cli"},
-			{"name": "Tonight picker", "command": "tonight", "description": "Pick dinner in 2 seconds: filter cookbook by time budget, recency from cook log, and dietary/kid-friendly flags.", "rationale": "Decision-fatigue killer. Requires local cook log + cookbook + filter set.", "via": "cli"},
-			{"name": "Review-modification digest", "command": "recipe reviews", "description": "Surface the top modifications cooks actually made to a recipe ('added an egg: 22 cooks; baked 5 min less: 17; honey...", "rationale": "Tribal knowledge hidden in 500-review threads; the 5-star hack nobody aggregates.", "via": "cli"},
-			{"name": "USDA nutrition backfill", "command": "recipe get --nutrition", "description": "When a site omits nutrition, parse ingredients, match USDA FoodData Central IDs, compute per-serving macros locally.", "rationale": "~30% of recipes omit nutrition. USDA is free, authoritative, and fills the gap.", "via": "cli"},
-			{"name": "Kid-friendly filter", "command": "search --kid-friendly", "description": "Filter recipes against an editable ingredient-exclusion list (capers, anchovies, excess heat, raw fish, etc.)....", "rationale": "No recipe site has a useful kid-friendly filter; existing ones just show white-bread pasta.", "via": "cli"},
-			{"name": "Unit-reconciling shopping list", "command": "meal-plan shopping-list", "description": "Aggregate ingredients across planned meals, reconcile units (2 cup + 1 cup milk → 3 cup), group by grocery aisle.", "rationale": "Everyone makes a shopping list; everyone fails at unit math. Mealie/Tandoor do this but they're web apps.", "via": "cli"},
-			{"name": "Inline seasonal flag", "command": "recipe get", "description": "Flag out-of-season ingredients inline ('⚠ asparagus is out of season in November — peak April–June') and...", "rationale": "Seasonal awareness improves quality and cost; no CLI provides it.", "via": "cli"},
-			{"name": "Honest cost estimate", "command": "recipe cost", "description": "Rough cost per serving using Budget Bytes line-item data plus USDA retail averages as fallback. Always shows an...", "rationale": "Budget matters; precision is impossible; honest estimates beat silence.", "via": "cli"},
+		// Command-mirror capabilities are exposed through MCP by shelling out
+		// to the companion CLI binary.
+		"command_mirror_capabilities": []map[string]string{
+			{"name": "Best-version ranker", "command": "goat", "description": "Query any dish across 37 recipe sites and rank results by normalized rating × review count × author trust × site...", "rationale": "", "via": "mcp-command-mirror"},
+			{"name": "Substitution lookup", "command": "sub", "description": "Aggregate ingredient substitutions from King Arthur, Serious Eats, AllRecipes reviews, and Budget Bytes. Ranked by...", "rationale": "", "via": "mcp-command-mirror"},
+			{"name": "Pantry match", "command": "cookbook match", "description": "Find recipes in the local cookbook that you can make right now with listed ingredients, or with ≤N missing...", "rationale": "", "via": "mcp-command-mirror"},
+			{"name": "Tonight picker", "command": "tonight", "description": "Pick dinner in 2 seconds: filter cookbook by time budget, recency from cook log, and dietary/kid-friendly flags.", "rationale": "", "via": "mcp-command-mirror"},
+			{"name": "Review-modification digest", "command": "recipe reviews", "description": "Surface the top modifications cooks actually made to a recipe ('added an egg: 22 cooks; baked 5 min less: 17; honey...", "rationale": "", "via": "mcp-command-mirror"},
+			{"name": "USDA nutrition backfill", "command": "recipe get --nutrition", "description": "When a site omits nutrition, parse ingredients, match USDA FoodData Central IDs, compute per-serving macros locally.", "rationale": "", "via": "mcp-command-mirror"},
+			{"name": "Kid-friendly filter", "command": "search --kid-friendly", "description": "Filter recipes against an editable ingredient-exclusion list (capers, anchovies, excess heat, raw fish, etc.)....", "rationale": "", "via": "mcp-command-mirror"},
+			{"name": "Unit-reconciling shopping list", "command": "meal-plan shopping-list", "description": "Aggregate ingredients across planned meals, reconcile units (2 cup + 1 cup milk → 3 cup), group by grocery aisle.", "rationale": "", "via": "mcp-command-mirror"},
+			{"name": "Inline seasonal flag", "command": "recipe get", "description": "Flag out-of-season ingredients inline ('⚠ asparagus is out of season in November — peak April–June') and...", "rationale": "", "via": "mcp-command-mirror"},
+			{"name": "Honest cost estimate", "command": "recipe cost", "description": "Rough cost per serving using Budget Bytes line-item data plus USDA retail averages as fallback. Always shows an...", "rationale": "", "via": "mcp-command-mirror"},
 		},
 		"playbook": []map[string]string{
-			{"topic": "Best-version ranker", "insight": "No existing tool ranks recipes across sites. recipe-scrapers extracts one URL at a time; Paprika/Mealie import one URL at a time."},
-			{"topic": "Substitution lookup", "insight": "Substitutions are tribal knowledge scattered across per-ingredient pages; no unified tool aggregates them."},
-			{"topic": "Pantry match", "insight": "Requires local pantry + canonicalized ingredient store. No web tool has your pantry data."},
-			{"topic": "Tonight picker", "insight": "Decision-fatigue killer. Requires local cook log + cookbook + filter set."},
-			{"topic": "Review-modification digest", "insight": "Tribal knowledge hidden in 500-review threads; the 5-star hack nobody aggregates."},
-			{"topic": "USDA nutrition backfill", "insight": "~30% of recipes omit nutrition. USDA is free, authoritative, and fills the gap."},
-			{"topic": "Kid-friendly filter", "insight": "No recipe site has a useful kid-friendly filter; existing ones just show white-bread pasta."},
-			{"topic": "Unit-reconciling shopping list", "insight": "Everyone makes a shopping list; everyone fails at unit math. Mealie/Tandoor do this but they're web apps."},
-			{"topic": "Inline seasonal flag", "insight": "Seasonal awareness improves quality and cost; no CLI provides it."},
-			{"topic": "Honest cost estimate", "insight": "Budget matters; precision is impossible; honest estimates beat silence."},
+			{"topic": "Best-version ranker", "insight": ""},
+			{"topic": "Substitution lookup", "insight": ""},
+			{"topic": "Pantry match", "insight": ""},
+			{"topic": "Tonight picker", "insight": ""},
+			{"topic": "Review-modification digest", "insight": ""},
+			{"topic": "USDA nutrition backfill", "insight": ""},
+			{"topic": "Kid-friendly filter", "insight": ""},
+			{"topic": "Unit-reconciling shopping list", "insight": ""},
+			{"topic": "Inline seasonal flag", "insight": ""},
+			{"topic": "Honest cost estimate", "insight": ""},
 		},
 	}
 	data, _ := json.MarshalIndent(ctx, "", "  ")
 	return mcplib.NewToolResultText(string(data)), nil
 }
 
-// RegisterNovelFeatureTools registers MCP tools that shell out to the
-// companion CLI binary. Empty body when the spec has no novel features.
+// RegisterNovelFeatureTools is kept as a compatibility no-op for older MCP
+// mains. New generated mains call RegisterTools only; RegisterTools now
+// includes the runtime Cobra-tree mirror.
 func RegisterNovelFeatureTools(s *server.MCPServer) {
-	s.AddTool(
-		mcplib.NewTool("goat",
-			mcplib.WithDescription("Query any dish across 37 recipe sites and rank results by normalized rating × review count × author trust × site trust × recency."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("goat"),
-	)
-	s.AddTool(
-		mcplib.NewTool("sub",
-			mcplib.WithDescription("Aggregate ingredient substitutions from King Arthur, Serious Eats, AllRecipes reviews, and Budget Bytes. Ranked by source trust with ratios and context."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("sub"),
-	)
-	s.AddTool(
-		mcplib.NewTool("cookbook_match",
-			mcplib.WithDescription("Find recipes in the local cookbook that you can make right now with listed ingredients, or with ≤N missing ingredients."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("cookbook match"),
-	)
-	s.AddTool(
-		mcplib.NewTool("tonight",
-			mcplib.WithDescription("Pick dinner in 2 seconds: filter cookbook by time budget, recency from cook log, and dietary/kid-friendly flags."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("tonight"),
-	)
-	s.AddTool(
-		mcplib.NewTool("recipe_reviews",
-			mcplib.WithDescription("Surface the top modifications cooks actually made to a recipe (\"added an egg: 22 cooks; baked 5 min less: 17; honey instead of sugar: 14\")."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("recipe reviews"),
-	)
-	s.AddTool(
-		mcplib.NewTool("recipe_get_nutrition",
-			mcplib.WithDescription("When a site omits nutrition, parse ingredients, match USDA FoodData Central IDs, compute per-serving macros locally."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("recipe get --nutrition"),
-	)
-	s.AddTool(
-		mcplib.NewTool("search_kid_friendly",
-			mcplib.WithDescription("Filter recipes against an editable ingredient-exclusion list (capers, anchovies, excess heat, raw fish, etc.). Personalizable per-child."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("search --kid-friendly"),
-	)
-	s.AddTool(
-		mcplib.NewTool("meal_plan_shopping_list",
-			mcplib.WithDescription("Aggregate ingredients across planned meals, reconcile units (2 cup + 1 cup milk → 3 cup), group by grocery aisle."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("meal-plan shopping-list"),
-	)
-	s.AddTool(
-		mcplib.NewTool("recipe_get",
-			mcplib.WithDescription("Flag out-of-season ingredients inline (\"⚠ asparagus is out of season in November — peak April–June\") and suggest in-season swaps."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("recipe get"),
-	)
-	s.AddTool(
-		mcplib.NewTool("recipe_cost",
-			mcplib.WithDescription("Rough cost per serving using Budget Bytes line-item data plus USDA retail averages as fallback. Always shows an honesty band (±30%)."),
-			mcplib.WithString("args", mcplib.Description("Arguments to pass to the CLI command (e.g. \"--domain stripe.com --json\"). Empty string for no args.")),
-		),
-		shellOutToCLI("recipe cost"),
-	)
-}
-
-// siblingCLIPath resolves the companion CLI via sibling-of-executable,
-// RECIPE_GOAT_CLI_PATH env var, then PATH.
-func siblingCLIPath() (string, error) {
-	const cliName = "recipe-goat-pp-cli"
-	if exe, err := os.Executable(); err == nil {
-		candidate := filepath.Join(filepath.Dir(exe), cliName)
-		if _, err := os.Stat(candidate); err == nil {
-			return candidate, nil
-		}
-	}
-	if v := os.Getenv("RECIPE_GOAT_CLI_PATH"); v != "" {
-		return v, nil
-	}
-	return exec.LookPath(cliName)
-}
-
-// shellOutToCLI returns an MCP tool handler that runs commandSpec against
-// the companion CLI. Resolves the binary path and pre-splits commandSpec
-// at registration so the per-call work is just user-arg split + exec.
-func shellOutToCLI(commandSpec string) server.ToolHandlerFunc {
-	cliPath, lookupErr := siblingCLIPath()
-	prefixArgs := splitShellArgs(commandSpec)
-	return func(ctx context.Context, req mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
-		if lookupErr != nil {
-			return mcplib.NewToolResultError(fmt.Sprintf("companion CLI binary not found: %v\nTried sibling lookup, RECIPE_GOAT_CLI_PATH env var, and PATH.", lookupErr)), nil
-		}
-		userArgs, _ := req.GetArguments()["args"].(string)
-		finalArgs := append(append([]string{}, prefixArgs...), splitShellArgs(userArgs)...)
-		cmd := exec.CommandContext(ctx, cliPath, finalArgs...)
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			return mcplib.NewToolResultError(string(out)), nil
-		}
-		return mcplib.NewToolResultText(string(out)), nil
-	}
-}
-
-// splitShellArgs whitespace-splits with double-quoted-token preservation.
-func splitShellArgs(s string) []string {
-	var tokens []string
-	var cur []rune
-	inQuote := false
-	for _, r := range s {
-		switch {
-		case r == '"':
-			inQuote = !inQuote
-		case (r == ' ' || r == '\t') && !inQuote:
-			if len(cur) > 0 {
-				tokens = append(tokens, string(cur))
-				cur = cur[:0]
-			}
-		default:
-			cur = append(cur, r)
-		}
-	}
-	if len(cur) > 0 {
-		tokens = append(tokens, string(cur))
-	}
-	return tokens
+	_ = s
 }

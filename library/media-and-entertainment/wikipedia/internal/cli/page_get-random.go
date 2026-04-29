@@ -18,6 +18,7 @@ func newPageGetRandomCmd(flags *rootFlags) *cobra.Command {
 		Aliases: []string{"list"},
 		Short: "Get a random article summary",
 		Example: "  wikipedia-pp-cli page get-random",
+		Annotations: map[string]string{"pp:endpoint": "page.get-random"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {

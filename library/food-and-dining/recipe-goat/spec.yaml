@@ -11,6 +11,11 @@ auth:
   in: header
   env_vars:
     - USDA_FDC_API_KEY
+  key_url: "https://fdc.nal.usda.gov/api-key-signup"
+  # Opt-in: only used by `recipe get --nutrition` to backfill USDA macros
+  # when the recipe site omits them. Core ranking, save, search, cookbook,
+  # and meal-plan flows do not require this key.
+  optional: true
 
 config:
   format: toml

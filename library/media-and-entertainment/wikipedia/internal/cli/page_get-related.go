@@ -17,6 +17,7 @@ func newPageGetRelatedCmd(flags *rootFlags) *cobra.Command {
 		Use:   "get-related <title>",
 		Short: "Get related articles",
 		Example: "  wikipedia-pp-cli page get-related example-resource",
+		Annotations: map[string]string{"pp:endpoint": "page.get-related"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return cmd.Help()
