@@ -20,6 +20,7 @@ func newFeedPromotedCmd(flags *rootFlags) *cobra.Command {
 		Short: "Events on this day",
 		Long:  "Shortcut for 'feed get-on-this-day'. Events on this day",
 		Example: "  wikipedia-pp-cli feed",
+		Annotations: map[string]string{"pp:endpoint": "feed.get-on-this-day"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("month") && !flags.dryRun {
 				return fmt.Errorf("required flag \"%s\" not set", "month")

@@ -21,6 +21,7 @@ func newFoodsSearchCmd(flags *rootFlags) *cobra.Command {
 		Use:     "search",
 		Short:   "Search USDA FoodData Central for foods matching a query",
 		Example: "  recipe-goat-pp-cli foods search",
+		Annotations: map[string]string{"pp:endpoint": "foods.search"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("query") && !flags.dryRun {
 				return fmt.Errorf("required flag \"%s\" not set", "query")

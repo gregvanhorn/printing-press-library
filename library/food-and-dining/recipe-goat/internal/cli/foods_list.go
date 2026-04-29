@@ -20,6 +20,7 @@ func newFoodsListCmd(flags *rootFlags) *cobra.Command {
 		Use:     "list",
 		Short:   "List foods paginated",
 		Example: "  recipe-goat-pp-cli foods list",
+		Annotations: map[string]string{"pp:endpoint": "foods.list"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
 			if err != nil {

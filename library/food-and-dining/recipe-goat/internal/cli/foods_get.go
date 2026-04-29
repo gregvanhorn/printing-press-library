@@ -18,6 +18,7 @@ func newFoodsGetCmd(flags *rootFlags) *cobra.Command {
 		Use:     "get <fdc_id>",
 		Short:   "Get a specific food by FDC ID",
 		Example: "  recipe-goat-pp-cli foods get 550e8400-e29b-41d4-a716-446655440000",
+		Annotations: map[string]string{"pp:endpoint": "foods.get"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return cmd.Help()

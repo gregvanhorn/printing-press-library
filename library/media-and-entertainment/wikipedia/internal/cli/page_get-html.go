@@ -18,6 +18,7 @@ func newPageGetHtmlCmd(flags *rootFlags) *cobra.Command {
 		Aliases: []string{"get"},
 		Short: "Get article HTML",
 		Example: "  wikipedia-pp-cli page get-html example-resource",
+		Annotations: map[string]string{"pp:endpoint": "page.get-html"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return cmd.Help()

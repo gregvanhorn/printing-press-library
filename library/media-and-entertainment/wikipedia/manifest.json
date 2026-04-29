@@ -23,6 +23,5 @@
       "linux",
       "win32"
     ]
-  },
-  "cli_binary": "wikipedia-pp-cli"
+  }
 }
