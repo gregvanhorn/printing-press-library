@@ -99,43 +99,6 @@ func apiErr(err error) error       { return &cliError{code: 5, err: err} }
 func configErr(err error) error    { return &cliError{code: 10, err: err} }
 func rateLimitErr(err error) error { return &cliError{code: 7, err: err} }
 
-func normalizeCommandError(err error) error {
-	if err == nil {
-		return nil
-	}
-	var codeErr *cliError
-	if As(err, &codeErr) {
-		return err
-	}
-	if looksLikeUsageError(err.Error()) {
-		return usageErr(err)
-	}
-	return err
-}
-
-func looksLikeUsageError(msg string) bool {
-	patterns := []string{
-		"unknown command",
-		"unknown flag",
-		"required flag",
-		"accepts ",
-		"requires at least ",
-		"requires at most ",
-		"requires exactly ",
-		"argument",
-		"resource name required",
-		"at least two --handle flags required",
-		"invalid --data-source value",
-		"supported targets are ",
-	}
-	for _, pattern := range patterns {
-		if strings.Contains(msg, pattern) {
-			return true
-		}
-	}
-	return false
-}
-
 // looksLikeAuthError checks if an error message body contains auth-related keywords.
 func looksLikeAuthError(msg string) bool {
 	lower := strings.ToLower(msg)

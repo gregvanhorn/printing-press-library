@@ -16,10 +16,10 @@ func newYoutubeListVideoCmd(flags *rootFlags) *cobra.Command {
 	var flagLanguage string
 
 	cmd := &cobra.Command{
-		Use:     "video",
-		Aliases: []string{"list-video"},
-		Short:   "Video/Short Details",
-		Example: "  scrape-creators-pp-cli youtube list-video",
+		Use:         "video",
+		Aliases:     []string{"list-video"},
+		Short:       "Video/Short Details",
+		Example:     "  scrape-creators-pp-cli youtube list-video",
 		Annotations: map[string]string{"pp:endpoint": "youtube.list-video"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("url") && !flags.dryRun {

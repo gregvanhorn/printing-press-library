@@ -15,10 +15,10 @@ func newLinktreePromotedCmd(flags *rootFlags) *cobra.Command {
 	var flagUrl string
 
 	cmd := &cobra.Command{
-		Use:     "linktree",
-		Short:   "Linktree page",
-		Long:    "Shortcut for 'linktree list'. Linktree page",
-		Example: "  scrape-creators-pp-cli linktree",
+		Use:         "linktree",
+		Short:       "Linktree page",
+		Long:        "Shortcut for 'linktree list'. Linktree page",
+		Example:     "  scrape-creators-pp-cli linktree",
 		Annotations: map[string]string{"pp:endpoint": "linktree.list"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("url") && !flags.dryRun {

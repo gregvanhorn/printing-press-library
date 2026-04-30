@@ -15,10 +15,10 @@ func newTwitterListCmd(flags *rootFlags) *cobra.Command {
 	var flagUrl string
 
 	cmd := &cobra.Command{
-		Use:     "community",
-		Aliases: []string{"list"},
-		Short:   "Retrieves details about a Twitter/X Community by URL. Returns the community name, description, rest_id, join_policy,...",
-		Example: "  scrape-creators-pp-cli twitter list",
+		Use:         "community",
+		Aliases:     []string{"list"},
+		Short:       "Retrieves details about a Twitter/X Community by URL. Returns the community name, description, rest_id, join_policy,...",
+		Example:     "  scrape-creators-pp-cli twitter list",
 		Annotations: map[string]string{"pp:endpoint": "twitter.list"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("url") && !flags.dryRun {

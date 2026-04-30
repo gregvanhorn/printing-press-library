@@ -12,5 +12,47 @@
   "auth_type": "api_key",
   "auth_env_vars": [
     "SCRAPE_CREATORS_API_KEY_AUTH"
+  ],
+  "novel_features": [
+    {
+      "name": "Engagement Spike Detector",
+      "command": "videos spikes",
+      "description": "Find videos that performed significantly above a creator's average — the ones that actually went viral."
+    },
+    {
+      "name": "Transcript Full-Text Search",
+      "command": "transcripts search",
+      "description": "Search across all a creator's video transcripts for any keyword or phrase — like grep for TikTok."
+    },
+    {
+      "name": "Multi-Creator Comparison",
+      "command": "profile compare",
+      "description": "Compare two or more creators side-by-side on follower count, engagement rate, posting cadence, and content volume."
+    },
+    {
+      "name": "Content Cadence Analysis",
+      "command": "videos cadence",
+      "description": "See when a creator posts — by day of week and hour — so you can benchmark their publishing strategy."
+    },
+    {
+      "name": "Follower Growth Tracker",
+      "command": "profile track",
+      "description": "Record daily follower snapshots for any creator and chart their growth trajectory over time."
+    },
+    {
+      "name": "Credit Burn Rate Monitor",
+      "command": "account budget",
+      "description": "Track how quickly you're spending API credits and project how many days until you hit your limit."
+    },
+    {
+      "name": "Hashtag Trend Delta",
+      "command": "search trends",
+      "description": "Track whether a hashtag is growing or shrinking by comparing video counts across snapshot intervals."
+    },
+    {
+      "name": "Video Engagement Ranker",
+      "command": "videos analyze",
+      "description": "Rank all of a creator's synced videos by engagement rate (not raw likes) to surface their true best performers."
+    }
   ]
 }

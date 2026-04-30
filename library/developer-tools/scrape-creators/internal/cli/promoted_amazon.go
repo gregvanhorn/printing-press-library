@@ -15,10 +15,10 @@ func newAmazonPromotedCmd(flags *rootFlags) *cobra.Command {
 	var flagUrl string
 
 	cmd := &cobra.Command{
-		Use:     "amazon",
-		Short:   "Amazon Shop page",
-		Long:    "Shortcut for 'amazon list'. Amazon Shop page",
-		Example: "  scrape-creators-pp-cli amazon",
+		Use:         "amazon",
+		Short:       "Amazon Shop page",
+		Long:        "Shortcut for 'amazon list'. Amazon Shop page",
+		Example:     "  scrape-creators-pp-cli amazon",
 		Annotations: map[string]string{"pp:endpoint": "amazon.list"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("url") && !flags.dryRun {

@@ -17,10 +17,10 @@ func newYoutubeListSearch2Cmd(flags *rootFlags) *cobra.Command {
 	var flagType string
 
 	cmd := &cobra.Command{
-		Use:     "search-hashtag",
-		Aliases: []string{"list-search-2"},
-		Short:   "Search by Hashtag",
-		Example: "  scrape-creators-pp-cli youtube list-search-2",
+		Use:         "search-hashtag",
+		Aliases:     []string{"list-search-2"},
+		Short:       "Search by Hashtag",
+		Example:     "  scrape-creators-pp-cli youtube list-search-2",
 		Annotations: map[string]string{"pp:endpoint": "youtube.list-search-2"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("hashtag") && !flags.dryRun {

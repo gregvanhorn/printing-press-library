@@ -23,10 +23,10 @@ func newGoogleListCompanyCmd(flags *rootFlags) *cobra.Command {
 	var flagAll bool
 
 	cmd := &cobra.Command{
-		Use:     "company-ads",
-		Aliases: []string{"list-company"},
-		Short:   "Company Ads",
-		Example: "  scrape-creators-pp-cli google list-company",
+		Use:         "company-ads",
+		Aliases:     []string{"list-company"},
+		Short:       "Company Ads",
+		Example:     "  scrape-creators-pp-cli google list-company",
 		Annotations: map[string]string{"pp:endpoint": "google.list-company"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()

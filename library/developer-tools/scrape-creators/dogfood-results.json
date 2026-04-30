@@ -1,5 +1,5 @@
 {
-  "dir": ".",
+  "dir": "/Users/tmchow/printing-press/library/scrape-creators",
   "verdict": "WARN",
   "path_check": {
     "tested": 0,
@@ -22,12 +22,8 @@
     "dead": 0
   },
   "dead_functions": {
-    "total": 47,
-    "dead": 2,
-    "items": [
-      "looksLikeUsageError",
-      "normalizeCommandError"
-    ]
+    "total": 45,
+    "dead": 0
   },
   "pipeline_check": {
     "sync_calls_domain": true,
@@ -40,7 +36,7 @@
     "with_examples": 0,
     "valid_examples": 0,
     "skipped": true,
-    "detail": "could not discover command tree from agent-context: invalid character 'u' looking for beginning of value"
+    "detail": "could not discover command tree from agent-context: agent-context failed: unknown command \"agent-context\" for \"scrape-creators-pp-cli\""
   },
   "wiring_check": {
     "command_tree": {
@@ -58,9 +54,8 @@
     }
   },
   "novel_features_check": {
-    "planned": 0,
-    "found": 0,
-    "skipped": true
+    "planned": 8,
+    "found": 8
   },
   "mcp_surface_parity": {
     "state": "runtime_walking",
@@ -68,9 +63,8 @@
     "detail": "MCP surface mirrors the Cobra tree at runtime"
   },
   "reimplementation_check": {
-    "checked": 0,
-    "exempted_via_store": 0,
-    "skipped": true
+    "checked": 8,
+    "exempted_via_store": 1
   },
   "source_client_check": {
     "checked": 0,
@@ -83,7 +77,6 @@
     "checked": 133
   },
   "issues": [
-    "2 dead helper functions found",
-    "example check skipped: could not discover command tree from agent-context: invalid character 'u' looking for beginning of value"
+    "example check skipped: could not discover command tree from agent-context: agent-context failed: unknown command \"agent-context\" for \"scrape-creators-pp-cli\""
   ]
 }

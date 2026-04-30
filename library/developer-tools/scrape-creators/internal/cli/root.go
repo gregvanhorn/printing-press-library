@@ -13,9 +13,9 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/spf13/cobra"
 	"github.com/mvanhorn/printing-press-library/library/developer-tools/scrape-creators/internal/client"
 	"github.com/mvanhorn/printing-press-library/library/developer-tools/scrape-creators/internal/config"
-	"github.com/spf13/cobra"
 )
 
 // stripFlagArgs returns argv with flag-looking tokens removed so the wizard's

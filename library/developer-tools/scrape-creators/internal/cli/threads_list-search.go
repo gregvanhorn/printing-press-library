@@ -18,10 +18,10 @@ func newThreadsListSearchCmd(flags *rootFlags) *cobra.Command {
 	var flagTrim bool
 
 	cmd := &cobra.Command{
-		Use:     "search",
-		Aliases: []string{"list-search"},
-		Short:   "Search by Keyword",
-		Example: "  scrape-creators-pp-cli threads list-search",
+		Use:         "search",
+		Aliases:     []string{"list-search"},
+		Short:       "Search by Keyword",
+		Example:     "  scrape-creators-pp-cli threads list-search",
 		Annotations: map[string]string{"pp:endpoint": "threads.list-search"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("query") && !flags.dryRun {

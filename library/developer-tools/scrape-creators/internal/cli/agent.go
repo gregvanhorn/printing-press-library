@@ -11,9 +11,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mvanhorn/printing-press-library/library/developer-tools/scrape-creators/internal/config"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/spf13/cobra"
+	"github.com/mvanhorn/printing-press-library/library/developer-tools/scrape-creators/internal/config"
 )
 
 const (

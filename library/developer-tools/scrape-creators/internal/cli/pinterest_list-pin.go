@@ -16,10 +16,10 @@ func newPinterestListPinCmd(flags *rootFlags) *cobra.Command {
 	var flagTrim bool
 
 	cmd := &cobra.Command{
-		Use:     "pin",
-		Aliases: []string{"list-pin"},
-		Short:   "Fetches detailed information about a single Pinterest pin by URL, returning title, description, link, dominantColor,...",
-		Example: "  scrape-creators-pp-cli pinterest list-pin",
+		Use:         "pin",
+		Aliases:     []string{"list-pin"},
+		Short:       "Fetches detailed information about a single Pinterest pin by URL, returning title, description, link, dominantColor,...",
+		Example:     "  scrape-creators-pp-cli pinterest list-pin",
 		Annotations: map[string]string{"pp:endpoint": "pinterest.list-pin"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("url") && !flags.dryRun {

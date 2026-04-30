@@ -15,8 +15,8 @@ func newAccountPromotedCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:         "account",
-		Short:       "Get credit balance",
-		Long:        "Shortcut for 'account list'. Get credit balance",
+		Short:       "Show remaining Scrape Creators API credit balance for this key",
+		Long:        "Shortcut for 'account list'. Returns the credit balance left on your Scrape Creators API key.",
 		Example:     "  scrape-creators-pp-cli account",
 		Annotations: map[string]string{"mcp:read-only": "true"},
 		RunE: func(cmd *cobra.Command, args []string) error {

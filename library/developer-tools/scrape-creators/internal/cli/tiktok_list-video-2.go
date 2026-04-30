@@ -18,10 +18,10 @@ func newTiktokListVideo2Cmd(flags *rootFlags) *cobra.Command {
 	var flagAll bool
 
 	cmd := &cobra.Command{
-		Use:     "video-comments",
-		Aliases: []string{"list-video-2"},
-		Short:   "Fetches comments on a TikTok video by URL — useful for reading audience reactions, replies, and engagement....",
-		Example: "  scrape-creators-pp-cli tiktok list-video-2",
+		Use:         "video-comments",
+		Aliases:     []string{"list-video-2"},
+		Short:       "Fetches comments on a TikTok video by URL — useful for reading audience reactions, replies, and engagement....",
+		Example:     "  scrape-creators-pp-cli tiktok list-video-2",
 		Annotations: map[string]string{"pp:endpoint": "tiktok.list-video-2"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("url") && !flags.dryRun {

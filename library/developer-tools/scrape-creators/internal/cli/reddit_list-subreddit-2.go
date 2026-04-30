@@ -16,10 +16,10 @@ func newRedditListSubreddit2Cmd(flags *rootFlags) *cobra.Command {
 	var flagUrl string
 
 	cmd := &cobra.Command{
-		Use:     "subreddit-details",
-		Aliases: []string{"list-subreddit-2"},
-		Short:   "Subreddit Details",
-		Example: "  scrape-creators-pp-cli reddit list-subreddit-2",
+		Use:         "subreddit-details",
+		Aliases:     []string{"list-subreddit-2"},
+		Short:       "Subreddit Details",
+		Example:     "  scrape-creators-pp-cli reddit list-subreddit-2",
 		Annotations: map[string]string{"pp:endpoint": "reddit.list-subreddit-2"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()

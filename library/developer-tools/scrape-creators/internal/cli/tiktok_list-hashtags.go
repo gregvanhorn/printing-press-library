@@ -19,10 +19,10 @@ func newTiktokListHashtagsCmd(flags *rootFlags) *cobra.Command {
 	var flagIndustry string
 
 	cmd := &cobra.Command{
-		Use:     "hashtags-popular",
-		Aliases: []string{"list-hashtags"},
-		Short:   "Get popular hashtags",
-		Example: "  scrape-creators-pp-cli tiktok list-hashtags",
+		Use:         "hashtags-popular",
+		Aliases:     []string{"list-hashtags"},
+		Short:       "Get popular hashtags",
+		Example:     "  scrape-creators-pp-cli tiktok list-hashtags",
 		Annotations: map[string]string{"pp:endpoint": "tiktok.list-hashtags"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()

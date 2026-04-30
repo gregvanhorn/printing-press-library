@@ -15,10 +15,10 @@ func newKickPromotedCmd(flags *rootFlags) *cobra.Command {
 	var flagUrl string
 
 	cmd := &cobra.Command{
-		Use:     "kick",
-		Short:   "Fetches detailed data for a Kick clip by URL, including video, metadata, and channel info. Returns clip id, title,...",
-		Long:    "Shortcut for 'kick list'. Fetches detailed data for a Kick clip by URL, including video, metadata, and channel info. Returns clip id, title,...",
-		Example: "  scrape-creators-pp-cli kick",
+		Use:         "kick",
+		Short:       "Fetches detailed data for a Kick clip by URL, including video, metadata, and channel info. Returns clip id, title,...",
+		Long:        "Shortcut for 'kick list'. Fetches detailed data for a Kick clip by URL, including video, metadata, and channel info. Returns clip id, title,...",
+		Example:     "  scrape-creators-pp-cli kick",
 		Annotations: map[string]string{"pp:endpoint": "kick.list"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("url") && !flags.dryRun {

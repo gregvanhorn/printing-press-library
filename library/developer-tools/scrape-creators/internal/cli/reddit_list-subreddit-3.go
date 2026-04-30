@@ -20,10 +20,10 @@ func newRedditListSubreddit3Cmd(flags *rootFlags) *cobra.Command {
 	var flagAll bool
 
 	cmd := &cobra.Command{
-		Use:     "subreddit-search",
-		Aliases: []string{"list-subreddit-3"},
-		Short:   "Subreddit Search",
-		Example: "  scrape-creators-pp-cli reddit list-subreddit-3",
+		Use:         "subreddit-search",
+		Aliases:     []string{"list-subreddit-3"},
+		Short:       "Subreddit Search",
+		Example:     "  scrape-creators-pp-cli reddit list-subreddit-3",
 		Annotations: map[string]string{"pp:endpoint": "reddit.list-subreddit-3"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("subreddit") && !flags.dryRun {

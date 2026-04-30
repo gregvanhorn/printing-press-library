@@ -14,10 +14,10 @@ import (
 func newYoutubeListShortsCmd(flags *rootFlags) *cobra.Command {
 
 	cmd := &cobra.Command{
-		Use:     "shorts-trending",
-		Aliases: []string{"list-shorts"},
-		Short:   "Trending Shorts",
-		Example: "  scrape-creators-pp-cli youtube list-shorts",
+		Use:         "shorts-trending",
+		Aliases:     []string{"list-shorts"},
+		Short:       "Trending Shorts",
+		Example:     "  scrape-creators-pp-cli youtube list-shorts",
 		Annotations: map[string]string{"pp:endpoint": "youtube.list-shorts"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()

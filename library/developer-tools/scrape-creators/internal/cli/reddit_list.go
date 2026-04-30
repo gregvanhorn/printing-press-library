@@ -15,10 +15,10 @@ func newRedditListCmd(flags *rootFlags) *cobra.Command {
 	var flagId string
 
 	cmd := &cobra.Command{
-		Use:     "ad",
-		Aliases: []string{"list"},
-		Short:   "Get Ad",
-		Example: "  scrape-creators-pp-cli reddit list",
+		Use:         "ad",
+		Aliases:     []string{"list"},
+		Short:       "Get Ad",
+		Example:     "  scrape-creators-pp-cli reddit list",
 		Annotations: map[string]string{"pp:endpoint": "reddit.list"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("id") && !flags.dryRun {

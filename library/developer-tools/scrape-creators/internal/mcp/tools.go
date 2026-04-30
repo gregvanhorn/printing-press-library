@@ -26,7 +26,7 @@ import (
 func RegisterTools(s *server.MCPServer) {
 	s.AddTool(
 		mcplib.NewTool("account_list",
-			mcplib.WithDescription("Get credit balance"),
+			mcplib.WithDescription("Returns the number of API credits remaining on your Scrape Creators account. The response contains a single creditCount field with your current balance."),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
 			mcplib.WithOpenWorldHintAnnotation(true),
@@ -35,7 +35,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("account_list-getapiusage",
-			mcplib.WithDescription("Get request history"),
+			mcplib.WithDescription("Returns a paginated list of your API requests, including the endpoint called, status code, credits used, and timestamp. Useful for debugging and monitoring your API usage. Supports filtering by endpoint name and status code. Optional: page, endpoint, statusCode."),
 			mcplib.WithString("page", mcplib.Description("Page number for pagination (max 100)")),
 			mcplib.WithString("endpoint", mcplib.Description("Filter by endpoint name (partial match)")),
 			mcplib.WithString("statusCode", mcplib.Description("Filter by HTTP status code")),
@@ -47,7 +47,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("account_list-getdailyusagecount",
-			mcplib.WithDescription("Get daily usage"),
+			mcplib.WithDescription("Returns aggregated daily usage statistics for the last 30 days, including total credits consumed and number of requests per day."),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
 			mcplib.WithOpenWorldHintAnnotation(true),
@@ -56,7 +56,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("account_list-getmostusedroutes",
-			mcplib.WithDescription("Get most used routes"),
+			mcplib.WithDescription("Returns your top 20 most called API endpoints ranked by call count, along with total credits consumed per endpoint. Defaults to the last 24 hours. Supports custom time ranges up to 1 year. Optional: start_time, end_time."),
 			mcplib.WithString("start_time", mcplib.Description("Start of time range (ISO 8601 format)")),
 			mcplib.WithString("end_time", mcplib.Description("End of time range (ISO 8601 format)")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -67,7 +67,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("amazon_list",
-			mcplib.WithDescription("Amazon Shop page"),
+			mcplib.WithDescription("Scrapes a creator's Amazon Shop page by URL, returning their storefront profile and product collections. Returns avatar, name, description, socials, and lists with title and itemCount. Also includes trendingPicks with price and discount, curations with title and postCount, and a pageToken for pagination. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("URL to Amazon Shop page")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -77,7 +77,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("bluesky_list",
-			mcplib.WithDescription("Fetches a single Bluesky post by URL, returning the post's record text, author info, embed content, replyCount,..."),
+			mcplib.WithDescription("Fetches a single Bluesky post by URL, returning the post's record text, author info, embed content, replyCount, repostCount, likeCount, and quoteCount. Also includes a replies array with threaded reply posts. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Bluesky post URL")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -87,7 +87,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("bluesky_list-profile",
-			mcplib.WithDescription("Retrieves a Bluesky user's public profile including handle, displayName, avatar, description, followersCount,..."),
+			mcplib.WithDescription("Retrieves a Bluesky user's public profile including handle, displayName, avatar, description, followersCount, followsCount, postsCount, createdAt, and verification status. The associated field shows counts for lists, feed generators, and starter packs. Required: handle."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("Bluesky handle")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -97,7 +97,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("bluesky_list-user",
-			mcplib.WithDescription("Fetches a paginated feed of posts from a Bluesky user, returning each post's uri, record text, author info, embed..."),
+			mcplib.WithDescription("Fetches a paginated feed of posts from a Bluesky user, returning each post's uri, record text, author info, embed content, replyCount, repostCount, likeCount, quoteCount, and indexedAt. Supports pagination via cursor. Use user_id (the 'did') instead of handle for faster response times. Optional: handle, user_id."),
 			mcplib.WithString("handle", mcplib.Description("Bluesky handle")),
 			mcplib.WithString("user_id", mcplib.Description("Bluesky 'did'. (For some reason Bluesky calls their user ids, 'did' for whatever reason)")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -108,7 +108,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("detect-age-gender_list",
-			mcplib.WithDescription("Get Age and Gender"),
+			mcplib.WithDescription("Uses AI to analyze a creator's profile photo and estimate their age and gender. Returns ageRange with low and high bounds, gender, and a confidence score for the gender prediction. The profile photo must contain a clear, visible face for accurate results. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("URL to users social profile")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -118,7 +118,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("facebook_list",
-			mcplib.WithDescription("Retrieves a single public Facebook post or reel by URL. Returns post_id, like_count, comment_count, share_count,..."),
+			mcplib.WithDescription("Retrieves a single public Facebook post or reel by URL. Returns post_id, like_count, comment_count, share_count, view_count, description, creation_time, and author details. For video posts, includes video sd_url, hd_url, thumbnail, and length_in_second. Optionally fetches comments and transcript via get_comments and get_transcript parameters. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("The URL of the post to get")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -128,7 +128,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("facebook_list-adlibrary",
-			mcplib.WithDescription("Ad Details"),
+			mcplib.WithDescription("Retrieves detailed information about a specific Facebook ad by its ID or URL. Returns adArchiveID, pageName, isActive, startDate, endDate, and a snapshot containing body, images, videos, display_format, link_url, and cta_text. For ads with multiple versions, the ad creative is found in the snapshot.cards array rather than snapshot.body. Optional: id, url, get_transcript (plus 1 more)."),
 			mcplib.WithString("id", mcplib.Description("Facebook Ad Id")),
 			mcplib.WithString("url", mcplib.Description("Facebook Ad URL")),
 			mcplib.WithString("get_transcript", mcplib.Description("Get the transcript of the ad. Only works if the video is under 2 minutes.")),
@@ -141,7 +141,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("facebook_list-adlibrary-2",
-			mcplib.WithDescription("Company Ads"),
+			mcplib.WithDescription("Fetches all ads currently running for a specific company from the Meta Ad Library. Each ad includes ad_archive_id, page_name, is_active, publisher_platform, and a snapshot with body, images, videos, and display_format. Supports filtering by country, media_type, date range, and language with cursor-based pagination. Optional: pageId, companyName, country (plus 8 more)."),
 			mcplib.WithString("pageId", mcplib.Description("The companies ad library page id. You can get this with my Search For Companies Endpoint. Can either use this or...")),
 			mcplib.WithString("companyName", mcplib.Description("The name of the company. Can either use this or pageId")),
 			mcplib.WithString("country", mcplib.Description("This can only be one country. It has to be the 2 letter code for the country. It defaults to ALL.")),
@@ -161,7 +161,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("facebook_list-adlibrary-3",
-			mcplib.WithDescription("Searches the Meta Ad Library by keyword and returns matching ads. Each result includes ad_archive_id, page_name,..."),
+			mcplib.WithDescription("Searches the Meta Ad Library by keyword and returns matching ads. Each result includes ad_archive_id, page_name, is_active, publisher_platform, and a snapshot with body text, images, videos, and cta_text. Results cap around 1,500 via GET due to cursor size limits; switch to POST method with body params for larger result sets. Required: query. Optional: sort_by, search_type, ad_type (plus 7 more)."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Keyword to search for")),
 			mcplib.WithString("sort_by", mcplib.Description("Sort by impressions (high to low), or Most Recent (relevancy_monthly_grouped). Defaults to impressions.")),
 			mcplib.WithString("search_type", mcplib.Description("If you want to search by exact phrase or not")),
@@ -181,7 +181,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("facebook_list-adlibrary-4",
-			mcplib.WithDescription("Search for Companies"),
+			mcplib.WithDescription("Searches for companies by name in the Meta Ad Library and returns their page IDs for use with other ad library endpoints. Each result includes page_id, name, category, likes, verification status, and Instagram details like ig_username and ig_followers. Required: query."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Keyword to search for")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -191,7 +191,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("facebook_list-group",
-			mcplib.WithDescription("Facebook Group Posts"),
+			mcplib.WithDescription("Fetches posts from a public Facebook group, limited to 3 posts per page due to API limitations. Each post includes id, text, url, reactionCount, commentCount, publishTime, videoDetails, and topComments. Supports sorting by TOP_POSTS, RECENT_ACTIVITY, CHRONOLOGICAL, or CHRONOLOGICAL_LISTINGS, with cursor-based pagination. Optional: url, group_id, sort_by (plus 1 more)."),
 			mcplib.WithString("url", mcplib.Description("The URL of the group")),
 			mcplib.WithString("group_id", mcplib.Description("The ID of the group")),
 			mcplib.WithString("sort_by", mcplib.Description("How to sort the posts")),
@@ -204,7 +204,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("facebook_list-post",
-			mcplib.WithDescription("Fetches comments from a Facebook post or reel with cursor-based pagination. Each comment includes id, text,..."),
+			mcplib.WithDescription("Fetches comments from a Facebook post or reel with cursor-based pagination. Each comment includes id, text, created_at, reply_count, reaction_count, and author details with name and profile_picture. Passing a feedback_id instead of a url significantly speeds up the request. Optional: url, feedback_id, cursor."),
 			mcplib.WithString("url", mcplib.Description("Facebook post URL (or reel URL)")),
 			mcplib.WithString("feedback_id", mcplib.Description("Using feedback_id (instead of url) will *really* speed up the request. You can get the feedback_id when you make a...")),
 			mcplib.WithString("cursor", mcplib.Description("Cursor to get more comments. Get 'cursor' from previous response.")),
@@ -216,7 +216,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("facebook_list-post-2",
-			mcplib.WithDescription("Extracts the transcript text from a Facebook video post or reel. Returns the transcript as a single text string with..."),
+			mcplib.WithDescription("Extracts the transcript text from a Facebook video post or reel. Returns the transcript as a single text string with line breaks. Only works on videos under 2 minutes in length. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Facebook post URL")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -226,7 +226,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("facebook_list-profile",
-			mcplib.WithDescription("Retrieves public Facebook page details including category, address, email, phone, website, services, priceRange,..."),
+			mcplib.WithDescription("Retrieves public Facebook page details including category, address, email, phone, website, services, priceRange, rating, likeCount, and followerCount. Also returns adLibrary status with the page's ad activity and pageId. Optionally includes businessHours when get_business_hours is set to true. Required: url. Optional: get_business_hours."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Facebook profile URL")),
 			mcplib.WithString("get_business_hours", mcplib.Description("Get the business's hours")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -237,7 +237,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("facebook_list-profile-2",
-			mcplib.WithDescription("Profile Photos"),
+			mcplib.WithDescription("Fetches photos from a public Facebook page with pagination support. Each photo includes photo_id, accessibility_caption, viewer_image with uri, height, and width, plus a thumbnail and direct url. Pagination requires passing both next_page_id and cursor from the previous response. Required: url. Optional: next_page_id, cursor."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Facebook page URL")),
 			mcplib.WithString("next_page_id", mcplib.Description("To paginate through to the next page")),
 			mcplib.WithString("cursor", mcplib.Description("To paginate through to the next page")),
@@ -249,7 +249,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("facebook_list-profile-3",
-			mcplib.WithDescription("Profile Posts"),
+			mcplib.WithDescription("Returns publicly visible Facebook profile posts, limited to 3 posts per page due to API limitations. Each post includes id, text, url, reactionCount, commentCount, publishTime, videoDetails with sdUrl, hdUrl, and thumbnailUrl, plus topComments. Accepts either a url or pageId parameter, where pageId is faster. Optional: url, pageId, cursor."),
 			mcplib.WithString("url", mcplib.Description("Facebook profile URL")),
 			mcplib.WithString("pageId", mcplib.Description("Facebook profile page id")),
 			mcplib.WithString("cursor", mcplib.Description("To paginate through the posts")),
@@ -261,7 +261,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("facebook_list-profile-4",
-			mcplib.WithDescription("Profile Reels"),
+			mcplib.WithDescription("Fetches up to 10 reels per request from a public Facebook page. Each reel includes id, url, view_count, description, creation_time, video_url, thumbnail, play_time_in_ms, and music details. Pagination requires passing both next_page_id and cursor from the previous response. Required: url. Optional: next_page_id, cursor."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Facebook page URL")),
 			mcplib.WithString("next_page_id", mcplib.Description("To paginate through to the next page")),
 			mcplib.WithString("cursor", mcplib.Description("To paginate through to the next page")),
@@ -273,7 +273,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("google_list",
-			mcplib.WithDescription("Ad Details"),
+			mcplib.WithDescription("Retrieves detailed information about a specific Google ad including advertiserId, creativeId, format, firstShown, lastShown, and overallImpressions. Returns creativeRegions, regionStats with per-region impression data, and variations with destinationUrl, headline, description, and imageUrl. Text extraction uses OCR, so accuracy may vary. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("The url of the ad")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -283,7 +283,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("google_list-adlibrary",
-			mcplib.WithDescription("Advertiser Search"),
+			mcplib.WithDescription("Searches the Google Ad Transparency Library for advertisers by name. Returns a list of matching advertisers with their name, advertiser_id, and region, plus a list of associated website domains. Use the returned advertiser_id to look up a company's ads. Required: query."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("The query to search for")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -293,7 +293,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("google_list-company",
-			mcplib.WithDescription("Company Ads"),
+			mcplib.WithDescription("Fetches public ads for a company from the Google Ad Transparency Library by domain or advertiser_id. Each ad includes advertiserId, creativeId, format, adUrl, advertiserName, domain, firstShown, and lastShown. Costs 25 credits per request when get_ad_details=true; without it, only advertiserId and creativeId are returned at 1 credit. Optional: domain, advertiser_id, topic (plus 5 more)."),
 			mcplib.WithString("domain", mcplib.Description("The domain of the company")),
 			mcplib.WithString("advertiser_id", mcplib.Description("The advertiser id of the company")),
 			mcplib.WithString("topic", mcplib.Description("The topic to search for. If you search for 'political', you will also need to pass a 'region', like 'US' or 'AU'")),
@@ -310,7 +310,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("google_list-search",
-			mcplib.WithDescription("Performs a Google search and returns organic results with url, title, and description for each result. Supports an..."),
+			mcplib.WithDescription("Performs a Google search and returns organic results with url, title, and description for each result. Supports an optional region parameter (2-letter country code) to get localized results from a specific country. Required: query. Optional: region, date_posted, page."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Search query")),
 			mcplib.WithString("region", mcplib.Description("2 letter country code, ie US, UK, CA, etc This will show results from that country")),
 			mcplib.WithString("date_posted", mcplib.Description("Date posted")),
@@ -323,7 +323,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("instagram_list",
-			mcplib.WithDescription("Basic Profile"),
+			mcplib.WithDescription("Fetches a lightweight Instagram profile summary by user ID, returning username, full name, biography, profile picture URL, verification status, follower count, following count, media count, and account privacy and type. Ideal for quick lookups or enrichment when you already have the numeric user ID. Optional: userId."),
 			mcplib.WithString("userId", mcplib.Description("Instagram user id")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -333,7 +333,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("instagram_list-media",
-			mcplib.WithDescription("Generates an AI-powered speech-to-text transcription for an Instagram video post or reel. The video must be under 2..."),
+			mcplib.WithDescription("Generates an AI-powered speech-to-text transcription for an Instagram video post or reel. The video must be under 2 minutes long. Returns a transcripts array with each item's shortcode and transcribed text; carousel posts produce one transcript per video slide. Expect 10-30 second response times, and null when no speech is detected. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Instagram post or reel URL")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -343,7 +343,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("instagram_list-post",
-			mcplib.WithDescription("Post/Reel Info"),
+			mcplib.WithDescription("Fetches detailed metadata for a single Instagram post or reel by shortcode or URL. Returns caption text, like count, comment count, video URL, video play count, video duration, display images, owner info, tagged users, and carousel sidecar children when applicable. Play counts are Instagram-only views and exclude cross-posted Facebook views. Required: url. Optional: region, trim, download_media."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Instagram post or reel URL")),
 			mcplib.WithString("region", mcplib.Description("2 letter country code to set the proxy in")),
 			mcplib.WithString("trim", mcplib.Description("Set to true to get a trimmed response")),
@@ -356,7 +356,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("instagram_list-post-2",
-			mcplib.WithDescription("Retrieves comments on a public Instagram post or reel. Each comment includes the comment text, creation timestamp,..."),
+			mcplib.WithDescription("Retrieves comments on a public Instagram post or reel. Each comment includes the comment text, creation timestamp, and commenter details such as username, user ID, verification status, and profile picture URL. Supports cursor-based pagination to load additional comment pages. Required: url. Optional: cursor."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("The URL of the post or reel to get comments from")),
 			mcplib.WithString("cursor", mcplib.Description("The cursor to get more comments. Get 'cursor' from previous response.")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -367,7 +367,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("instagram_list-profile",
-			mcplib.WithDescription("Retrieves comprehensive public Instagram profile information including biography, bio links, follower and following..."),
+			mcplib.WithDescription("Retrieves comprehensive public Instagram profile information including biography, bio links, follower and following counts, verification status, and profile picture URLs. Also returns recent timeline posts with engagement metrics such as likes, comments, and video view counts, plus a list of related profiles. Useful for account overview, audience analysis, or discovering similar creators. Required: handle. Optional: trim."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("Instagram handle")),
 			mcplib.WithString("trim", mcplib.Description("Set to true to get a trimmed response")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -378,7 +378,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("instagram_list-reels",
-			mcplib.WithDescription("Search Reels"),
+			mcplib.WithDescription("Searches for Instagram reels matching a keyword or phrase via Google Search, bypassing Instagram's login-gated search. Returns a list of reels with shortcode, caption, thumbnail, video URL, play count, like count, comment count, video duration, owner details, location, and audio attribution info. Play counts are Instagram-only views and exclude cross-posted Facebook views. Supports page-based pagination for browsing additional results. Required: query. Optional: date_posted, page."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("The keyword to search for")),
 			mcplib.WithString("date_posted", mcplib.Description("Date posted")),
 			mcplib.WithString("page", mcplib.Description("The page number to return.")),
@@ -390,7 +390,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("instagram_list-song",
-			mcplib.WithDescription("Reels using Song (Deprecated)"),
+			mcplib.WithDescription("DEPRECATED — this endpoint is no longer functional. Instagram removed the public audio pages that this endpoint relied on, so it cannot return data. Do not use this endpoint; there is currently no replacement available. Required: audio_id. Optional: max_id."),
 			mcplib.WithString("audio_id", mcplib.Required(), mcplib.Description("If you're looking for this, it is sometimes called 'audio_cluster_id', or it can be just 'audio_id'.")),
 			mcplib.WithString("max_id", mcplib.Description("How you paginate the results. Pass the max_id from the previous response to get the next set of reels.")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -401,7 +401,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("instagram_list-user",
-			mcplib.WithDescription("Embed HTML"),
+			mcplib.WithDescription("Returns the raw HTML embed snippet for an Instagram user's profile widget. The response contains a single html string that can be inserted into a webpage to render an embeddable Instagram profile card. Requires the user's handle as input. Required: handle."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("Instagram handle")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -411,7 +411,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("instagram_list-user-2",
-			mcplib.WithDescription("Story Highlights"),
+			mcplib.WithDescription("Lists all story highlight albums for an Instagram user. Each highlight includes its ID, title, cover thumbnail URL, and owner info with username and profile picture. Accepts either a user_id or handle; providing user_id yields faster responses. Optional: user_id, handle."),
 			mcplib.WithString("user_id", mcplib.Description("Instagram user id. Use for faster response times.")),
 			mcplib.WithString("handle", mcplib.Description("Instagram handle. Use user_id for faster response times.")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -422,7 +422,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("instagram_list-user-3",
-			mcplib.WithDescription("Returns a paginated list of a user's public Instagram reels (short-form videos). Each reel includes its shortcode,..."),
+			mcplib.WithDescription("Returns a paginated list of a user's public Instagram reels (short-form videos). Each reel includes its shortcode, play count, like count, comment count, video versions with download URLs, thumbnail image, and owner info. Note that reel captions are not returned by this endpoint. Play counts are Instagram-only views and exclude cross-posted Facebook views. Supports cursor-based pagination via max_id; providing a user_id instead of a handle yields faster responses. Optional: user_id, handle, max_id (plus 1 more)."),
 			mcplib.WithString("user_id", mcplib.Description("Instagram user id. Use this for faster response times.")),
 			mcplib.WithString("handle", mcplib.Description("Instagram handle. Use user_id for faster response times.")),
 			mcplib.WithString("max_id", mcplib.Description("Max id to get more reels. Get 'max_id' from previous response.")),
@@ -435,7 +435,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("instagram_list-user-4",
-			mcplib.WithDescription("Returns a paginated feed of a user's public Instagram posts, including photos, videos, and carousels. Each item..."),
+			mcplib.WithDescription("Returns a paginated feed of a user's public Instagram posts, including photos, videos, and carousels. Each item includes media type, shortcode, caption text, like count, comment count, play count, video URLs, image URLs, and tagged users. Play counts reflect Instagram-only views and exclude cross-posted Facebook views. Supports cursor-based pagination via next_max_id for scrolling through the full timeline. Required: handle. Optional: next_max_id, trim."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("Instagram handle")),
 			mcplib.WithString("next_max_id", mcplib.Description("Cursor to get next page of results.")),
 			mcplib.WithString("trim", mcplib.Description("Set to true to get a trimmed response")),
@@ -447,7 +447,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("instagram_list-user-5",
-			mcplib.WithDescription("Highlights Details"),
+			mcplib.WithDescription("Fetches the full contents of a specific Instagram story highlight album by its ID. Returns the highlight's cover image, title, user info, and an items array containing each story with its media type, image or video URLs, dimensions, timestamp, and sticker/interactive element data. Useful for archiving or analyzing individual highlight reels. Optional: id."),
 			mcplib.WithString("id", mcplib.Description("The ID of the highlight to get details for")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -457,7 +457,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("kick_list",
-			mcplib.WithDescription("Fetches detailed data for a Kick clip by URL, including video, metadata, and channel info. Returns clip id, title,..."),
+			mcplib.WithDescription("Fetches detailed data for a Kick clip by URL, including video, metadata, and channel info. Returns clip id, title, clip_url, thumbnail_url, video_url, view_count, likes_count, duration, privacy status, and is_mature flag. Also includes category details (name, slug), creator info (username), and channel info (username, profile_picture). Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Kick clip URL")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -467,7 +467,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("komi_list",
-			mcplib.WithDescription("Komi page"),
+			mcplib.WithDescription("Scrapes a Komi page by URL, extracting the creator's profile, social links, and featured content. Returns id, username, avatar, displayName, bio, and social accounts (instagram, tiktok, youtube, twitter, facebook, snapchat). Also includes links, an array of link and product objects each with id, url, title, type, thumbnail, and optional price and currency for products. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("URL to Komi page")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -477,7 +477,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("linkbio_list",
-			mcplib.WithDescription("Linkbio page"),
+			mcplib.WithDescription("Scrapes a Linkbio (lnk.bio) page by URL, extracting the creator's profile and all their links. Returns handle, id, social accounts (instagram, tiktok, youtube, twitter, whatsapp), email, website, and links — an array of link objects each with url and text. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("URL to Linkbio (lnk.bio) page")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -487,7 +487,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("linkedin_list",
-			mcplib.WithDescription("Ad Details"),
+			mcplib.WithDescription("Retrieves detailed information about a specific LinkedIn ad by URL. Returns id, description, headline, adType, advertiser, and targeting with language, location, and audience criteria. Also includes totalImpressions, impressionsByCountry, adDuration, startDate, and endDate. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("The url of the ad")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -497,7 +497,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("linkedin_list-ads",
-			mcplib.WithDescription("Search Ads"),
+			mcplib.WithDescription("Searches the LinkedIn Ad Library by company name, keyword, or companyId with optional country and date filters. Each ad includes id, description, headline, adType, advertiser, targeting details, image or video URLs, totalImpressions, and impressionsByCountry. Supports pagination via paginationToken. Optional: company, keyword, companyId (plus 4 more)."),
 			mcplib.WithString("company", mcplib.Description("The company name to search for. 'Microsoft' for example")),
 			mcplib.WithString("keyword", mcplib.Description("The keyword to search for")),
 			mcplib.WithString("companyId", mcplib.Description("The company id to search for")),
@@ -513,7 +513,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("linkedin_list-company",
-			mcplib.WithDescription("Company Page"),
+			mcplib.WithDescription("Fetches a LinkedIn company page with details including name, description, logo, cover image, slogan, location, headquarters, employee count (headcount/staff size), website, industry, company type, founded year, specialties, funding rounds with investors, featured employees, recent posts, and similar company pages. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("The URL of the LinkedIn company page to get")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -523,7 +523,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("linkedin_list-company-2",
-			mcplib.WithDescription("Company Posts"),
+			mcplib.WithDescription("Retrieves paginated posts from a LinkedIn company page, including each post's URL, ID, publication date, and full text content. Supports page-based pagination up to a maximum of 7 pages due to a LinkedIn platform limitation. Required: url. Optional: page."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("The URL of the LinkedIn company page to get")),
 			mcplib.WithString("page", mcplib.Description("The page number to get")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -534,7 +534,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("linkedin_list-post",
-			mcplib.WithDescription("Fetches a single LinkedIn post or article, returning the title, headline, full description text, author info with..."),
+			mcplib.WithDescription("Fetches a single LinkedIn post or article, returning the title, headline, full description text, author info with follower count, publication date, like count (reactions), comment count, and individual comments. Also includes related articles from the same author in moreArticles. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("The URL of the LinkedIn post to get")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -544,7 +544,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("linkedin_list-profile",
-			mcplib.WithDescription("Person's Profile"),
+			mcplib.WithDescription("Retrieves a person's public LinkedIn profile data, including their name, photo, location, follower count (followers), about/bio summary, recent posts, work experience, education, articles, activity feed, publications, projects, recommendations, and similar profiles. Only returns publicly available information visible in an incognito browser. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("The URL of the LinkedIn profile to get")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -554,7 +554,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("linkme_list",
-			mcplib.WithDescription("Retrieves a Linkme profile by URL, including identity, social links, and contact details. Returns profile with id,..."),
+			mcplib.WithDescription("Retrieves a Linkme profile by URL, including identity, social links, and contact details. Returns profile with id, firstName, username, bio, profileVisitCount, profileImage, verifiedAccount, and isAmbassador flag. Also includes infoLinks (email addresses) and webLinks, an array of categorized social platform links (Spotify, Instagram, YouTube, Twitter, Facebook, and more) each with linkValue and faceValue. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Linkme profile URL")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -564,7 +564,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("linktree_list",
-			mcplib.WithDescription("Linktree page"),
+			mcplib.WithDescription("Scrapes a Linktree page by URL, extracting the creator's profile and all their links. Returns id, username, profilePictureUrl, description, verticals, timezone, and links — an array of link objects each with id, type, title, and url. Also includes detected social accounts (instagram, tiktok, spotify, youtube, soundcloud, apple_music) and email_address. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("URL to Linktree page")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -574,7 +574,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("pillar_list",
-			mcplib.WithDescription("Pillar page"),
+			mcplib.WithDescription("Scrapes a Pillar page by URL, extracting the creator's profile, social links, and products. Returns id, first_name, last_name, email, location, and social accounts (tiktok, spotify, twitter, youtube, facebook, linkedin, instagram, and more). Also includes links with click counts and products with title, price, description, and image. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("URL to Pillar page")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -584,7 +584,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("pinterest_list",
-			mcplib.WithDescription("Fetches a paginated list of pins from a Pinterest board by URL, returning each pin's id, description, title, images,..."),
+			mcplib.WithDescription("Fetches a paginated list of pins from a Pinterest board by URL, returning each pin's id, description, title, images, board info, pin_join annotations, and aggregated_pin_data. Supports pagination via cursor and a trim option for lighter responses. Required: url. Optional: cursor, trim."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("The URL of the board to get")),
 			mcplib.WithString("cursor", mcplib.Description("The cursor to get the next page of results")),
 			mcplib.WithString("trim", mcplib.Description("Set to true for a trimmed down version of the response")),
@@ -596,7 +596,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("pinterest_list-pin",
-			mcplib.WithDescription("Fetches detailed information about a single Pinterest pin by URL, returning title, description, link, dominantColor,..."),
+			mcplib.WithDescription("Fetches detailed information about a single Pinterest pin by URL, returning title, description, link, dominantColor, originPinner, pinner, images at multiple resolutions (imageSpec_236x through imageSpec_orig), and pinJoin with visual annotations. Supports a trim option for lighter responses. Required: url. Optional: trim."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Pinterest pin URL")),
 			mcplib.WithString("trim", mcplib.Description("Set to true for a trimmed down version of the response")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -607,7 +607,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("pinterest_list-search",
-			mcplib.WithDescription("Searches Pinterest for pins matching a query, returning results with id, url, title, description, images, link,..."),
+			mcplib.WithDescription("Searches Pinterest for pins matching a query, returning results with id, url, title, description, images, link, domain, board info, and pinner details. Supports pagination via cursor and a trim option for lighter responses. Required: query. Optional: cursor, trim."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Search query")),
 			mcplib.WithString("cursor", mcplib.Description("Cursor")),
 			mcplib.WithString("trim", mcplib.Description("Set to true for a trimmed down version of the response")),
@@ -619,7 +619,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("pinterest_list-user",
-			mcplib.WithDescription("User Boards"),
+			mcplib.WithDescription("Fetches a paginated list of boards for a Pinterest user, returning each board's name, url, description, pin_count, follower_count, owner info, cover_images, and created_at. Supports pagination via cursor and a trim option for lighter responses. Required: handle. Optional: trim."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("The username of the user to get boards for. (e.g. broadstbullycom from https://www.pinterest.com/broadstbullycom/)")),
 			mcplib.WithString("trim", mcplib.Description("Set to true for a trimmed down version of the response")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -630,7 +630,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("reddit_list",
-			mcplib.WithDescription("Get Ad"),
+			mcplib.WithDescription("Retrieves detailed information about a specific Reddit ad by its id. Returns an analysis_summary with headline and media insights, plus the full inspiration_creative object containing id, budget_category, industry, placements, objective, and creative details (headline, body, type, thumbnail_url, created_at, post_url). Also includes profile_info with the advertiser's name. Required: id."),
 			mcplib.WithString("id", mcplib.Required(), mcplib.Description("Ad id")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -640,7 +640,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("reddit_list-ads",
-			mcplib.WithDescription("Search Ads"),
+			mcplib.WithDescription("Searches the Reddit Ad Library for ads matching a query, returning a maximum of 30 results. Each ad includes id, budget_category, industry, placements, objective, and a creative object with headline, body, thumbnail_url, type, created_at, and post_url. Also includes profile_info with the advertiser's name. Supports filtering by industries, budgets, formats, placements, and objectives. Required: query. Optional: industries, budgets, formats (plus 2 more)."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Search query")),
 			mcplib.WithString("industries", mcplib.Description("Industries to filter by")),
 			mcplib.WithString("budgets", mcplib.Description("Budgets to filter by")),
@@ -655,7 +655,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("reddit_list-post",
-			mcplib.WithDescription("Post Comments"),
+			mcplib.WithDescription("Retrieves comments and post details from a Reddit post by URL. Returns the post with title, author, score, ups, upvote_ratio, num_comments, and created_utc, plus a comments array where each comment includes author, body, body_html, score, created_utc, parent_id, permalink, and nested replies. Supports cursor-based pagination for loading more comments and a trim parameter for lighter responses. Required: url. Optional: cursor, trim."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Reddit post URL")),
 			mcplib.WithString("cursor", mcplib.Description("Cursor to get more comments, or replies.")),
 			mcplib.WithString("trim", mcplib.Description("Set to true for a trimmed down version of the response")),
@@ -667,7 +667,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("reddit_list-search",
-			mcplib.WithDescription("Searches across all of Reddit for posts matching a query. Each post includes title, author, selftext, subreddit,..."),
+			mcplib.WithDescription("Searches across all of Reddit for posts matching a query. Each post includes title, author, selftext, subreddit, score, ups, upvote_ratio, num_comments, created_utc, url, permalink, and is_video. Supports sort (relevance, new, top, comment_count), timeframe filtering, pagination via the after token, and a trim parameter for lighter responses. Required: query. Optional: sort, timeframe, after (plus 1 more)."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Search query")),
 			mcplib.WithString("sort", mcplib.Description("Sort by")),
 			mcplib.WithString("timeframe", mcplib.Description("Timeframe")),
@@ -681,7 +681,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("reddit_list-subreddit",
-			mcplib.WithDescription("Subreddit Posts"),
+			mcplib.WithDescription("Fetches posts from a subreddit with sorting and filtering options. Each post includes title, author, selftext, score, ups, upvote_ratio, num_comments, created_utc, url, permalink, subreddit_subscribers, and is_video. Supports sort (best, hot, new, top, rising), timeframe filtering, pagination via the after token, and a trim parameter for lighter responses. Required: subreddit. Optional: timeframe, sort, after (plus 1 more)."),
 			mcplib.WithString("subreddit", mcplib.Required(), mcplib.Description("Subreddit name")),
 			mcplib.WithString("timeframe", mcplib.Description("Timeframe to get posts from")),
 			mcplib.WithString("sort", mcplib.Description("Sort order")),
@@ -695,7 +695,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("reddit_list-subreddit-2",
-			mcplib.WithDescription("Subreddit Details"),
+			mcplib.WithDescription("Retrieves metadata about a subreddit by name or URL. The subreddit name must be case-sensitive. Returns display_name, description, subscribers, weekly_active_users, weekly_contributions, rules, icon_img, header_img, advertiser_category, submit_text, and created_at. Optional: subreddit, url."),
 			mcplib.WithString("subreddit", mcplib.Description("Subreddit name. MUST be case sensitive. So 'AskReddit' not 'askreddit'.")),
 			mcplib.WithString("url", mcplib.Description("Subreddit URL")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -706,7 +706,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("reddit_list-subreddit-3",
-			mcplib.WithDescription("Subreddit Search"),
+			mcplib.WithDescription("Searches within a specific subreddit for posts, comments, and media matching a query. Returns posts with title, votes, num_comments, url, and created_at; comments with author, body, votes, and parent post info; and media with title, media_type, image dimensions, and gallery_count. Supports sort, timeframe filtering, and cursor-based pagination. Required: subreddit. Optional: query, sort, timeframe (plus 1 more)."),
 			mcplib.WithString("subreddit", mcplib.Required(), mcplib.Description("Subreddit name (e.g. 'Fitness', not 'r/Fitness' or a full URL)")),
 			mcplib.WithString("query", mcplib.Description("Search query to find matching content")),
 			mcplib.WithString("sort", mcplib.Description("Sort order. For posts/media: relevance, hot, top, new, comments. For comments: relevance, top, new")),
@@ -720,7 +720,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("snapchat_list",
-			mcplib.WithDescription("User Profile"),
+			mcplib.WithDescription("Retrieves a Snapchat user's public profile by handle, including identity, stories, and spotlight content. Returns userProfile with username, title, snapcodeImageUrl, subscriberCount, bio, and profilePictureUrl. Also includes highlightStoryMetadata with individual story snaps (mediaUrl, mediaType, thumbnailUrl) and spotlightStoryMetadata with video details and engagement stats (viewCount, shareCount, commentCount). Required: handle."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("Snapchat username")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -730,7 +730,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("threads_list",
-			mcplib.WithDescription("Fetches a single Threads post by URL, returning the post's caption, like_count, view_counts, reshare_count,..."),
+			mcplib.WithDescription("Fetches a single Threads post by URL, returning the post's caption, like_count, view_counts, reshare_count, direct_reply_count, image_versions2, and taken_at. Also includes comments and related_posts arrays. Supports a trim option for lighter responses. Required: url. Optional: trim."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("The URL of the post to get")),
 			mcplib.WithString("trim", mcplib.Description("Set to true for a trimmed down version of the response")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -741,7 +741,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("threads_list-profile",
-			mcplib.WithDescription("Retrieves a Threads user's public profile including username, full_name, biography, profile_pic_url, follower_count,..."),
+			mcplib.WithDescription("Retrieves a Threads user's public profile including username, full_name, biography, profile_pic_url, follower_count, is_verified, bio_links, and hd_profile_pic_versions. Also indicates whether the account is a threads-only user via is_threads_only_user. Required: handle."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("Threads username")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -751,7 +751,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("threads_list-search",
-			mcplib.WithDescription("Search by Keyword"),
+			mcplib.WithDescription("Searches Threads for posts matching a keyword, returning up to 10 results with caption text, like_count, reshare_count, direct_reply_count, user info, and image_versions2. Supports optional start_date and end_date filters plus a trim option. Only 10 results are returned per request due to public API limitations. Required: query. Optional: start_date, end_date, trim."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Keyword to search for")),
 			mcplib.WithString("start_date", mcplib.Description("Start date to search for")),
 			mcplib.WithString("end_date", mcplib.Description("End date to search for")),
@@ -764,7 +764,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("threads_list-search-2",
-			mcplib.WithDescription("Search Users"),
+			mcplib.WithDescription("Searches for Threads users by username, returning matching profiles with username, full_name, profile_pic_url, is_verified, and pk. Useful for finding user accounts before fetching their profile or posts. Required: query."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Username to search for")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -774,7 +774,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("threads_list-user",
-			mcplib.WithDescription("Fetches the most recent posts from a Threads user, returning id, caption text, code, like_count, reshare_count,..."),
+			mcplib.WithDescription("Fetches the most recent posts from a Threads user, returning id, caption text, code, like_count, reshare_count, direct_reply_count, repost_count, image_versions2, video_versions, and taken_at. Only the last 20-30 posts are publicly visible. Supports a trim option for lighter responses. Required: handle. Optional: trim."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("Threads username")),
 			mcplib.WithString("trim", mcplib.Description("Set to true for a trimmed down version of the response")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -785,7 +785,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list",
-			mcplib.WithDescription("Trending Feed"),
+			mcplib.WithDescription("Fetches TikTok's trending/For You feed for a given region — useful for discovering viral content and what's currently popular. Returns `aweme_list`, an array of video objects each with `aweme_id`, `desc` (caption), `statistics` (play_count, digg_count/likes, comment_count, share_count, collect_count), `video` (playback and download URLs, cover), `author` info, and `image_post_info` for photo carousels. Required: region. Optional: trim."),
 			mcplib.WithString("region", mcplib.Required(), mcplib.Description("Where you want the proxy to be. This doesn't mean that you will only see TikToks from this region, you will just see...")),
 			mcplib.WithString("trim", mcplib.Description("Set to true to get a trimmed response.")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -796,7 +796,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-creators",
-			mcplib.WithDescription("Get popular creators"),
+			mcplib.WithDescription("Discovers trending and popular TikTok creators, filterable by follower count range, creator country, and audience country. Returns `creator_list`, an array of creator objects each with `nickname`, `unique_id`, `follower_count`, `likes_count`, `video_views`, `engagement_rate`, and avatar URLs. Sortable by engagement, follower count, or average views. Optional: page, sortBy, followerCount (plus 2 more)."),
 			mcplib.WithString("page", mcplib.Description("Page number")),
 			mcplib.WithString("sortBy", mcplib.Description("Sort creators by engagement, follower count, or average views")),
 			mcplib.WithString("followerCount", mcplib.Description("Filter by follower count range")),
@@ -810,7 +810,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-hashtags",
-			mcplib.WithDescription("Get popular hashtags"),
+			mcplib.WithDescription("Discovers trending and popular TikTok hashtags, filterable by time period (7/30/120 days) and country. Returns a list of hashtag objects each with `hashtag_name`, `rank`, `trend` data, and related video examples. Useful for identifying viral topics and content trends on TikTok. Optional: period, page, countryCode (plus 2 more)."),
 			mcplib.WithString("period", mcplib.Description("Time period in days (7, 30, or 120)")),
 			mcplib.WithString("page", mcplib.Description("Page number")),
 			mcplib.WithString("countryCode", mcplib.Description("Country code to get popular hashtags from")),
@@ -824,7 +824,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-product",
-			mcplib.WithDescription("Product Details"),
+			mcplib.WithDescription("Fetches full details for a specific TikTok Shop product by its URL, including stock levels and affiliate videos. Returns `product_info` with `product_base` (title, images, sold_count, price), `skus` (variants with exact `stock` counts), and `product_detail_review` (product_rating, review_count, sample reviews); also returns `shop_info` (shop_name, shop_rating, followers_count) and `related_videos` (affiliate TikToks promoting the product). Related videos are only available in the US region. Required: url. Optional: region."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("The URL of the product to get details for.")),
 			mcplib.WithString("region", mcplib.Description("Region the proxy will be set to so you can access products from that country. Use 2 letter country codes like US,...")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -835,7 +835,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-profile",
-			mcplib.WithDescription("Fetches public profile data for a TikTok user by their handle — useful for looking up a creator's identity, bio,..."),
+			mcplib.WithDescription("Fetches public profile data for a TikTok user by their handle — useful for looking up a creator's identity, bio, and account stats. Returns a `user` object (display name, avatar URLs, bio/signature, verification status, bio link) and a `stats` object (followerCount, followingCount, heartCount/total likes, videoCount). This only returns profile metadata, not the user's actual videos or followers list. Required: handle."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("TikTok handle")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -845,7 +845,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-profile-2",
-			mcplib.WithDescription("Profile Videos"),
+			mcplib.WithDescription("Fetches videos posted by a TikTok user, sortable by latest or most popular — use this to get a creator's video feed or TikToks. Returns `aweme_list`, an array of video objects each containing `aweme_id`, `desc` (caption), `statistics` (play_count, digg_count/likes, comment_count, share_count, collect_count/saves), and `video` (download URLs, duration, cover image). Paginate with `max_cursor` from the previous response. Required: handle. Optional: user_id, sort_by, max_cursor (plus 2 more)."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("TikTok handle")),
 			mcplib.WithString("user_id", mcplib.Description("TikTok user id. Use this for faster responses.")),
 			mcplib.WithString("sort_by", mcplib.Description("What to sort by")),
@@ -860,7 +860,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-search",
-			mcplib.WithDescription("Search by Hashtag"),
+			mcplib.WithDescription("Searches for TikTok videos under a specific hashtag — useful for finding content by topic or trend. Returns `aweme_list`, an array of video objects each with `aweme_id`, `desc` (caption), `statistics` (play_count, digg_count/likes, comment_count, share_count), `video` info, and `author` details. Paginate with `cursor` from the previous response. Required: hashtag. Optional: region, cursor, trim."),
 			mcplib.WithString("hashtag", mcplib.Required(), mcplib.Description("Hashtag to search for (without #)")),
 			mcplib.WithString("region", mcplib.Description("Region the proxy will be set to. Note: this isn't going to grab you all tiktoks from this region, you're just...")),
 			mcplib.WithString("cursor", mcplib.Description("Cursor to get more videos. Get 'cursor' from previous response.")),
@@ -873,7 +873,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-search-2",
-			mcplib.WithDescription("Search by Keyword"),
+			mcplib.WithDescription("Searches for TikTok videos by keyword or phrase — the general video search across all of TikTok. Returns `search_item_list`, an array of objects each containing `aweme_info` with `aweme_id`, `desc` (caption), `statistics` (play_count, digg_count/likes, comment_count, share_count), `video` info, and `author` details. Paginate with `cursor`. Required: query. Optional: date_posted, sort_by, region (plus 2 more)."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Keyword to search for")),
 			mcplib.WithString("date_posted", mcplib.Description("Time Frame")),
 			mcplib.WithString("sort_by", mcplib.Description("Sort by")),
@@ -888,7 +888,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-search-3",
-			mcplib.WithDescription("Top Search"),
+			mcplib.WithDescription("Searches TikTok's 'Top' results by query — returns both videos and photo carousels, unlike keyword search which only returns videos. Returns `items`, an array of objects each with `id`, `desc` (caption), `content_type` (video or photo carousel), `statistics` (play_count, digg_count/likes, comment_count, share_count), `video` info, and `images` for carousels. Paginate with `cursor`. Required: query. Optional: publish_time, sort_by, region (plus 1 more)."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Keyword to search for")),
 			mcplib.WithString("publish_time", mcplib.Description("Time Frame TikTok was posted")),
 			mcplib.WithString("sort_by", mcplib.Description("Sort by")),
@@ -902,7 +902,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-search-4",
-			mcplib.WithDescription("Search Users"),
+			mcplib.WithDescription("Searches for TikTok users by keyword or name — useful for finding creators or accounts matching a query. Returns `users`, an array of objects each containing `user_info` (nickname, unique_id, signature/bio, follower_count, following_count, avatar) and associated `items`. Paginate with `cursor` from the previous response. Required: query. Optional: cursor, trim."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Search query for users")),
 			mcplib.WithString("cursor", mcplib.Description("Cursor to get more users. Get 'cursor' from previous response.")),
 			mcplib.WithString("trim", mcplib.Description("Set to true to get a trimmed response")),
@@ -914,7 +914,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-shop",
-			mcplib.WithDescription("Shop Products"),
+			mcplib.WithDescription("Lists all products from a specific TikTok Shop store by its URL. Returns an array of product objects each with `title`, `cover` images, `url`, `price` info, `sold_count`, `review_count`, and `rating`. Paginate with `cursor` from the previous response; filter by region. Required: url. Optional: cursor, region."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("The TikTok Shop store URL.")),
 			mcplib.WithString("cursor", mcplib.Description("Cursor parameter from the previous response to retrieve the next page of products. Omit for the first page.")),
 			mcplib.WithString("region", mcplib.Description("Region to get shop products from. Defaults to US if not provided.")),
@@ -926,7 +926,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-shop-2",
-			mcplib.WithDescription("Shop Search"),
+			mcplib.WithDescription("Searches TikTok Shop for products matching a keyword query. Returns an array of product objects each with `title`, `cover` image, `url` (product page link), `price`, `sold_count`, `review_count`, `rating`, and `shop_name`. Paginate with `page`; filter by region. Required: query. Optional: page, region."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Term you want to search for")),
 			mcplib.WithString("page", mcplib.Description("Page number to retrieve")),
 			mcplib.WithString("region", mcplib.Description("Region to search shop products in.")),
@@ -938,7 +938,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-shop-3",
-			mcplib.WithDescription("Product Reviews"),
+			mcplib.WithDescription("Fetches customer reviews for a TikTok Shop product by URL or product_id. Returns `product_reviews`, an array of review objects each with `rating`, `display_text`, `review_timestamp_fmt`, `review_user` (name, avatar), and `sku_specification` (variant purchased); also returns `total_reviews` count and `rating_distribution`. Paginate with `page`. Optional: url, product_id, region (plus 1 more)."),
 			mcplib.WithString("url", mcplib.Description("The URL of the product (required if product_id is not provided)")),
 			mcplib.WithString("product_id", mcplib.Description("The ID of the product (required if url is not provided)")),
 			mcplib.WithString("region", mcplib.Description("The region of the product. This is *very* important.")),
@@ -951,7 +951,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-song",
-			mcplib.WithDescription("Get Song Details"),
+			mcplib.WithDescription("Fetches detailed metadata for a specific TikTok sound or song by its clipId. Returns `music_info` with `title`, `author`, `album`, `duration`, `user_count` (number of videos using this sound), `play_url`, cover art, and artist details. Use the `clipId` from a sound URL or from the popular songs endpoint. Required: clipId."),
 			mcplib.WithString("clipId", mcplib.Required(), mcplib.Description("This is a little confusing because this isn't songId like you'd think. It is the clipId. I guess because you can...")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -961,7 +961,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-song-2",
-			mcplib.WithDescription("TikToks using Song"),
+			mcplib.WithDescription("Fetches TikTok videos that use a specific sound or song, identified by its clipId. Returns `aweme_list`, an array of video objects each with `aweme_id`, `desc` (caption), `statistics` (play_count, digg_count/likes, comment_count, share_count), `video` info, and `author` details. Paginate with `cursor` from the previous response. Optional: clipId, cursor."),
 			mcplib.WithString("clipId", mcplib.Description("This is clipId. Can be found on a url like so: https://www.tiktok.com/music/That%27s-Who-I-Praise-7370375686554782506...")),
 			mcplib.WithString("cursor", mcplib.Description("The cursor to get the next page of results.")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -972,7 +972,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-songs",
-			mcplib.WithDescription("Get popular songs"),
+			mcplib.WithDescription("Gets the current trending and popular songs/sounds on TikTok, sourced from the TikTok Creative Center. Returns `sound_list`, an array of song objects each with `title`, `author`, `clip_id`, `rank`, `cover` image URL, `duration`, `link` to the sound page, and a `trend` array showing popularity over time. Filter by country, time period (7/30/120 days), rank type (popular vs surging), and commercial music approval. Optional: page, timePeriod, rankType (plus 3 more)."),
 			mcplib.WithString("page", mcplib.Description("Page number")),
 			mcplib.WithString("timePeriod", mcplib.Description("Time period to get popular songs from")),
 			mcplib.WithString("rankType", mcplib.Description("Get popular or surging songs")),
@@ -987,7 +987,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-user",
-			mcplib.WithDescription("User's Audience Demographics"),
+			mcplib.WithDescription("Retrieves audience demographic data for a TikTok user, showing where their followers are located by country. Returns `audienceLocations`, an array of objects each containing `country`, `countryCode`, `count`, and `percentage`. Costs 26 credits per request. Required: handle."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("TikTok handle")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -997,7 +997,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-user-2",
-			mcplib.WithDescription("Retrieves the follower list of a TikTok account by handle or user_id — useful for seeing who follows a creator or..."),
+			mcplib.WithDescription("Retrieves the follower list of a TikTok account by handle or user_id — useful for seeing who follows a creator or getting subscriber data. Returns `followers`, an array of user objects each with `nickname`, `unique_id`, `uid`, `follower_count`, `following_count`, and avatar URLs; also returns `total` follower count. Paginate with `min_time` from the previous response. Optional: handle, user_id, min_time (plus 1 more)."),
 			mcplib.WithString("handle", mcplib.Description("TikTok handle")),
 			mcplib.WithString("user_id", mcplib.Description("User id. Use this for faster response times.")),
 			mcplib.WithString("min_time", mcplib.Description("Used to paginate. Get 'min_time' from previous response.")),
@@ -1010,7 +1010,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-user-3",
-			mcplib.WithDescription("Retrieves the following list — accounts that a TikTok user follows — by their handle. Returns `followings`, an..."),
+			mcplib.WithDescription("Retrieves the following list — accounts that a TikTok user follows — by their handle. Returns `followings`, an array of user objects each with `nickname`, `unique_id`, `uid`, `follower_count`, `following_count`, `signature`, and avatar URLs; also returns `total` count. Paginate with `min_time` from the previous response. Required: handle. Optional: min_time, trim."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("TikTok handle")),
 			mcplib.WithString("min_time", mcplib.Description("Used to paginate. Get 'min_time' from previous response.")),
 			mcplib.WithString("trim", mcplib.Description("Set to true to get a trimmed response")),
@@ -1022,7 +1022,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-user-4",
-			mcplib.WithDescription("TikTok Live"),
+			mcplib.WithDescription("Checks if a TikTok user is currently live streaming and retrieves their live room details. Returns `liveRoomUserInfo` (nickname, avatar, followerCount, roomId) and `liveRoom` (title, startTime, status, `liveRoomStats` with enterCount and userCount, plus `streamData` with playback URLs in multiple qualities). Required: handle."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("TikTok handle")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -1032,7 +1032,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-user-5",
-			mcplib.WithDescription("User Showcase"),
+			mcplib.WithDescription("Fetches products featured in a TikTok user's public showcase — the products a creator promotes on their profile. Returns an array of product objects each with title, price, images, and shop details. Use POST request if pagination is cutting off too early. Just send the query params in the body. Required: handle. Optional: region, cursor."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("The handle of the user")),
 			mcplib.WithString("region", mcplib.Description("Region to put the proxy in")),
 			mcplib.WithString("cursor", mcplib.Description("The cursor to the next page of products")),
@@ -1044,7 +1044,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-video",
-			mcplib.WithDescription("Video Info"),
+			mcplib.WithDescription("Fetches detailed data for a single TikTok video by URL, including its metadata, engagement stats, and optionally its transcript/captions. Returns `aweme_detail` with `desc` (caption), `statistics` (play_count, digg_count/likes, comment_count, share_count, collect_count), `video` (download URLs including no-watermark), `author` info, and `music` info; also returns `transcript` in WEBVTT format if `get_transcript=true`. Required: url. Optional: get_transcript, region, trim (plus 1 more)."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("TikTok video URL")),
 			mcplib.WithString("get_transcript", mcplib.Description("Get transcript of the video")),
 			mcplib.WithString("region", mcplib.Description("Region of the proxy. Sometimes you'll need to specify the region if you're not getting a response. Commonly for...")),
@@ -1058,7 +1058,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-video-2",
-			mcplib.WithDescription("Fetches comments on a TikTok video by URL — useful for reading audience reactions, replies, and engagement...."),
+			mcplib.WithDescription("Fetches comments on a TikTok video by URL — useful for reading audience reactions, replies, and engagement. Returns `comments`, an array where each comment includes `text`, `digg_count` (likes), `reply_comment_total`, `create_time`, and a `user` object with the commenter's nickname and unique_id; also returns `total` comment count. Paginate with `cursor` from the previous response. Required: url. Optional: cursor, trim."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("TikTok video URL")),
 			mcplib.WithString("cursor", mcplib.Description("Cursor to get more comments. Get 'cursor' from previous response.")),
 			mcplib.WithString("trim", mcplib.Description("Set to true to get a trimmed response")),
@@ -1070,7 +1070,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-video-3",
-			mcplib.WithDescription("Extracts the transcript, captions, or subtitles from a TikTok video by URL. Returns `id`, `url`, and `transcript` as..."),
+			mcplib.WithDescription("Extracts the transcript, captions, or subtitles from a TikTok video by URL. Returns `id`, `url`, and `transcript` as a WEBVTT-formatted string with timestamped text segments. Video must be under 2 minutes; costs an additional 10 credits when `use_ai_as_fallback=true`. Required: url. Optional: language, use_ai_as_fallback."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("TikTok video URL")),
 			mcplib.WithString("language", mcplib.Description("Language of the transcript. 2 letter language code, ie 'en', 'es', 'fr', 'de', 'it', 'ja', 'ko', 'zh'")),
 			mcplib.WithString("use_ai_as_fallback", mcplib.Description("Set to 'true' to use AI as a fallback to get the transcript if the transcript is not found. Costs 10 credits to use...")),
@@ -1082,7 +1082,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-video-4",
-			mcplib.WithDescription("Comment Replies"),
+			mcplib.WithDescription("Fetches replies to a specific TikTok comment by its ID. Returns `comments`, an array of comment objects each with `text`, `user` info, and `create_time`. Paginate with `cursor` from the previous response. Required: comment_id, url. Optional: cursor."),
 			mcplib.WithString("comment_id", mcplib.Required(), mcplib.Description("TikTok comment ID. This is the cid from the comments endpoint.")),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("TikTok video URL. This is the url from the comments endpoint.")),
 			mcplib.WithString("cursor", mcplib.Description("Cursor to get more replies. Get 'cursor' from previous response.")),
@@ -1094,7 +1094,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("tiktok_list-videos",
-			mcplib.WithDescription("Get popular videos"),
+			mcplib.WithDescription("Discovers trending and popular TikTok videos, filterable by time period (7 or 30 days) and country. Returns a list of video objects each with `title`, `item_url` (link to the TikTok), `cover`, `region`, and engagement stats. Sortable by likes, views (hot), comments, or reposts. Optional: period, page, orderBy (plus 1 more)."),
 			mcplib.WithString("period", mcplib.Description("Time period in days (7 or 30)")),
 			mcplib.WithString("page", mcplib.Description("Page number")),
 			mcplib.WithString("orderBy", mcplib.Description("Sort videos by likes, views (hot), comments, or reposts")),
@@ -1107,7 +1107,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("truthsocial_list",
-			mcplib.WithDescription("Fetches a single Truth Social post by URL, returning text, id, created_at, url, content, account details,..."),
+			mcplib.WithDescription("Fetches a single Truth Social post by URL, returning text, id, created_at, url, content, account details, media_attachments, card link previews, replies_count, reblogs_count, and favourites_count. Only posts from prominent public figures (e.g., Trump, Vance) are accessible without authentication. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Truth Social post URL")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -1117,7 +1117,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("truthsocial_list-profile",
-			mcplib.WithDescription("Retrieves a Truth Social user's public profile including display_name, username, avatar, header, followers_count,..."),
+			mcplib.WithDescription("Retrieves a Truth Social user's public profile including display_name, username, avatar, header, followers_count, following_count, statuses_count, verified status, website, and created_at. Only prominent public figures (e.g., Trump, Vance) are accessible without authentication; most other accounts will not work. Required: handle."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("Truth Social username")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -1127,7 +1127,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("truthsocial_list-user",
-			mcplib.WithDescription("User Posts"),
+			mcplib.WithDescription("Fetches a paginated list of posts from a Truth Social user, returning text, id, created_at, url, content, account info, media_attachments, card link previews, replies_count, reblogs_count, and favourites_count. Supports pagination via next_max_id and a trim option for lighter responses. Only prominent public figures (e.g., Trump, Vance) are accessible without authentication. Optional: handle, user_id, next_max_id (plus 1 more)."),
 			mcplib.WithString("handle", mcplib.Description("Truth Social username")),
 			mcplib.WithString("user_id", mcplib.Description("Truth Social user id. Use this for faster response times. Trumps is 107780257626128497. It is the 'id' field in the...")),
 			mcplib.WithString("next_max_id", mcplib.Description("Used to paginate to next page")),
@@ -1140,7 +1140,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("twitch_list",
-			mcplib.WithDescription("Fetches detailed data for a Twitch clip by URL, including metadata and direct video URLs. Returns clip id, slug,..."),
+			mcplib.WithDescription("Fetches detailed data for a Twitch clip by URL, including metadata and direct video URLs. Returns clip id, slug, url, embedURL, title, viewCount, language, durationSeconds, game info, broadcaster details with follower count, thumbnailURL, and videoQualities at multiple resolutions with a signed videoURL for playback. Also includes additional clips from the same broadcaster. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Twitch clip URL")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -1150,7 +1150,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("twitch_list-profile",
-			mcplib.WithDescription("Retrieves a Twitch user's public profile by handle, including identity, social links, and content. Returns id,..."),
+			mcplib.WithDescription("Retrieves a Twitch user's public profile by handle, including identity, social links, and content. Returns id, handle, displayName, description, followers count, and linked social accounts (instagram, x, tiktok). Also includes allVideos with game info, duration, and view counts, featuredClips with clip metadata and thumbnails, and similarStreamers. Required: handle."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("Twitch handle")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -1160,7 +1160,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("twitter_list",
-			mcplib.WithDescription("Retrieves details about a Twitter/X Community by URL. Returns the community name, description, rest_id, join_policy,..."),
+			mcplib.WithDescription("Retrieves details about a Twitter/X Community by URL. Returns the community name, description, rest_id, join_policy, created_at, member_count, rules, and creator_results with the creator's profile. Also includes members_facepile_results with avatar images of recent members. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Community URL")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -1170,7 +1170,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("twitter_list-community",
-			mcplib.WithDescription("Community Tweets"),
+			mcplib.WithDescription("Fetches tweets posted within a Twitter/X Community by URL. Returns an array of tweets, each with id, full_text, view_count, favorite_count, retweet_count, reply_count, bookmark_count, quote_count, created_at, and source. Each tweet includes a user object with the author's name, screen_name, avatar, followers_count, and is_blue_verified status. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Community URL")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -1180,7 +1180,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("twitter_list-profile",
-			mcplib.WithDescription("Retrieves a Twitter user's profile by handle, including account metadata and statistics. Returns name, screen_name,..."),
+			mcplib.WithDescription("Retrieves a Twitter user's profile by handle, including account metadata and statistics. Returns name, screen_name, description, followers_count, friends_count, statuses_count, favourites_count, location, profile_image_url_https, and is_blue_verified. Also includes verification_info, tipjar_settings, highlights_info, and creator_subscriptions_count. Required: handle."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("Twitter handle")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -1190,7 +1190,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("twitter_list-tweet",
-			mcplib.WithDescription("Tweet Details"),
+			mcplib.WithDescription("Retrieves detailed information about a specific tweet by URL, including the author's profile and engagement metrics. Returns rest_id, full_text, views count, favorite_count, retweet_count, reply_count, bookmark_count, quote_count, created_at, source, and media entities. Supports a trim parameter for a lighter response. Required: url. Optional: trim."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Tweet URL")),
 			mcplib.WithString("trim", mcplib.Description("Set to true for a trimmed down version of the response")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -1201,7 +1201,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("twitter_list-tweet-2",
-			mcplib.WithDescription("Extracts the transcript from a Twitter video tweet using AI-powered transcription. The video must be under 2 minutes..."),
+			mcplib.WithDescription("Extracts the transcript from a Twitter video tweet using AI-powered transcription. The video must be under 2 minutes long. Returns a success flag and the full transcript text. This endpoint is slower than others due to the AI processing step. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("Tweet URL")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -1211,7 +1211,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("twitter_list-usertweets",
-			mcplib.WithDescription("User Tweets"),
+			mcplib.WithDescription("Fetches tweets from a Twitter user's profile by handle. Note: Twitter publicly returns only ~100 of the user's most popular tweets, not chronological or latest. Each tweet includes rest_id, full_text, views count, favorite_count, retweet_count, reply_count, bookmark_count, quote_count, created_at, media entities, and url. Supports a trim parameter for a lighter response. Required: handle. Optional: trim."),
 			mcplib.WithString("handle", mcplib.Required(), mcplib.Description("Twitter handle")),
 			mcplib.WithString("trim", mcplib.Description("Set to true for a trimmed down version of the response")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -1222,7 +1222,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("youtube_list",
-			mcplib.WithDescription("Channel Details"),
+			mcplib.WithDescription("Retrieves comprehensive YouTube channel profile data including name, avatar images, subscriber count (subscribers), total video and view counts, join date, tags, and linked social accounts like Twitter and Instagram. Accepts a channelId, handle, or full channel URL as input. Returns channel metadata such as country, email, and external store links when available. Optional: channelId, handle, url."),
 			mcplib.WithString("channelId", mcplib.Description("YouTube channel ID. Can pass a channelId, handle or url")),
 			mcplib.WithString("handle", mcplib.Description("YouTube channel handle. Can pass a channelId, handle or url")),
 			mcplib.WithString("url", mcplib.Description("YouTube channel URL. Can pass a channelId, handle or url")),
@@ -1234,7 +1234,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("youtube_list-channel",
-			mcplib.WithDescription("Channel Shorts"),
+			mcplib.WithDescription("Retrieves a paginated list of short-form videos (Shorts) from a YouTube channel, including each short's title, URL, view count (views), likes, comments, and description. Supports sorting by newest or popular, and use the continuationToken to page through all results. Returns data in the shorts array. Optional: handle, channelId, sort (plus 1 more)."),
 			mcplib.WithString("handle", mcplib.Description("Can pass channelId or handle")),
 			mcplib.WithString("channelId", mcplib.Description("Can pass channelId or handle")),
 			mcplib.WithString("sort", mcplib.Description("Sort by newest or popular")),
@@ -1247,7 +1247,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("youtube_list-channelvideos",
-			mcplib.WithDescription("Channel Videos"),
+			mcplib.WithDescription("Fetches a paginated list of videos uploaded by a YouTube channel, including each video's title, URL, thumbnail, view count (views), publish date, duration, and description. Supports sorting by latest or popular, and use the continuationToken to page through all results. Optionally include extras like like count, comment count, and descriptions for each video. Optional: channelId, handle, sort (plus 2 more)."),
 			mcplib.WithString("channelId", mcplib.Description("YouTube channel ID")),
 			mcplib.WithString("handle", mcplib.Description("YouTube channel handle")),
 			mcplib.WithString("sort", mcplib.Description("Sort by latest or popular")),
@@ -1261,7 +1261,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("youtube_list-communitypost",
-			mcplib.WithDescription("Community Post Details"),
+			mcplib.WithDescription("Retrieves the full details of a YouTube community post, including its text content, attached images, like count, publish date, and associated channel info. Also returns a linked video if the post includes one. Required: url."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("The URL of the YouTube community post to get")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -1271,7 +1271,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("youtube_list-playlist",
-			mcplib.WithDescription("Retrieves all videos in a YouTube playlist, including the playlist title, owner info, total video count, and each..."),
+			mcplib.WithDescription("Retrieves all videos in a YouTube playlist, including the playlist title, owner info, total video count, and each video's title, URL, thumbnail, duration, and channel. Accepts the playlist ID found in the 'list' URL parameter. Required: playlist_id."),
 			mcplib.WithString("playlist_id", mcplib.Required(), mcplib.Description("The ID of the YouTube playlist. In the YouTube URL it will be the 'list' parameter.")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
@@ -1281,7 +1281,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("youtube_list-search",
-			mcplib.WithDescription("Searches YouTube by keyword query and returns matching videos, channels, playlists, shorts, shelves, and live..."),
+			mcplib.WithDescription("Searches YouTube by keyword query and returns matching videos, channels, playlists, shorts, shelves, and live streams. Each video result includes title, URL, thumbnail, view count (views), publish date, duration, channel info, and badges. Supports filtering by upload date, sorting by relevance or popularity, and paginating with continuationToken. Required: query. Optional: uploadDate, sortBy, type (plus 4 more)."),
 			mcplib.WithString("query", mcplib.Required(), mcplib.Description("Search query")),
 			mcplib.WithString("uploadDate", mcplib.Description("Upload date")),
 			mcplib.WithString("sortBy", mcplib.Description("Sort by")),
@@ -1298,7 +1298,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("youtube_list-search-2",
-			mcplib.WithDescription("Search by Hashtag"),
+			mcplib.WithDescription("Searches YouTube for content matching a specific hashtag and returns matching videos with title, URL, thumbnail, view count (views), publish date, duration, and channel info. Supports pagination via continuationToken and filtering to return all content types or only shorts. Required: hashtag. Optional: continuationToken, type."),
 			mcplib.WithString("hashtag", mcplib.Required(), mcplib.Description("Hashtag to search for")),
 			mcplib.WithString("continuationToken", mcplib.Description("Continuation token to get more videos. Get 'continuationToken' from previous response.")),
 			mcplib.WithString("type", mcplib.Description("Search for all types of content or only shorts")),
@@ -1310,7 +1310,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("youtube_list-shorts",
-			mcplib.WithDescription("Trending Shorts"),
+			mcplib.WithDescription("Fetches approximately 48 currently trending YouTube Shorts (viral/popular short-form videos) per call, returning each short's title, URL, thumbnail, view count (views), like count (likes), comment count, publish date, channel info, keywords, and duration. Each subsequent call returns a fresh batch of different trending shorts."),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),
 			mcplib.WithOpenWorldHintAnnotation(true),
@@ -1319,7 +1319,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("youtube_list-video",
-			mcplib.WithDescription("Video/Short Details"),
+			mcplib.WithDescription("Fetches full details for a YouTube video or short, including title, description, thumbnail, view count (views), like count (likes), comment count, publish date, duration, genre, keywords, chapters, collaborators, and available caption tracks (subtitles/captions). Also returns related recommended videos in watchNextVideos and channel info for the uploader. Required: url. Optional: language."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("YouTube video or short URL")),
 			mcplib.WithString("language", mcplib.Description("Preferred response language (mapped to Accept-Language header; not guaranteed due to YouTube localization behavior)....")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -1330,7 +1330,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("youtube_list-video-2",
-			mcplib.WithDescription("Fetches comments and replies from a YouTube video, including each comment's text content, author details, like..."),
+			mcplib.WithDescription("Fetches comments and replies from a YouTube video, including each comment's text content, author details, like count, reply count, and publish date. Supports ordering by top or newest, and paginating with continuationToken. Limited to approximately 1,000 top comments or 7,000 newest comments. Required: url. Optional: continuationToken, order."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("YouTube video URL")),
 			mcplib.WithString("continuationToken", mcplib.Description("Continuation token to get more comments. Get 'continuationToken' from previous response.")),
 			mcplib.WithString("order", mcplib.Description("Order of comments")),
@@ -1342,7 +1342,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("youtube_list-video-3",
-			mcplib.WithDescription("Retrieves the captions, subtitles, or transcript of a YouTube video or short. Returns both a timestamped transcript..."),
+			mcplib.WithDescription("Retrieves the captions, subtitles, or transcript of a YouTube video or short. Returns both a timestamped transcript array with start/end times and a plain-text version in transcript_only_text. Supports specifying a language code. Note: the video must be under 2 minutes for transcript extraction to work. Required: url. Optional: language."),
 			mcplib.WithString("url", mcplib.Required(), mcplib.Description("YouTube video or short URL")),
 			mcplib.WithString("language", mcplib.Description("2 letter language code, ie 'en', 'es', 'fr' etc. If the transcript is not available in the language you specify, the...")),
 			mcplib.WithReadOnlyHintAnnotation(true),
@@ -1353,7 +1353,7 @@ func RegisterTools(s *server.MCPServer) {
 	)
 	s.AddTool(
 		mcplib.NewTool("youtube_list-video-4",
-			mcplib.WithDescription("Comment Replies"),
+			mcplib.WithDescription("Fetches replies to a specific comment on a YouTube video, including each reply's text content, author details (name, channel ID, avatar, verified/creator status), like count, and publish date. Requires a continuationToken obtained from the 'repliesContinuationToken' field on comments returned by the Comments endpoint. Supports paginating through additional replies with the continuationToken returned in each response. Required: continuationToken."),
 			mcplib.WithString("continuationToken", mcplib.Required(), mcplib.Description("Continuation token for the comment replies. Use 'repliesContinuationToken' from the Comments endpoint, or...")),
 			mcplib.WithReadOnlyHintAnnotation(true),
 			mcplib.WithDestructiveHintAnnotation(false),

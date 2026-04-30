@@ -18,10 +18,10 @@ func newPinterestListSearchCmd(flags *rootFlags) *cobra.Command {
 	var flagAll bool
 
 	cmd := &cobra.Command{
-		Use:     "search",
-		Aliases: []string{"list-search"},
-		Short:   "Searches Pinterest for pins matching a query, returning results with id, url, title, description, images, link,...",
-		Example: "  scrape-creators-pp-cli pinterest list-search",
+		Use:         "search",
+		Aliases:     []string{"list-search"},
+		Short:       "Searches Pinterest for pins matching a query, returning results with id, url, title, description, images, link,...",
+		Example:     "  scrape-creators-pp-cli pinterest list-search",
 		Annotations: map[string]string{"pp:endpoint": "pinterest.list-search"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("query") && !flags.dryRun {

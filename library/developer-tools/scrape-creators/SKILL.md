@@ -190,3 +190,15 @@ Data-layer commands wrap successful output in `{"meta": {...}, "results": <data>
 | 5 | API error (Scrape Creators upstream) |
 | 7 | Rate limited |
 | 10 | Config error |
+
+## Unique Capabilities
+
+These capabilities aren't available in any other tool for this API.
+- **`videos spikes`** — Find videos that performed significantly above a creator's average — the ones that actually went viral.
+- **`transcripts search`** — Search across all a creator's video transcripts for any keyword or phrase — like grep for TikTok.
+- **`profile compare`** — Compare two or more creators side-by-side on follower count, engagement rate, posting cadence, and content volume.
+- **`videos cadence`** — See when a creator posts — by day of week and hour — so you can benchmark their publishing strategy.
+- **`profile track`** — Record daily follower snapshots for any creator and chart their growth trajectory over time.
+- **`account budget`** — Track how quickly you're spending API credits and project how many days until you hit your limit.
+- **`search trends`** — Track whether a hashtag is growing or shrinking by comparing video counts across snapshot intervals.
+- **`videos analyze`** — Rank all of a creator's synced videos by engagement rate (not raw likes) to surface their true best performers.

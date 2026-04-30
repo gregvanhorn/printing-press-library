@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mvanhorn/printing-press-library/library/developer-tools/scrape-creators/internal/store"
 	"github.com/spf13/cobra"
+	"github.com/mvanhorn/printing-press-library/library/developer-tools/scrape-creators/internal/store"
 )
 
 func newArchiveCmd(flags *rootFlags) *cobra.Command {

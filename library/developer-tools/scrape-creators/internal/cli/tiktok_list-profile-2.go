@@ -20,10 +20,10 @@ func newTiktokListProfile2Cmd(flags *rootFlags) *cobra.Command {
 	var flagTrim bool
 
 	cmd := &cobra.Command{
-		Use:     "profile-videos",
-		Aliases: []string{"list-profile-2"},
-		Short:   "Profile Videos",
-		Example: "  scrape-creators-pp-cli tiktok list-profile-2",
+		Use:         "profile-videos",
+		Aliases:     []string{"list-profile-2"},
+		Short:       "Profile Videos",
+		Example:     "  scrape-creators-pp-cli tiktok list-profile-2",
 		Annotations: map[string]string{"pp:endpoint": "tiktok.list-profile-2"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("handle") && !flags.dryRun {

@@ -18,10 +18,10 @@ func newTiktokListShop2Cmd(flags *rootFlags) *cobra.Command {
 	var flagAll bool
 
 	cmd := &cobra.Command{
-		Use:     "shop-products",
-		Aliases: []string{"list-shop-2"},
-		Short:   "Shop Products",
-		Example: "  scrape-creators-pp-cli tiktok list-shop-2",
+		Use:         "shop-products",
+		Aliases:     []string{"list-shop-2"},
+		Short:       "Shop Products",
+		Example:     "  scrape-creators-pp-cli tiktok list-shop-2",
 		Annotations: map[string]string{"pp:endpoint": "tiktok.list-shop-2"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("url") && !flags.dryRun {

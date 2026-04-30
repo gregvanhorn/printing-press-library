@@ -16,14 +16,14 @@
   "tools": [
     {
       "name": "account_list",
-      "description": "Get credit balance",
+      "description": "Returns the number of API credits remaining on your Scrape Creators account. The response contains a single creditCount field with your current balance.",
       "method": "GET",
       "path": "/v1/account/credit-balance",
       "params": []
     },
     {
       "name": "account_list-getapiusage",
-      "description": "Get request history",
+      "description": "Returns a paginated list of your API requests, including the endpoint called, status code, credits used, and timestamp. Useful for debugging and monitoring your API usage. Supports filtering by endpoint name and status code. Optional: page, endpoint, statusCode.",
       "method": "GET",
       "path": "/v1/account/get-api-usage",
       "params": [
@@ -49,14 +49,14 @@
     },
     {
       "name": "account_list-getdailyusagecount",
-      "description": "Get daily usage",
+      "description": "Returns aggregated daily usage statistics for the last 30 days, including total credits consumed and number of requests per day.",
       "method": "GET",
       "path": "/v1/account/get-daily-usage-count",
       "params": []
     },
     {
       "name": "account_list-getmostusedroutes",
-      "description": "Get most used routes",
+      "description": "Returns your top 20 most called API endpoints ranked by call count, along with total credits consumed per endpoint. Defaults to the last 24 hours. Supports custom time ranges up to 1 year. Optional: start_time, end_time.",
       "method": "GET",
       "path": "/v1/account/get-most-used-routes",
       "params": [
@@ -76,7 +76,7 @@
     },
     {
       "name": "amazon_list",
-      "description": "Amazon Shop page",
+      "description": "Scrapes a creator's Amazon Shop page by URL, returning their storefront profile and product collections. Returns avatar, name, description, socials, and lists with title and itemCount. Also includes trendingPicks with price and discount, curations with title and postCount, and a pageToken for pagination. Required: url.",
       "method": "GET",
       "path": "/v1/amazon/shop",
       "params": [
@@ -91,7 +91,7 @@
     },
     {
       "name": "bluesky_list",
-      "description": "Fetches a single Bluesky post by URL, returning the post's record text, author info, embed content, replyCount,...",
+      "description": "Fetches a single Bluesky post by URL, returning the post's record text, author info, embed content, replyCount, repostCount, likeCount, and quoteCount. Also includes a replies array with threaded reply posts. Required: url.",
       "method": "GET",
       "path": "/v1/bluesky/post",
       "params": [
@@ -106,7 +106,7 @@
     },
     {
       "name": "bluesky_list-profile",
-      "description": "Retrieves a Bluesky user's public profile including handle, displayName, avatar, description, followersCount,...",
+      "description": "Retrieves a Bluesky user's public profile including handle, displayName, avatar, description, followersCount, followsCount, postsCount, createdAt, and verification status. The associated field shows counts for lists, feed generators, and starter packs. Required: handle.",
       "method": "GET",
       "path": "/v1/bluesky/profile",
       "params": [
@@ -121,7 +121,7 @@
     },
     {
       "name": "bluesky_list-user",
-      "description": "Fetches a paginated feed of posts from a Bluesky user, returning each post's uri, record text, author info, embed...",
+      "description": "Fetches a paginated feed of posts from a Bluesky user, returning each post's uri, record text, author info, embed content, replyCount, repostCount, likeCount, quoteCount, and indexedAt. Supports pagination via cursor. Use user_id (the 'did') instead of handle for faster response times. Optional: handle, user_id.",
       "method": "GET",
       "path": "/v1/bluesky/user/posts",
       "params": [
@@ -141,7 +141,7 @@
     },
     {
       "name": "detect-age-gender_list",
-      "description": "Get Age and Gender",
+      "description": "Uses AI to analyze a creator's profile photo and estimate their age and gender. Returns ageRange with low and high bounds, gender, and a confidence score for the gender prediction. The profile photo must contain a clear, visible face for accurate results. Required: url.",
       "method": "GET",
       "path": "/v1/detect-age-gender",
       "params": [
@@ -156,7 +156,7 @@
     },
     {
       "name": "facebook_list",
-      "description": "Retrieves a single public Facebook post or reel by URL. Returns post_id, like_count, comment_count, share_count,...",
+      "description": "Retrieves a single public Facebook post or reel by URL. Returns post_id, like_count, comment_count, share_count, view_count, description, creation_time, and author details. For video posts, includes video sd_url, hd_url, thumbnail, and length_in_second. Optionally fetches comments and transcript via get_comments and get_transcript parameters. Required: url.",
       "method": "GET",
       "path": "/v1/facebook/post",
       "params": [
@@ -171,7 +171,7 @@
     },
     {
       "name": "facebook_list-adlibrary",
-      "description": "Ad Details",
+      "description": "Retrieves detailed information about a specific Facebook ad by its ID or URL. Returns adArchiveID, pageName, isActive, startDate, endDate, and a snapshot containing body, images, videos, display_format, link_url, and cta_text. For ads with multiple versions, the ad creative is found in the snapshot.cards array rather than snapshot.body. Optional: id, url, get_transcript (plus 1 more).",
       "method": "GET",
       "path": "/v1/facebook/adLibrary/ad",
       "params": [
@@ -203,7 +203,7 @@
     },
     {
       "name": "facebook_list-adlibrary-2",
-      "description": "Company Ads",
+      "description": "Fetches all ads currently running for a specific company from the Meta Ad Library. Each ad includes ad_archive_id, page_name, is_active, publisher_platform, and a snapshot with body, images, videos, and display_format. Supports filtering by country, media_type, date range, and language with cursor-based pagination. Optional: pageId, companyName, country (plus 8 more).",
       "method": "GET",
       "path": "/v1/facebook/adLibrary/company/ads",
       "params": [
@@ -277,7 +277,7 @@
     },
     {
       "name": "facebook_list-adlibrary-3",
-      "description": "Searches the Meta Ad Library by keyword and returns matching ads. Each result includes ad_archive_id, page_name,...",
+      "description": "Searches the Meta Ad Library by keyword and returns matching ads. Each result includes ad_archive_id, page_name, is_active, publisher_platform, and a snapshot with body text, images, videos, and cta_text. Results cap around 1,500 via GET due to cursor size limits; switch to POST method with body params for larger result sets. Required: query. Optional: sort_by, search_type, ad_type (plus 7 more).",
       "method": "GET",
       "path": "/v1/facebook/adLibrary/search/ads",
       "params": [
@@ -352,7 +352,7 @@
     },
     {
       "name": "facebook_list-adlibrary-4",
-      "description": "Search for Companies",
+      "description": "Searches for companies by name in the Meta Ad Library and returns their page IDs for use with other ad library endpoints. Each result includes page_id, name, category, likes, verification status, and Instagram details like ig_username and ig_followers. Required: query.",
       "method": "GET",
       "path": "/v1/facebook/adLibrary/search/companies",
       "params": [
@@ -367,7 +367,7 @@
     },
     {
       "name": "facebook_list-group",
-      "description": "Facebook Group Posts",
+      "description": "Fetches posts from a public Facebook group, limited to 3 posts per page due to API limitations. Each post includes id, text, url, reactionCount, commentCount, publishTime, videoDetails, and topComments. Supports sorting by TOP_POSTS, RECENT_ACTIVITY, CHRONOLOGICAL, or CHRONOLOGICAL_LISTINGS, with cursor-based pagination. Optional: url, group_id, sort_by (plus 1 more).",
       "method": "GET",
       "path": "/v1/facebook/group/posts",
       "params": [
@@ -399,7 +399,7 @@
     },
     {
       "name": "facebook_list-post",
-      "description": "Fetches comments from a Facebook post or reel with cursor-based pagination. Each comment includes id, text,...",
+      "description": "Fetches comments from a Facebook post or reel with cursor-based pagination. Each comment includes id, text, created_at, reply_count, reaction_count, and author details with name and profile_picture. Passing a feedback_id instead of a url significantly speeds up the request. Optional: url, feedback_id, cursor.",
       "method": "GET",
       "path": "/v1/facebook/post/comments",
       "params": [
@@ -425,7 +425,7 @@
     },
     {
       "name": "facebook_list-post-2",
-      "description": "Extracts the transcript text from a Facebook video post or reel. Returns the transcript as a single text string with...",
+      "description": "Extracts the transcript text from a Facebook video post or reel. Returns the transcript as a single text string with line breaks. Only works on videos under 2 minutes in length. Required: url.",
       "method": "GET",
       "path": "/v1/facebook/post/transcript",
       "params": [
@@ -440,7 +440,7 @@
     },
     {
       "name": "facebook_list-profile",
-      "description": "Retrieves public Facebook page details including category, address, email, phone, website, services, priceRange,...",
+      "description": "Retrieves public Facebook page details including category, address, email, phone, website, services, priceRange, rating, likeCount, and followerCount. Also returns adLibrary status with the page's ad activity and pageId. Optionally includes businessHours when get_business_hours is set to true. Required: url. Optional: get_business_hours.",
       "method": "GET",
       "path": "/v1/facebook/profile",
       "params": [
@@ -461,7 +461,7 @@
     },
     {
       "name": "facebook_list-profile-2",
-      "description": "Profile Photos",
+      "description": "Fetches photos from a public Facebook page with pagination support. Each photo includes photo_id, accessibility_caption, viewer_image with uri, height, and width, plus a thumbnail and direct url. Pagination requires passing both next_page_id and cursor from the previous response. Required: url. Optional: next_page_id, cursor.",
       "method": "GET",
       "path": "/v1/facebook/profile/photos",
       "params": [
@@ -488,7 +488,7 @@
     },
     {
       "name": "facebook_list-profile-3",
-      "description": "Profile Posts",
+      "description": "Returns publicly visible Facebook profile posts, limited to 3 posts per page due to API limitations. Each post includes id, text, url, reactionCount, commentCount, publishTime, videoDetails with sdUrl, hdUrl, and thumbnailUrl, plus topComments. Accepts either a url or pageId parameter, where pageId is faster. Optional: url, pageId, cursor.",
       "method": "GET",
       "path": "/v1/facebook/profile/posts",
       "params": [
@@ -514,7 +514,7 @@
     },
     {
       "name": "facebook_list-profile-4",
-      "description": "Profile Reels",
+      "description": "Fetches up to 10 reels per request from a public Facebook page. Each reel includes id, url, view_count, description, creation_time, video_url, thumbnail, play_time_in_ms, and music details. Pagination requires passing both next_page_id and cursor from the previous response. Required: url. Optional: next_page_id, cursor.",
       "method": "GET",
       "path": "/v1/facebook/profile/reels",
       "params": [
@@ -541,7 +541,7 @@
     },
     {
       "name": "google_list",
-      "description": "Ad Details",
+      "description": "Retrieves detailed information about a specific Google ad including advertiserId, creativeId, format, firstShown, lastShown, and overallImpressions. Returns creativeRegions, regionStats with per-region impression data, and variations with destinationUrl, headline, description, and imageUrl. Text extraction uses OCR, so accuracy may vary. Required: url.",
       "method": "GET",
       "path": "/v1/google/ad",
       "params": [
@@ -556,7 +556,7 @@
     },
     {
       "name": "google_list-adlibrary",
-      "description": "Advertiser Search",
+      "description": "Searches the Google Ad Transparency Library for advertisers by name. Returns a list of matching advertisers with their name, advertiser_id, and region, plus a list of associated website domains. Use the returned advertiser_id to look up a company's ads. Required: query.",
       "method": "GET",
       "path": "/v1/google/adLibrary/advertisers/search",
       "params": [
@@ -571,7 +571,7 @@
     },
     {
       "name": "google_list-company",
-      "description": "Company Ads",
+      "description": "Fetches public ads for a company from the Google Ad Transparency Library by domain or advertiser_id. Each ad includes advertiserId, creativeId, format, adUrl, advertiserName, domain, firstShown, and lastShown. Costs 25 credits per request when get_ad_details=true; without it, only advertiserId and creativeId are returned at 1 credit. Optional: domain, advertiser_id, topic (plus 5 more).",
       "method": "GET",
       "path": "/v1/google/company/ads",
       "params": [
@@ -627,7 +627,7 @@
     },
     {
       "name": "google_list-search",
-      "description": "Performs a Google search and returns organic results with url, title, and description for each result. Supports an...",
+      "description": "Performs a Google search and returns organic results with url, title, and description for each result. Supports an optional region parameter (2-letter country code) to get localized results from a specific country. Required: query. Optional: region, date_posted, page.",
       "method": "GET",
       "path": "/v1/google/search",
       "params": [
@@ -660,7 +660,7 @@
     },
     {
       "name": "instagram_list",
-      "description": "Basic Profile",
+      "description": "Fetches a lightweight Instagram profile summary by user ID, returning username, full name, biography, profile picture URL, verification status, follower count, following count, media count, and account privacy and type. Ideal for quick lookups or enrichment when you already have the numeric user ID. Optional: userId.",
       "method": "GET",
       "path": "/v1/instagram/basic-profile",
       "params": [
@@ -674,7 +674,7 @@
     },
     {
       "name": "instagram_list-media",
-      "description": "Generates an AI-powered speech-to-text transcription for an Instagram video post or reel. The video must be under 2...",
+      "description": "Generates an AI-powered speech-to-text transcription for an Instagram video post or reel. The video must be under 2 minutes long. Returns a transcripts array with each item's shortcode and transcribed text; carousel posts produce one transcript per video slide. Expect 10-30 second response times, and null when no speech is detected. Required: url.",
       "method": "GET",
       "path": "/v2/instagram/media/transcript",
       "params": [
@@ -689,7 +689,7 @@
     },
     {
       "name": "instagram_list-post",
-      "description": "Post/Reel Info",
+      "description": "Fetches detailed metadata for a single Instagram post or reel by shortcode or URL. Returns caption text, like count, comment count, video URL, video play count, video duration, display images, owner info, tagged users, and carousel sidecar children when applicable. Play counts are Instagram-only views and exclude cross-posted Facebook views. Required: url. Optional: region, trim, download_media.",
       "method": "GET",
       "path": "/v1/instagram/post",
       "params": [
@@ -722,7 +722,7 @@
     },
     {
       "name": "instagram_list-post-2",
-      "description": "Retrieves comments on a public Instagram post or reel. Each comment includes the comment text, creation timestamp,...",
+      "description": "Retrieves comments on a public Instagram post or reel. Each comment includes the comment text, creation timestamp, and commenter details such as username, user ID, verification status, and profile picture URL. Supports cursor-based pagination to load additional comment pages. Required: url. Optional: cursor.",
       "method": "GET",
       "path": "/v2/instagram/post/comments",
       "params": [
@@ -743,7 +743,7 @@
     },
     {
       "name": "instagram_list-profile",
-      "description": "Retrieves comprehensive public Instagram profile information including biography, bio links, follower and following...",
+      "description": "Retrieves comprehensive public Instagram profile information including biography, bio links, follower and following counts, verification status, and profile picture URLs. Also returns recent timeline posts with engagement metrics such as likes, comments, and video view counts, plus a list of related profiles. Useful for account overview, audience analysis, or discovering similar creators. Required: handle. Optional: trim.",
       "method": "GET",
       "path": "/v1/instagram/profile",
       "params": [
@@ -764,7 +764,7 @@
     },
     {
       "name": "instagram_list-reels",
-      "description": "Search Reels",
+      "description": "Searches for Instagram reels matching a keyword or phrase via Google Search, bypassing Instagram's login-gated search. Returns a list of reels with shortcode, caption, thumbnail, video URL, play count, like count, comment count, video duration, owner details, location, and audio attribution info. Play counts are Instagram-only views and exclude cross-posted Facebook views. Supports page-based pagination for browsing additional results. Required: query. Optional: date_posted, page.",
       "method": "GET",
       "path": "/v2/instagram/reels/search",
       "params": [
@@ -791,7 +791,7 @@
     },
     {
       "name": "instagram_list-song",
-      "description": "Reels using Song (Deprecated)",
+      "description": "DEPRECATED — this endpoint is no longer functional. Instagram removed the public audio pages that this endpoint relied on, so it cannot return data. Do not use this endpoint; there is currently no replacement available. Required: audio_id. Optional: max_id.",
       "method": "GET",
       "path": "/v1/instagram/song/reels",
       "params": [
@@ -812,7 +812,7 @@
     },
     {
       "name": "instagram_list-user",
-      "description": "Embed HTML",
+      "description": "Returns the raw HTML embed snippet for an Instagram user's profile widget. The response contains a single html string that can be inserted into a webpage to render an embeddable Instagram profile card. Requires the user's handle as input. Required: handle.",
       "method": "GET",
       "path": "/v1/instagram/user/embed",
       "params": [
@@ -827,7 +827,7 @@
     },
     {
       "name": "instagram_list-user-2",
-      "description": "Story Highlights",
+      "description": "Lists all story highlight albums for an Instagram user. Each highlight includes its ID, title, cover thumbnail URL, and owner info with username and profile picture. Accepts either a user_id or handle; providing user_id yields faster responses. Optional: user_id, handle.",
       "method": "GET",
       "path": "/v1/instagram/user/highlights",
       "params": [
@@ -847,7 +847,7 @@
     },
     {
       "name": "instagram_list-user-3",
-      "description": "Returns a paginated list of a user's public Instagram reels (short-form videos). Each reel includes its shortcode,...",
+      "description": "Returns a paginated list of a user's public Instagram reels (short-form videos). Each reel includes its shortcode, play count, like count, comment count, video versions with download URLs, thumbnail image, and owner info. Note that reel captions are not returned by this endpoint. Play counts are Instagram-only views and exclude cross-posted Facebook views. Supports cursor-based pagination via max_id; providing a user_id instead of a handle yields faster responses. Optional: user_id, handle, max_id (plus 1 more).",
       "method": "GET",
       "path": "/v1/instagram/user/reels",
       "params": [
@@ -879,7 +879,7 @@
     },
     {
       "name": "instagram_list-user-4",
-      "description": "Returns a paginated feed of a user's public Instagram posts, including photos, videos, and carousels. Each item...",
+      "description": "Returns a paginated feed of a user's public Instagram posts, including photos, videos, and carousels. Each item includes media type, shortcode, caption text, like count, comment count, play count, video URLs, image URLs, and tagged users. Play counts reflect Instagram-only views and exclude cross-posted Facebook views. Supports cursor-based pagination via next_max_id for scrolling through the full timeline. Required: handle. Optional: next_max_id, trim.",
       "method": "GET",
       "path": "/v2/instagram/user/posts",
       "params": [
@@ -906,7 +906,7 @@
     },
     {
       "name": "instagram_list-user-5",
-      "description": "Highlights Details",
+      "description": "Fetches the full contents of a specific Instagram story highlight album by its ID. Returns the highlight's cover image, title, user info, and an items array containing each story with its media type, image or video URLs, dimensions, timestamp, and sticker/interactive element data. Useful for archiving or analyzing individual highlight reels. Optional: id.",
       "method": "GET",
       "path": "/v1/instagram/user/highlight/detail",
       "params": [
@@ -920,7 +920,7 @@
     },
     {
       "name": "kick_list",
-      "description": "Fetches detailed data for a Kick clip by URL, including video, metadata, and channel info. Returns clip id, title,...",
+      "description": "Fetches detailed data for a Kick clip by URL, including video, metadata, and channel info. Returns clip id, title, clip_url, thumbnail_url, video_url, view_count, likes_count, duration, privacy status, and is_mature flag. Also includes category details (name, slug), creator info (username), and channel info (username, profile_picture). Required: url.",
       "method": "GET",
       "path": "/v1/kick/clip",
       "params": [
@@ -935,7 +935,7 @@
     },
     {
       "name": "komi_list",
-      "description": "Komi page",
+      "description": "Scrapes a Komi page by URL, extracting the creator's profile, social links, and featured content. Returns id, username, avatar, displayName, bio, and social accounts (instagram, tiktok, youtube, twitter, facebook, snapchat). Also includes links, an array of link and product objects each with id, url, title, type, thumbnail, and optional price and currency for products. Required: url.",
       "method": "GET",
       "path": "/v1/komi",
       "params": [
@@ -950,7 +950,7 @@
     },
     {
       "name": "linkbio_list",
-      "description": "Linkbio page",
+      "description": "Scrapes a Linkbio (lnk.bio) page by URL, extracting the creator's profile and all their links. Returns handle, id, social accounts (instagram, tiktok, youtube, twitter, whatsapp), email, website, and links — an array of link objects each with url and text. Required: url.",
       "method": "GET",
       "path": "/v1/linkbio",
       "params": [
@@ -965,7 +965,7 @@
     },
     {
       "name": "linkedin_list",
-      "description": "Ad Details",
+      "description": "Retrieves detailed information about a specific LinkedIn ad by URL. Returns id, description, headline, adType, advertiser, and targeting with language, location, and audience criteria. Also includes totalImpressions, impressionsByCountry, adDuration, startDate, and endDate. Required: url.",
       "method": "GET",
       "path": "/v1/linkedin/ad",
       "params": [
@@ -980,7 +980,7 @@
     },
     {
       "name": "linkedin_list-ads",
-      "description": "Search Ads",
+      "description": "Searches the LinkedIn Ad Library by company name, keyword, or companyId with optional country and date filters. Each ad includes id, description, headline, adType, advertiser, targeting details, image or video URLs, totalImpressions, and impressionsByCountry. Supports pagination via paginationToken. Optional: company, keyword, companyId (plus 4 more).",
       "method": "GET",
       "path": "/v1/linkedin/ads/search",
       "params": [
@@ -1030,7 +1030,7 @@
     },
     {
       "name": "linkedin_list-company",
-      "description": "Company Page",
+      "description": "Fetches a LinkedIn company page with details including name, description, logo, cover image, slogan, location, headquarters, employee count (headcount/staff size), website, industry, company type, founded year, specialties, funding rounds with investors, featured employees, recent posts, and similar company pages. Required: url.",
       "method": "GET",
       "path": "/v1/linkedin/company",
       "params": [
@@ -1045,7 +1045,7 @@
     },
     {
       "name": "linkedin_list-company-2",
-      "description": "Company Posts",
+      "description": "Retrieves paginated posts from a LinkedIn company page, including each post's URL, ID, publication date, and full text content. Supports page-based pagination up to a maximum of 7 pages due to a LinkedIn platform limitation. Required: url. Optional: page.",
       "method": "GET",
       "path": "/v1/linkedin/company/posts",
       "params": [
@@ -1066,7 +1066,7 @@
     },
     {
       "name": "linkedin_list-post",
-      "description": "Fetches a single LinkedIn post or article, returning the title, headline, full description text, author info with...",
+      "description": "Fetches a single LinkedIn post or article, returning the title, headline, full description text, author info with follower count, publication date, like count (reactions), comment count, and individual comments. Also includes related articles from the same author in moreArticles. Required: url.",
       "method": "GET",
       "path": "/v1/linkedin/post",
       "params": [
@@ -1081,7 +1081,7 @@
     },
     {
       "name": "linkedin_list-profile",
-      "description": "Person's Profile",
+      "description": "Retrieves a person's public LinkedIn profile data, including their name, photo, location, follower count (followers), about/bio summary, recent posts, work experience, education, articles, activity feed, publications, projects, recommendations, and similar profiles. Only returns publicly available information visible in an incognito browser. Required: url.",
       "method": "GET",
       "path": "/v1/linkedin/profile",
       "params": [
@@ -1096,7 +1096,7 @@
     },
     {
       "name": "linkme_list",
-      "description": "Retrieves a Linkme profile by URL, including identity, social links, and contact details. Returns profile with id,...",
+      "description": "Retrieves a Linkme profile by URL, including identity, social links, and contact details. Returns profile with id, firstName, username, bio, profileVisitCount, profileImage, verifiedAccount, and isAmbassador flag. Also includes infoLinks (email addresses) and webLinks, an array of categorized social platform links (Spotify, Instagram, YouTube, Twitter, Facebook, and more) each with linkValue and faceValue. Required: url.",
       "method": "GET",
       "path": "/v1/linkme",
       "params": [
@@ -1111,7 +1111,7 @@
     },
     {
       "name": "linktree_list",
-      "description": "Linktree page",
+      "description": "Scrapes a Linktree page by URL, extracting the creator's profile and all their links. Returns id, username, profilePictureUrl, description, verticals, timezone, and links — an array of link objects each with id, type, title, and url. Also includes detected social accounts (instagram, tiktok, spotify, youtube, soundcloud, apple_music) and email_address. Required: url.",
       "method": "GET",
       "path": "/v1/linktree",
       "params": [
@@ -1126,7 +1126,7 @@
     },
     {
       "name": "pillar_list",
-      "description": "Pillar page",
+      "description": "Scrapes a Pillar page by URL, extracting the creator's profile, social links, and products. Returns id, first_name, last_name, email, location, and social accounts (tiktok, spotify, twitter, youtube, facebook, linkedin, instagram, and more). Also includes links with click counts and products with title, price, description, and image. Required: url.",
       "method": "GET",
       "path": "/v1/pillar",
       "params": [
@@ -1141,7 +1141,7 @@
     },
     {
       "name": "pinterest_list",
-      "description": "Fetches a paginated list of pins from a Pinterest board by URL, returning each pin's id, description, title, images,...",
+      "description": "Fetches a paginated list of pins from a Pinterest board by URL, returning each pin's id, description, title, images, board info, pin_join annotations, and aggregated_pin_data. Supports pagination via cursor and a trim option for lighter responses. Required: url. Optional: cursor, trim.",
       "method": "GET",
       "path": "/v1/pinterest/board",
       "params": [
@@ -1168,7 +1168,7 @@
     },
     {
       "name": "pinterest_list-pin",
-      "description": "Fetches detailed information about a single Pinterest pin by URL, returning title, description, link, dominantColor,...",
+      "description": "Fetches detailed information about a single Pinterest pin by URL, returning title, description, link, dominantColor, originPinner, pinner, images at multiple resolutions (imageSpec_236x through imageSpec_orig), and pinJoin with visual annotations. Supports a trim option for lighter responses. Required: url. Optional: trim.",
       "method": "GET",
       "path": "/v1/pinterest/pin",
       "params": [
@@ -1189,7 +1189,7 @@
     },
     {
       "name": "pinterest_list-search",
-      "description": "Searches Pinterest for pins matching a query, returning results with id, url, title, description, images, link,...",
+      "description": "Searches Pinterest for pins matching a query, returning results with id, url, title, description, images, link, domain, board info, and pinner details. Supports pagination via cursor and a trim option for lighter responses. Required: query. Optional: cursor, trim.",
       "method": "GET",
       "path": "/v1/pinterest/search",
       "params": [
@@ -1216,7 +1216,7 @@
     },
     {
       "name": "pinterest_list-user",
-      "description": "User Boards",
+      "description": "Fetches a paginated list of boards for a Pinterest user, returning each board's name, url, description, pin_count, follower_count, owner info, cover_images, and created_at. Supports pagination via cursor and a trim option for lighter responses. Required: handle. Optional: trim.",
       "method": "GET",
       "path": "/v1/pinterest/user/boards",
       "params": [
@@ -1237,7 +1237,7 @@
     },
     {
       "name": "reddit_list",
-      "description": "Get Ad",
+      "description": "Retrieves detailed information about a specific Reddit ad by its id. Returns an analysis_summary with headline and media insights, plus the full inspiration_creative object containing id, budget_category, industry, placements, objective, and creative details (headline, body, type, thumbnail_url, created_at, post_url). Also includes profile_info with the advertiser's name. Required: id.",
       "method": "GET",
       "path": "/v1/reddit/ad",
       "params": [
@@ -1252,7 +1252,7 @@
     },
     {
       "name": "reddit_list-ads",
-      "description": "Search Ads",
+      "description": "Searches the Reddit Ad Library for ads matching a query, returning a maximum of 30 results. Each ad includes id, budget_category, industry, placements, objective, and a creative object with headline, body, thumbnail_url, type, created_at, and post_url. Also includes profile_info with the advertiser's name. Supports filtering by industries, budgets, formats, placements, and objectives. Required: query. Optional: industries, budgets, formats (plus 2 more).",
       "method": "GET",
       "path": "/v1/reddit/ads/search",
       "params": [
@@ -1297,7 +1297,7 @@
     },
     {
       "name": "reddit_list-post",
-      "description": "Post Comments",
+      "description": "Retrieves comments and post details from a Reddit post by URL. Returns the post with title, author, score, ups, upvote_ratio, num_comments, and created_utc, plus a comments array where each comment includes author, body, body_html, score, created_utc, parent_id, permalink, and nested replies. Supports cursor-based pagination for loading more comments and a trim parameter for lighter responses. Required: url. Optional: cursor, trim.",
       "method": "GET",
       "path": "/v1/reddit/post/comments",
       "params": [
@@ -1324,7 +1324,7 @@
     },
     {
       "name": "reddit_list-search",
-      "description": "Searches across all of Reddit for posts matching a query. Each post includes title, author, selftext, subreddit,...",
+      "description": "Searches across all of Reddit for posts matching a query. Each post includes title, author, selftext, subreddit, score, ups, upvote_ratio, num_comments, created_utc, url, permalink, and is_video. Supports sort (relevance, new, top, comment_count), timeframe filtering, pagination via the after token, and a trim parameter for lighter responses. Required: query. Optional: sort, timeframe, after (plus 1 more).",
       "method": "GET",
       "path": "/v1/reddit/search",
       "params": [
@@ -1363,7 +1363,7 @@
     },
     {
       "name": "reddit_list-subreddit",
-      "description": "Subreddit Posts",
+      "description": "Fetches posts from a subreddit with sorting and filtering options. Each post includes title, author, selftext, score, ups, upvote_ratio, num_comments, created_utc, url, permalink, subreddit_subscribers, and is_video. Supports sort (best, hot, new, top, rising), timeframe filtering, pagination via the after token, and a trim parameter for lighter responses. Required: subreddit. Optional: timeframe, sort, after (plus 1 more).",
       "method": "GET",
       "path": "/v1/reddit/subreddit",
       "params": [
@@ -1402,7 +1402,7 @@
     },
     {
       "name": "reddit_list-subreddit-2",
-      "description": "Subreddit Details",
+      "description": "Retrieves metadata about a subreddit by name or URL. The subreddit name must be case-sensitive. Returns display_name, description, subscribers, weekly_active_users, weekly_contributions, rules, icon_img, header_img, advertiser_category, submit_text, and created_at. Optional: subreddit, url.",
       "method": "GET",
       "path": "/v1/reddit/subreddit/details",
       "params": [
@@ -1422,7 +1422,7 @@
     },
     {
       "name": "reddit_list-subreddit-3",
-      "description": "Subreddit Search",
+      "description": "Searches within a specific subreddit for posts, comments, and media matching a query. Returns posts with title, votes, num_comments, url, and created_at; comments with author, body, votes, and parent post info; and media with title, media_type, image dimensions, and gallery_count. Supports sort, timeframe filtering, and cursor-based pagination. Required: subreddit. Optional: query, sort, timeframe (plus 1 more).",
       "method": "GET",
       "path": "/v1/reddit/subreddit/search",
       "params": [
@@ -1461,7 +1461,7 @@
     },
     {
       "name": "snapchat_list",
-      "description": "User Profile",
+      "description": "Retrieves a Snapchat user's public profile by handle, including identity, stories, and spotlight content. Returns userProfile with username, title, snapcodeImageUrl, subscriberCount, bio, and profilePictureUrl. Also includes highlightStoryMetadata with individual story snaps (mediaUrl, mediaType, thumbnailUrl) and spotlightStoryMetadata with video details and engagement stats (viewCount, shareCount, commentCount). Required: handle.",
       "method": "GET",
       "path": "/v1/snapchat/profile",
       "params": [
@@ -1476,7 +1476,7 @@
     },
     {
       "name": "threads_list",
-      "description": "Fetches a single Threads post by URL, returning the post's caption, like_count, view_counts, reshare_count,...",
+      "description": "Fetches a single Threads post by URL, returning the post's caption, like_count, view_counts, reshare_count, direct_reply_count, image_versions2, and taken_at. Also includes comments and related_posts arrays. Supports a trim option for lighter responses. Required: url. Optional: trim.",
       "method": "GET",
       "path": "/v1/threads/post",
       "params": [
@@ -1497,7 +1497,7 @@
     },
     {
       "name": "threads_list-profile",
-      "description": "Retrieves a Threads user's public profile including username, full_name, biography, profile_pic_url, follower_count,...",
+      "description": "Retrieves a Threads user's public profile including username, full_name, biography, profile_pic_url, follower_count, is_verified, bio_links, and hd_profile_pic_versions. Also indicates whether the account is a threads-only user via is_threads_only_user. Required: handle.",
       "method": "GET",
       "path": "/v1/threads/profile",
       "params": [
@@ -1512,7 +1512,7 @@
     },
     {
       "name": "threads_list-search",
-      "description": "Search by Keyword",
+      "description": "Searches Threads for posts matching a keyword, returning up to 10 results with caption text, like_count, reshare_count, direct_reply_count, user info, and image_versions2. Supports optional start_date and end_date filters plus a trim option. Only 10 results are returned per request due to public API limitations. Required: query. Optional: start_date, end_date, trim.",
       "method": "GET",
       "path": "/v1/threads/search",
       "params": [
@@ -1545,7 +1545,7 @@
     },
     {
       "name": "threads_list-search-2",
-      "description": "Search Users",
+      "description": "Searches for Threads users by username, returning matching profiles with username, full_name, profile_pic_url, is_verified, and pk. Useful for finding user accounts before fetching their profile or posts. Required: query.",
       "method": "GET",
       "path": "/v1/threads/search/users",
       "params": [
@@ -1560,7 +1560,7 @@
     },
     {
       "name": "threads_list-user",
-      "description": "Fetches the most recent posts from a Threads user, returning id, caption text, code, like_count, reshare_count,...",
+      "description": "Fetches the most recent posts from a Threads user, returning id, caption text, code, like_count, reshare_count, direct_reply_count, repost_count, image_versions2, video_versions, and taken_at. Only the last 20-30 posts are publicly visible. Supports a trim option for lighter responses. Required: handle. Optional: trim.",
       "method": "GET",
       "path": "/v1/threads/user/posts",
       "params": [
@@ -1581,7 +1581,7 @@
     },
     {
       "name": "tiktok_list",
-      "description": "Trending Feed",
+      "description": "Fetches TikTok's trending/For You feed for a given region — useful for discovering viral content and what's currently popular. Returns `aweme_list`, an array of video objects each with `aweme_id`, `desc` (caption), `statistics` (play_count, digg_count/likes, comment_count, share_count, collect_count), `video` (playback and download URLs, cover), `author` info, and `image_post_info` for photo carousels. Required: region. Optional: trim.",
       "method": "GET",
       "path": "/v1/tiktok/get-trending-feed",
       "params": [
@@ -1602,7 +1602,7 @@
     },
     {
       "name": "tiktok_list-creators",
-      "description": "Get popular creators",
+      "description": "Discovers trending and popular TikTok creators, filterable by follower count range, creator country, and audience country. Returns `creator_list`, an array of creator objects each with `nickname`, `unique_id`, `follower_count`, `likes_count`, `video_views`, `engagement_rate`, and avatar URLs. Sortable by engagement, follower count, or average views. Optional: page, sortBy, followerCount (plus 2 more).",
       "method": "GET",
       "path": "/v1/tiktok/creators/popular",
       "params": [
@@ -1640,7 +1640,7 @@
     },
     {
       "name": "tiktok_list-hashtags",
-      "description": "Get popular hashtags",
+      "description": "Discovers trending and popular TikTok hashtags, filterable by time period (7/30/120 days) and country. Returns a list of hashtag objects each with `hashtag_name`, `rank`, `trend` data, and related video examples. Useful for identifying viral topics and content trends on TikTok. Optional: period, page, countryCode (plus 2 more).",
       "method": "GET",
       "path": "/v1/tiktok/hashtags/popular",
       "params": [
@@ -1678,7 +1678,7 @@
     },
     {
       "name": "tiktok_list-product",
-      "description": "Product Details",
+      "description": "Fetches full details for a specific TikTok Shop product by its URL, including stock levels and affiliate videos. Returns `product_info` with `product_base` (title, images, sold_count, price), `skus` (variants with exact `stock` counts), and `product_detail_review` (product_rating, review_count, sample reviews); also returns `shop_info` (shop_name, shop_rating, followers_count) and `related_videos` (affiliate TikToks promoting the product). Related videos are only available in the US region. Required: url. Optional: region.",
       "method": "GET",
       "path": "/v1/tiktok/product",
       "params": [
@@ -1699,7 +1699,7 @@
     },
     {
       "name": "tiktok_list-profile",
-      "description": "Fetches public profile data for a TikTok user by their handle — useful for looking up a creator's identity, bio,...",
+      "description": "Fetches public profile data for a TikTok user by their handle — useful for looking up a creator's identity, bio, and account stats. Returns a `user` object (display name, avatar URLs, bio/signature, verification status, bio link) and a `stats` object (followerCount, followingCount, heartCount/total likes, videoCount). This only returns profile metadata, not the user's actual videos or followers list. Required: handle.",
       "method": "GET",
       "path": "/v1/tiktok/profile",
       "params": [
@@ -1714,7 +1714,7 @@
     },
     {
       "name": "tiktok_list-profile-2",
-      "description": "Profile Videos",
+      "description": "Fetches videos posted by a TikTok user, sortable by latest or most popular — use this to get a creator's video feed or TikToks. Returns `aweme_list`, an array of video objects each containing `aweme_id`, `desc` (caption), `statistics` (play_count, digg_count/likes, comment_count, share_count, collect_count/saves), and `video` (download URLs, duration, cover image). Paginate with `max_cursor` from the previous response. Required: handle. Optional: user_id, sort_by, max_cursor (plus 2 more).",
       "method": "GET",
       "path": "/v3/tiktok/profile/videos",
       "params": [
@@ -1759,7 +1759,7 @@
     },
     {
       "name": "tiktok_list-search",
-      "description": "Search by Hashtag",
+      "description": "Searches for TikTok videos under a specific hashtag — useful for finding content by topic or trend. Returns `aweme_list`, an array of video objects each with `aweme_id`, `desc` (caption), `statistics` (play_count, digg_count/likes, comment_count, share_count), `video` info, and `author` details. Paginate with `cursor` from the previous response. Required: hashtag. Optional: region, cursor, trim.",
       "method": "GET",
       "path": "/v1/tiktok/search/hashtag",
       "params": [
@@ -1792,7 +1792,7 @@
     },
     {
       "name": "tiktok_list-search-2",
-      "description": "Search by Keyword",
+      "description": "Searches for TikTok videos by keyword or phrase — the general video search across all of TikTok. Returns `search_item_list`, an array of objects each containing `aweme_info` with `aweme_id`, `desc` (caption), `statistics` (play_count, digg_count/likes, comment_count, share_count), `video` info, and `author` details. Paginate with `cursor`. Required: query. Optional: date_posted, sort_by, region (plus 2 more).",
       "method": "GET",
       "path": "/v1/tiktok/search/keyword",
       "params": [
@@ -1837,7 +1837,7 @@
     },
     {
       "name": "tiktok_list-search-3",
-      "description": "Top Search",
+      "description": "Searches TikTok's 'Top' results by query — returns both videos and photo carousels, unlike keyword search which only returns videos. Returns `items`, an array of objects each with `id`, `desc` (caption), `content_type` (video or photo carousel), `statistics` (play_count, digg_count/likes, comment_count, share_count), `video` info, and `images` for carousels. Paginate with `cursor`. Required: query. Optional: publish_time, sort_by, region (plus 1 more).",
       "method": "GET",
       "path": "/v1/tiktok/search/top",
       "params": [
@@ -1876,7 +1876,7 @@
     },
     {
       "name": "tiktok_list-search-4",
-      "description": "Search Users",
+      "description": "Searches for TikTok users by keyword or name — useful for finding creators or accounts matching a query. Returns `users`, an array of objects each containing `user_info` (nickname, unique_id, signature/bio, follower_count, following_count, avatar) and associated `items`. Paginate with `cursor` from the previous response. Required: query. Optional: cursor, trim.",
       "method": "GET",
       "path": "/v1/tiktok/search/users",
       "params": [
@@ -1903,7 +1903,7 @@
     },
     {
       "name": "tiktok_list-shop",
-      "description": "Shop Products",
+      "description": "Lists all products from a specific TikTok Shop store by its URL. Returns an array of product objects each with `title`, `cover` images, `url`, `price` info, `sold_count`, `review_count`, and `rating`. Paginate with `cursor` from the previous response; filter by region. Required: url. Optional: cursor, region.",
       "method": "GET",
       "path": "/v1/tiktok/shop/products",
       "params": [
@@ -1930,7 +1930,7 @@
     },
     {
       "name": "tiktok_list-shop-2",
-      "description": "Shop Search",
+      "description": "Searches TikTok Shop for products matching a keyword query. Returns an array of product objects each with `title`, `cover` image, `url` (product page link), `price`, `sold_count`, `review_count`, `rating`, and `shop_name`. Paginate with `page`; filter by region. Required: query. Optional: page, region.",
       "method": "GET",
       "path": "/v1/tiktok/shop/search",
       "params": [
@@ -1957,7 +1957,7 @@
     },
     {
       "name": "tiktok_list-shop-3",
-      "description": "Product Reviews",
+      "description": "Fetches customer reviews for a TikTok Shop product by URL or product_id. Returns `product_reviews`, an array of review objects each with `rating`, `display_text`, `review_timestamp_fmt`, `review_user` (name, avatar), and `sku_specification` (variant purchased); also returns `total_reviews` count and `rating_distribution`. Paginate with `page`. Optional: url, product_id, region (plus 1 more).",
       "method": "GET",
       "path": "/v1/tiktok/shop/product/reviews",
       "params": [
@@ -1989,7 +1989,7 @@
     },
     {
       "name": "tiktok_list-song",
-      "description": "Get Song Details",
+      "description": "Fetches detailed metadata for a specific TikTok sound or song by its clipId. Returns `music_info` with `title`, `author`, `album`, `duration`, `user_count` (number of videos using this sound), `play_url`, cover art, and artist details. Use the `clipId` from a sound URL or from the popular songs endpoint. Required: clipId.",
       "method": "GET",
       "path": "/v1/tiktok/song",
       "params": [
@@ -2004,7 +2004,7 @@
     },
     {
       "name": "tiktok_list-song-2",
-      "description": "TikToks using Song",
+      "description": "Fetches TikTok videos that use a specific sound or song, identified by its clipId. Returns `aweme_list`, an array of video objects each with `aweme_id`, `desc` (caption), `statistics` (play_count, digg_count/likes, comment_count, share_count), `video` info, and `author` details. Paginate with `cursor` from the previous response. Optional: clipId, cursor.",
       "method": "GET",
       "path": "/v1/tiktok/song/videos",
       "params": [
@@ -2024,7 +2024,7 @@
     },
     {
       "name": "tiktok_list-songs",
-      "description": "Get popular songs",
+      "description": "Gets the current trending and popular songs/sounds on TikTok, sourced from the TikTok Creative Center. Returns `sound_list`, an array of song objects each with `title`, `author`, `clip_id`, `rank`, `cover` image URL, `duration`, `link` to the sound page, and a `trend` array showing popularity over time. Filter by country, time period (7/30/120 days), rank type (popular vs surging), and commercial music approval. Optional: page, timePeriod, rankType (plus 3 more).",
       "method": "GET",
       "path": "/v1/tiktok/songs/popular",
       "params": [
@@ -2068,7 +2068,7 @@
     },
     {
       "name": "tiktok_list-user",
-      "description": "User's Audience Demographics",
+      "description": "Retrieves audience demographic data for a TikTok user, showing where their followers are located by country. Returns `audienceLocations`, an array of objects each containing `country`, `countryCode`, `count`, and `percentage`. Costs 26 credits per request. Required: handle.",
       "method": "GET",
       "path": "/v1/tiktok/user/audience",
       "params": [
@@ -2083,7 +2083,7 @@
     },
     {
       "name": "tiktok_list-user-2",
-      "description": "Retrieves the follower list of a TikTok account by handle or user_id — useful for seeing who follows a creator or...",
+      "description": "Retrieves the follower list of a TikTok account by handle or user_id — useful for seeing who follows a creator or getting subscriber data. Returns `followers`, an array of user objects each with `nickname`, `unique_id`, `uid`, `follower_count`, `following_count`, and avatar URLs; also returns `total` follower count. Paginate with `min_time` from the previous response. Optional: handle, user_id, min_time (plus 1 more).",
       "method": "GET",
       "path": "/v1/tiktok/user/followers",
       "params": [
@@ -2115,7 +2115,7 @@
     },
     {
       "name": "tiktok_list-user-3",
-      "description": "Retrieves the following list — accounts that a TikTok user follows — by their handle. Returns `followings`, an...",
+      "description": "Retrieves the following list — accounts that a TikTok user follows — by their handle. Returns `followings`, an array of user objects each with `nickname`, `unique_id`, `uid`, `follower_count`, `following_count`, `signature`, and avatar URLs; also returns `total` count. Paginate with `min_time` from the previous response. Required: handle. Optional: min_time, trim.",
       "method": "GET",
       "path": "/v1/tiktok/user/following",
       "params": [
@@ -2142,7 +2142,7 @@
     },
     {
       "name": "tiktok_list-user-4",
-      "description": "TikTok Live",
+      "description": "Checks if a TikTok user is currently live streaming and retrieves their live room details. Returns `liveRoomUserInfo` (nickname, avatar, followerCount, roomId) and `liveRoom` (title, startTime, status, `liveRoomStats` with enterCount and userCount, plus `streamData` with playback URLs in multiple qualities). Required: handle.",
       "method": "GET",
       "path": "/v1/tiktok/user/live",
       "params": [
@@ -2157,7 +2157,7 @@
     },
     {
       "name": "tiktok_list-user-5",
-      "description": "User Showcase",
+      "description": "Fetches products featured in a TikTok user's public showcase — the products a creator promotes on their profile. Returns an array of product objects each with title, price, images, and shop details. Use POST request if pagination is cutting off too early. Just send the query params in the body. Required: handle. Optional: region, cursor.",
       "method": "GET",
       "path": "/v1/tiktok/user/showcase",
       "params": [
@@ -2184,7 +2184,7 @@
     },
     {
       "name": "tiktok_list-video",
-      "description": "Video Info",
+      "description": "Fetches detailed data for a single TikTok video by URL, including its metadata, engagement stats, and optionally its transcript/captions. Returns `aweme_detail` with `desc` (caption), `statistics` (play_count, digg_count/likes, comment_count, share_count, collect_count), `video` (download URLs including no-watermark), `author` info, and `music` info; also returns `transcript` in WEBVTT format if `get_transcript=true`. Required: url. Optional: get_transcript, region, trim (plus 1 more).",
       "method": "GET",
       "path": "/v2/tiktok/video",
       "params": [
@@ -2223,7 +2223,7 @@
     },
     {
       "name": "tiktok_list-video-2",
-      "description": "Fetches comments on a TikTok video by URL — useful for reading audience reactions, replies, and engagement....",
+      "description": "Fetches comments on a TikTok video by URL — useful for reading audience reactions, replies, and engagement. Returns `comments`, an array where each comment includes `text`, `digg_count` (likes), `reply_comment_total`, `create_time`, and a `user` object with the commenter's nickname and unique_id; also returns `total` comment count. Paginate with `cursor` from the previous response. Required: url. Optional: cursor, trim.",
       "method": "GET",
       "path": "/v1/tiktok/video/comments",
       "params": [
@@ -2250,7 +2250,7 @@
     },
     {
       "name": "tiktok_list-video-3",
-      "description": "Extracts the transcript, captions, or subtitles from a TikTok video by URL. Returns `id`, `url`, and `transcript` as...",
+      "description": "Extracts the transcript, captions, or subtitles from a TikTok video by URL. Returns `id`, `url`, and `transcript` as a WEBVTT-formatted string with timestamped text segments. Video must be under 2 minutes; costs an additional 10 credits when `use_ai_as_fallback=true`. Required: url. Optional: language, use_ai_as_fallback.",
       "method": "GET",
       "path": "/v1/tiktok/video/transcript",
       "params": [
@@ -2277,7 +2277,7 @@
     },
     {
       "name": "tiktok_list-video-4",
-      "description": "Comment Replies",
+      "description": "Fetches replies to a specific TikTok comment by its ID. Returns `comments`, an array of comment objects each with `text`, `user` info, and `create_time`. Paginate with `cursor` from the previous response. Required: comment_id, url. Optional: cursor.",
       "method": "GET",
       "path": "/v1/tiktok/video/comment/replies",
       "params": [
@@ -2305,7 +2305,7 @@
     },
     {
       "name": "tiktok_list-videos",
-      "description": "Get popular videos",
+      "description": "Discovers trending and popular TikTok videos, filterable by time period (7 or 30 days) and country. Returns a list of video objects each with `title`, `item_url` (link to the TikTok), `cover`, `region`, and engagement stats. Sortable by likes, views (hot), comments, or reposts. Optional: period, page, orderBy (plus 1 more).",
       "method": "GET",
       "path": "/v1/tiktok/videos/popular",
       "params": [
@@ -2337,7 +2337,7 @@
     },
     {
       "name": "truthsocial_list",
-      "description": "Fetches a single Truth Social post by URL, returning text, id, created_at, url, content, account details,...",
+      "description": "Fetches a single Truth Social post by URL, returning text, id, created_at, url, content, account details, media_attachments, card link previews, replies_count, reblogs_count, and favourites_count. Only posts from prominent public figures (e.g., Trump, Vance) are accessible without authentication. Required: url.",
       "method": "GET",
       "path": "/v1/truthsocial/post",
       "params": [
@@ -2352,7 +2352,7 @@
     },
     {
       "name": "truthsocial_list-profile",
-      "description": "Retrieves a Truth Social user's public profile including display_name, username, avatar, header, followers_count,...",
+      "description": "Retrieves a Truth Social user's public profile including display_name, username, avatar, header, followers_count, following_count, statuses_count, verified status, website, and created_at. Only prominent public figures (e.g., Trump, Vance) are accessible without authentication; most other accounts will not work. Required: handle.",
       "method": "GET",
       "path": "/v1/truthsocial/profile",
       "params": [
@@ -2367,7 +2367,7 @@
     },
     {
       "name": "truthsocial_list-user",
-      "description": "User Posts",
+      "description": "Fetches a paginated list of posts from a Truth Social user, returning text, id, created_at, url, content, account info, media_attachments, card link previews, replies_count, reblogs_count, and favourites_count. Supports pagination via next_max_id and a trim option for lighter responses. Only prominent public figures (e.g., Trump, Vance) are accessible without authentication. Optional: handle, user_id, next_max_id (plus 1 more).",
       "method": "GET",
       "path": "/v1/truthsocial/user/posts",
       "params": [
@@ -2399,7 +2399,7 @@
     },
     {
       "name": "twitch_list",
-      "description": "Fetches detailed data for a Twitch clip by URL, including metadata and direct video URLs. Returns clip id, slug,...",
+      "description": "Fetches detailed data for a Twitch clip by URL, including metadata and direct video URLs. Returns clip id, slug, url, embedURL, title, viewCount, language, durationSeconds, game info, broadcaster details with follower count, thumbnailURL, and videoQualities at multiple resolutions with a signed videoURL for playback. Also includes additional clips from the same broadcaster. Required: url.",
       "method": "GET",
       "path": "/v1/twitch/clip",
       "params": [
@@ -2414,7 +2414,7 @@
     },
     {
       "name": "twitch_list-profile",
-      "description": "Retrieves a Twitch user's public profile by handle, including identity, social links, and content. Returns id,...",
+      "description": "Retrieves a Twitch user's public profile by handle, including identity, social links, and content. Returns id, handle, displayName, description, followers count, and linked social accounts (instagram, x, tiktok). Also includes allVideos with game info, duration, and view counts, featuredClips with clip metadata and thumbnails, and similarStreamers. Required: handle.",
       "method": "GET",
       "path": "/v1/twitch/profile",
       "params": [
@@ -2429,7 +2429,7 @@
     },
     {
       "name": "twitter_list",
-      "description": "Retrieves details about a Twitter/X Community by URL. Returns the community name, description, rest_id, join_policy,...",
+      "description": "Retrieves details about a Twitter/X Community by URL. Returns the community name, description, rest_id, join_policy, created_at, member_count, rules, and creator_results with the creator's profile. Also includes members_facepile_results with avatar images of recent members. Required: url.",
       "method": "GET",
       "path": "/v1/twitter/community",
       "params": [
@@ -2444,7 +2444,7 @@
     },
     {
       "name": "twitter_list-community",
-      "description": "Community Tweets",
+      "description": "Fetches tweets posted within a Twitter/X Community by URL. Returns an array of tweets, each with id, full_text, view_count, favorite_count, retweet_count, reply_count, bookmark_count, quote_count, created_at, and source. Each tweet includes a user object with the author's name, screen_name, avatar, followers_count, and is_blue_verified status. Required: url.",
       "method": "GET",
       "path": "/v1/twitter/community/tweets",
       "params": [
@@ -2459,7 +2459,7 @@
     },
     {
       "name": "twitter_list-profile",
-      "description": "Retrieves a Twitter user's profile by handle, including account metadata and statistics. Returns name, screen_name,...",
+      "description": "Retrieves a Twitter user's profile by handle, including account metadata and statistics. Returns name, screen_name, description, followers_count, friends_count, statuses_count, favourites_count, location, profile_image_url_https, and is_blue_verified. Also includes verification_info, tipjar_settings, highlights_info, and creator_subscriptions_count. Required: handle.",
       "method": "GET",
       "path": "/v1/twitter/profile",
       "params": [
@@ -2474,7 +2474,7 @@
     },
     {
       "name": "twitter_list-tweet",
-      "description": "Tweet Details",
+      "description": "Retrieves detailed information about a specific tweet by URL, including the author's profile and engagement metrics. Returns rest_id, full_text, views count, favorite_count, retweet_count, reply_count, bookmark_count, quote_count, created_at, source, and media entities. Supports a trim parameter for a lighter response. Required: url. Optional: trim.",
       "method": "GET",
       "path": "/v1/twitter/tweet",
       "params": [
@@ -2495,7 +2495,7 @@
     },
     {
       "name": "twitter_list-tweet-2",
-      "description": "Extracts the transcript from a Twitter video tweet using AI-powered transcription. The video must be under 2 minutes...",
+      "description": "Extracts the transcript from a Twitter video tweet using AI-powered transcription. The video must be under 2 minutes long. Returns a success flag and the full transcript text. This endpoint is slower than others due to the AI processing step. Required: url.",
       "method": "GET",
       "path": "/v1/twitter/tweet/transcript",
       "params": [
@@ -2510,7 +2510,7 @@
     },
     {
       "name": "twitter_list-usertweets",
-      "description": "User Tweets",
+      "description": "Fetches tweets from a Twitter user's profile by handle. Note: Twitter publicly returns only ~100 of the user's most popular tweets, not chronological or latest. Each tweet includes rest_id, full_text, views count, favorite_count, retweet_count, reply_count, bookmark_count, quote_count, created_at, media entities, and url. Supports a trim parameter for a lighter response. Required: handle. Optional: trim.",
       "method": "GET",
       "path": "/v1/twitter/user-tweets",
       "params": [
@@ -2531,7 +2531,7 @@
     },
     {
       "name": "youtube_list",
-      "description": "Channel Details",
+      "description": "Retrieves comprehensive YouTube channel profile data including name, avatar images, subscriber count (subscribers), total video and view counts, join date, tags, and linked social accounts like Twitter and Instagram. Accepts a channelId, handle, or full channel URL as input. Returns channel metadata such as country, email, and external store links when available. Optional: channelId, handle, url.",
       "method": "GET",
       "path": "/v1/youtube/channel",
       "params": [
@@ -2557,7 +2557,7 @@
     },
     {
       "name": "youtube_list-channel",
-      "description": "Channel Shorts",
+      "description": "Retrieves a paginated list of short-form videos (Shorts) from a YouTube channel, including each short's title, URL, view count (views), likes, comments, and description. Supports sorting by newest or popular, and use the continuationToken to page through all results. Returns data in the shorts array. Optional: handle, channelId, sort (plus 1 more).",
       "method": "GET",
       "path": "/v1/youtube/channel/shorts",
       "params": [
@@ -2589,7 +2589,7 @@
     },
     {
       "name": "youtube_list-channelvideos",
-      "description": "Channel Videos",
+      "description": "Fetches a paginated list of videos uploaded by a YouTube channel, including each video's title, URL, thumbnail, view count (views), publish date, duration, and description. Supports sorting by latest or popular, and use the continuationToken to page through all results. Optionally include extras like like count, comment count, and descriptions for each video. Optional: channelId, handle, sort (plus 2 more).",
       "method": "GET",
       "path": "/v1/youtube/channel-videos",
       "params": [
@@ -2627,7 +2627,7 @@
     },
     {
       "name": "youtube_list-communitypost",
-      "description": "Community Post Details",
+      "description": "Retrieves the full details of a YouTube community post, including its text content, attached images, like count, publish date, and associated channel info. Also returns a linked video if the post includes one. Required: url.",
       "method": "GET",
       "path": "/v1/youtube/community-post",
       "params": [
@@ -2642,7 +2642,7 @@
     },
     {
       "name": "youtube_list-playlist",
-      "description": "Retrieves all videos in a YouTube playlist, including the playlist title, owner info, total video count, and each...",
+      "description": "Retrieves all videos in a YouTube playlist, including the playlist title, owner info, total video count, and each video's title, URL, thumbnail, duration, and channel. Accepts the playlist ID found in the 'list' URL parameter. Required: playlist_id.",
       "method": "GET",
       "path": "/v1/youtube/playlist",
       "params": [
@@ -2657,7 +2657,7 @@
     },
     {
       "name": "youtube_list-search",
-      "description": "Searches YouTube by keyword query and returns matching videos, channels, playlists, shorts, shelves, and live...",
+      "description": "Searches YouTube by keyword query and returns matching videos, channels, playlists, shorts, shelves, and live streams. Each video result includes title, URL, thumbnail, view count (views), publish date, duration, channel info, and badges. Supports filtering by upload date, sorting by relevance or popularity, and paginating with continuationToken. Required: query. Optional: uploadDate, sortBy, type (plus 4 more).",
       "method": "GET",
       "path": "/v1/youtube/search",
       "params": [
@@ -2714,7 +2714,7 @@
     },
     {
       "name": "youtube_list-search-2",
-      "description": "Search by Hashtag",
+      "description": "Searches YouTube for content matching a specific hashtag and returns matching videos with title, URL, thumbnail, view count (views), publish date, duration, and channel info. Supports pagination via continuationToken and filtering to return all content types or only shorts. Required: hashtag. Optional: continuationToken, type.",
       "method": "GET",
       "path": "/v1/youtube/search/hashtag",
       "params": [
@@ -2741,14 +2741,14 @@
     },
     {
       "name": "youtube_list-shorts",
-      "description": "Trending Shorts",
+      "description": "Fetches approximately 48 currently trending YouTube Shorts (viral/popular short-form videos) per call, returning each short's title, URL, thumbnail, view count (views), like count (likes), comment count, publish date, channel info, keywords, and duration. Each subsequent call returns a fresh batch of different trending shorts.",
       "method": "GET",
       "path": "/v1/youtube/shorts/trending",
       "params": []
     },
     {
       "name": "youtube_list-video",
-      "description": "Video/Short Details",
+      "description": "Fetches full details for a YouTube video or short, including title, description, thumbnail, view count (views), like count (likes), comment count, publish date, duration, genre, keywords, chapters, collaborators, and available caption tracks (subtitles/captions). Also returns related recommended videos in watchNextVideos and channel info for the uploader. Required: url. Optional: language.",
       "method": "GET",
       "path": "/v1/youtube/video",
       "params": [
@@ -2769,7 +2769,7 @@
     },
     {
       "name": "youtube_list-video-2",
-      "description": "Fetches comments and replies from a YouTube video, including each comment's text content, author details, like...",
+      "description": "Fetches comments and replies from a YouTube video, including each comment's text content, author details, like count, reply count, and publish date. Supports ordering by top or newest, and paginating with continuationToken. Limited to approximately 1,000 top comments or 7,000 newest comments. Required: url. Optional: continuationToken, order.",
       "method": "GET",
       "path": "/v1/youtube/video/comments",
       "params": [
@@ -2796,7 +2796,7 @@
     },
     {
       "name": "youtube_list-video-3",
-      "description": "Retrieves the captions, subtitles, or transcript of a YouTube video or short. Returns both a timestamped transcript...",
+      "description": "Retrieves the captions, subtitles, or transcript of a YouTube video or short. Returns both a timestamped transcript array with start/end times and a plain-text version in transcript_only_text. Supports specifying a language code. Note: the video must be under 2 minutes for transcript extraction to work. Required: url. Optional: language.",
       "method": "GET",
       "path": "/v1/youtube/video/transcript",
       "params": [
@@ -2817,7 +2817,7 @@
     },
     {
       "name": "youtube_list-video-4",
-      "description": "Comment Replies",
+      "description": "Fetches replies to a specific comment on a YouTube video, including each reply's text content, author details (name, channel ID, avatar, verified/creator status), like count, and publish date. Requires a continuationToken obtained from the 'repliesContinuationToken' field on comments returned by the Comments endpoint. Supports paginating through additional replies with the continuationToken returned in each response. Required: continuationToken.",
       "method": "GET",
       "path": "/v1/youtube/video/comment/replies",
       "params": [

@@ -20,10 +20,10 @@ func newRedditListAdsCmd(flags *rootFlags) *cobra.Command {
 	var flagObjectives string
 
 	cmd := &cobra.Command{
-		Use:     "ads-search",
-		Aliases: []string{"list-ads"},
-		Short:   "Search Ads",
-		Example: "  scrape-creators-pp-cli reddit list-ads",
+		Use:         "ads-search",
+		Aliases:     []string{"list-ads"},
+		Short:       "Search Ads",
+		Example:     "  scrape-creators-pp-cli reddit list-ads",
 		Annotations: map[string]string{"pp:endpoint": "reddit.list-ads"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("query") && !flags.dryRun {

@@ -19,10 +19,10 @@ func newTiktokListSearchCmd(flags *rootFlags) *cobra.Command {
 	var flagAll bool
 
 	cmd := &cobra.Command{
-		Use:     "search-hashtag",
-		Aliases: []string{"list-search"},
-		Short:   "Search by Hashtag",
-		Example: "  scrape-creators-pp-cli tiktok list-search",
+		Use:         "search-hashtag",
+		Aliases:     []string{"list-search"},
+		Short:       "Search by Hashtag",
+		Example:     "  scrape-creators-pp-cli tiktok list-search",
 		Annotations: map[string]string{"pp:endpoint": "tiktok.list-search"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("hashtag") && !flags.dryRun {

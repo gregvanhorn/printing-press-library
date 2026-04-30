@@ -16,10 +16,11 @@ func newTiktokListGettrendingfeedCmd(flags *rootFlags) *cobra.Command {
 	var flagTrim bool
 
 	cmd := &cobra.Command{
-		Use:     "trending-feed",
-		Aliases: []string{"list-gettrendingfeed"},
-		Short:   "Trending Feed",
-		Example: "  scrape-creators-pp-cli tiktok list-gettrendingfeed",
+		Use:         "trending-feed",
+		Aliases:     []string{"list-gettrendingfeed"},
+		Short:       "Fetch TikTok's trending For You feed for a region — viral video discovery",
+		Annotations: map[string]string{"mcp:read-only": "true"},
+		Example:     "  scrape-creators-pp-cli tiktok list-gettrendingfeed",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("region") && !flags.dryRun {
 				return fmt.Errorf("required flag \"%s\" not set", "region")

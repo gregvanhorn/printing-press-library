@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mvanhorn/printing-press-library/library/developer-tools/scrape-creators/internal/config"
 	"github.com/spf13/cobra"
+	"github.com/mvanhorn/printing-press-library/library/developer-tools/scrape-creators/internal/config"
 )
 
 func newDoctorCmd(flags *rootFlags) *cobra.Command {

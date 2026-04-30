@@ -15,10 +15,10 @@ func newLinkedinListCmd(flags *rootFlags) *cobra.Command {
 	var flagUrl string
 
 	cmd := &cobra.Command{
-		Use:     "ad",
-		Aliases: []string{"list"},
-		Short:   "Ad Details",
-		Example: "  scrape-creators-pp-cli linkedin list",
+		Use:         "ad",
+		Aliases:     []string{"list"},
+		Short:       "Ad Details",
+		Example:     "  scrape-creators-pp-cli linkedin list",
 		Annotations: map[string]string{"pp:endpoint": "linkedin.list"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("url") && !flags.dryRun {

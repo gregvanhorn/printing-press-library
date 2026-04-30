@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mvanhorn/printing-press-library/library/developer-tools/scrape-creators/internal/config"
 	"github.com/spf13/cobra"
+	"github.com/mvanhorn/printing-press-library/library/developer-tools/scrape-creators/internal/config"
 )
 
 func newAuthCmd(flags *rootFlags) *cobra.Command {

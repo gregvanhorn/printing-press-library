@@ -18,10 +18,10 @@ func newRedditListPostCmd(flags *rootFlags) *cobra.Command {
 	var flagAll bool
 
 	cmd := &cobra.Command{
-		Use:     "post-comments",
-		Aliases: []string{"list-post"},
-		Short:   "Post Comments",
-		Example: "  scrape-creators-pp-cli reddit list-post",
+		Use:         "post-comments",
+		Aliases:     []string{"list-post"},
+		Short:       "Post Comments",
+		Example:     "  scrape-creators-pp-cli reddit list-post",
 		Annotations: map[string]string{"pp:endpoint": "reddit.list-post"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if !cmd.Flags().Changed("url") && !flags.dryRun {

@@ -20,10 +20,10 @@ func newTiktokListSongsCmd(flags *rootFlags) *cobra.Command {
 	var flagCountryCode string
 
 	cmd := &cobra.Command{
-		Use:     "songs-popular",
-		Aliases: []string{"list-songs"},
-		Short:   "Get popular songs",
-		Example: "  scrape-creators-pp-cli tiktok list-songs",
+		Use:         "songs-popular",
+		Aliases:     []string{"list-songs"},
+		Short:       "Get popular songs",
+		Example:     "  scrape-creators-pp-cli tiktok list-songs",
 		Annotations: map[string]string{"pp:endpoint": "tiktok.list-songs"},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			c, err := flags.newClient()
