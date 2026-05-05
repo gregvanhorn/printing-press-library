@@ -64,6 +64,23 @@
       }
     },
     {
+      "name": "apartments",
+      "category": "other",
+      "api": "Apartments",
+      "description": "Search Apartments.com listings, sync results to a local SQLite store, and run workflows the website never built — diff saved searches, rank by $/sqft, compare shortlists, and surface price drops or phantom listings.",
+      "path": "library/other/apartments",
+      "mcp": {
+        "binary": "apartments-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 2,
+        "public_tool_count": 0,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full",
+        "spec_format": "internal"
+      }
+    },
+    {
       "name": "archive-is",
       "category": "media-and-entertainment",
       "api": "Archive.today",
