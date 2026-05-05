@@ -334,6 +334,25 @@
       }
     },
     {
+      "name": "google-photos",
+      "category": "media-and-entertainment",
+      "api": "Google Photos",
+      "description": "Google Photos Library and Picker APIs for app-created media, albums, uploads, and user-selected media.",
+      "path": "library/media-and-entertainment/google-photos",
+      "mcp": {
+        "binary": "google-photos-pp-mcp",
+        "transport": "stdio",
+        "tool_count": 19,
+        "public_tool_count": 0,
+        "auth_type": "oauth2",
+        "env_vars": [
+          "GOOGLE_PHOTOS_TOKEN"
+        ],
+        "mcp_ready": "full",
+        "spec_format": "internal"
+      }
+    },
+    {
       "name": "hackernews",
       "category": "media-and-entertainment",
       "api": "Hacker News",
