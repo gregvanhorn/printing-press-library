@@ -60,6 +60,7 @@ type agentContextCommand struct {
 	Name        string                `json:"name"`
 	Use         string                `json:"use,omitempty"`
 	Short       string                `json:"short,omitempty"`
+	Annotations map[string]string     `json:"annotations,omitempty"`
 	Flags       []agentContextFlag    `json:"flags,omitempty"`
 	Subcommands []agentContextCommand `json:"subcommands,omitempty"`
 }
@@ -74,8 +75,9 @@ type agentContextFlag struct {
 func newAgentContextCmd(rootCmd *cobra.Command) *cobra.Command {
 	var pretty bool
 	cmd := &cobra.Command{
-		Use:   "agent-context",
-		Short: "Emit structured JSON describing this CLI for agents",
+		Use:         "agent-context",
+		Short:       "Emit structured JSON describing this CLI for agents",
+		Annotations: map[string]string{"mcp:read-only": "true"},
 		Long: `Outputs a machine-readable description of commands, flags, and auth so
 agents can introspect this CLI at runtime without parsing --help or
 reading source. Schema is versioned via schema_version.`,
@@ -142,6 +144,16 @@ func collectAgentCommands(c *cobra.Command) []agentContextCommand {
 			Name:  sub.Name(),
 			Use:   sub.Use,
 			Short: sub.Short,
+		}
+		// Surface Cobra annotations (e.g., pp:endpoint, mcp:read-only) so
+		// agents and the live-dogfood classifier can detect destructive-at-auth
+		// endpoints without parsing source. Empty maps are stripped via
+		// omitempty in the struct tag.
+		if len(sub.Annotations) > 0 {
+			entry.Annotations = make(map[string]string, len(sub.Annotations))
+			for k, v := range sub.Annotations {
+				entry.Annotations[k] = v
+			}
 		}
 		sub.Flags().VisitAll(func(f *pflag.Flag) {
 			entry.Flags = append(entry.Flags, agentContextFlag{

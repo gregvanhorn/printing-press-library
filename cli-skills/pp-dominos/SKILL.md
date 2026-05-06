@@ -1,104 +1,124 @@
 ---
 name: pp-dominos
-description: "Order pizza, browse menus, optimize deals, and track delivery from the terminal — with a local SQLite store that powers reorder, analytics, and price comparison no other Domino's tool offers. Trigger phrases: `order a pizza`, `find a domino's near me`, `track my pizza`, `what's my pizza usual`, `how much do i spend on pizza`, `compare pizza prices`, `use dominos`, `run dominos`."
+description: "Order pizza, browse menus, optimize deals, and track delivery from the terminal — with a local SQLite store that powers reorder, price comparison, and deal stacking no other Domino's tool offers. Trigger phrases: `order a pizza`, `find a domino's near me`, `track my pizza`, `what's my pizza usual`, `best deal on my pizza order`, `compare pizza prices`, `use dominos`, `run dominos`."
 argument-hint: "<command> [args] | install cli|mcp"
 allowed-tools: "Read Bash"
-metadata: '{"openclaw":{"requires":{"bins":["dominos-pp-cli"]},"install":[{"id":"go","kind":"shell","command":"go install github.com/mvanhorn/printing-press-library/library/commerce/dominos/cmd/dominos-pp-cli@latest","bins":["dominos-pp-cli"],"label":"Install via go install"}]}}'
+metadata:
+  openclaw:
+    requires:
+      env: []
+      bins:
+        - dominos-pp-cli
+    envVars:
+      - name: DOMINOS_USERNAME
+        required: false
+        description: "Only needed during `auth login`; not required for normal use. Domino's account email or phone consumed by `auth login` to obtain a bearer token. Read-only commands work without."
+      - name: DOMINOS_PASSWORD
+        required: false
+        description: "Set during application setup."
+    install:
+      - kind: go
+        bins: [dominos-pp-cli]
+        module: github.com/mvanhorn/printing-press-library/library/food-and-dining/dominos/cmd/dominos-pp-cli
 ---
 
-# Dominos — Printing Press CLI
+# Domino's — Printing Press CLI
 
-Every Domino's feature you would expect — store locator, menu browse, build cart, validate, price, place, and track — plus a local data layer that compounds. Save named templates with `template save`, find the cheapest store for your order with `compare-prices`, hunt for the best deal with `deals best`, and watch your delivery in real-time with `tracking --watch`.
+Every Domino's feature you would expect — store locator, menu browse, build cart, validate, price, place, and track — plus a local data layer that compounds. Save named templates with `template save`, find the cheapest store for your order with `compare-prices`, hunt for the best stacked deal with `deals best`, and watch your delivery in real-time with `track --watch`.
 
 ## When to Use This CLI
 
-Use this CLI when an agent or power user needs to interact with Domino's outside a browser — building, pricing, and placing orders, tracking deliveries, comparing prices across stores, optimizing deal selection, or analyzing past spending. Excellent for automation: every command supports --json, --dry-run, --agent, and structured exit codes. Local SQLite store enables features the public API cannot serve directly (reorder substitution, menu diff, deal optimization, spending trends).
+Use this CLI when an agent or power user needs to interact with Domino's outside a browser — building, pricing, and placing orders, tracking deliveries, comparing prices across stores, optimizing deal selection, or replaying saved order templates. Excellent for automation: every command supports --json, --dry-run, --agent, --select, and structured exit codes. Local SQLite store enables features the public API cannot serve directly (deal optimization, multi-store wait-time comparison, named order templates). DO NOT use this CLI for: other pizza chains (Pizza Hut, Papa John's, etc.), generic food delivery (DoorDash, Uber Eats), restaurant search/aggregation, or non-US Domino's storefronts (only US endpoints are supported).
 
 ## Unique Capabilities
 
 These capabilities aren't available in any other tool for this API.
 
 ### Local state that compounds
+- **`template save`** — Save your usual order — store, address, items, toppings, payment ref — and replay it with one command.
 
-- **`compare-prices`** — Compare item pricing across every nearby store and find the cheapest one for your order.
-
-  _Pizza prices vary by store. Reach for this when the user cares about saving money or has a flexible delivery radius._
+  _Reach for this when an agent or user wants a one-command repeat of a known-good order without rebuilding the cart from scratch._
 
   ```bash
-  dominos-pp-cli compare-prices --address "421 N 63rd St, Seattle WA" --items S_PIZPH,S_LAVA --agent
+  dominos-pp-cli template save friday-night --from-cart && dominos-pp-cli template order friday-night --eta-watch --json
   ```
-- **`template save`** — Save a complete order (store, address, items, toppings, payment) as a named template and replay it with one command.
+- **`reorder`** — Replay your last order against today's menu; FTS-substitute items the menu rotated out so the order still goes through.
 
-  _Most users order the same thing repeatedly. Reach for this when the user says 'usual order' or 'what I had last Friday'._
+  _Reach for this when a saved-order-style replay must survive Domino's menu rotation; substitution avoids the 'this item is no longer available' failure._
 
   ```bash
-  dominos-pp-cli template save "friday-night" --from-cart ./cart.json && dominos-pp-cli template order "friday-night"
+  dominos-pp-cli reorder --last --substitute-unavailable --dry-run --json
   ```
-- **`deals best`** — Cross-references the cart against every available deal (including loyalty-exclusive) to find the cheapest combination.
+- **`deals best`** — Cross-reference your cart against every available deal (incl. loyalty-exclusive) and report the lowest-priced combination.
 
-  _The headline price often hides a cheaper deal-applied path. Reach for this whenever the cart total is non-trivial._
+  _Reach for this before placing an order whenever the user cares about price; the flag enumerates 2-3-deal combinations the website never surfaces._
 
   ```bash
-  dominos-pp-cli deals best --cart ./cart.json --agent
+  dominos-pp-cli deals best --agent
   ```
-- **`menu diff`** — Compare the current menu against the last-synced snapshot to surface new items, removed items, and price changes.
+- **`analytics`** — Aggregate your synced order history into spending totals, item frequency, favorite stores, and average order value.
 
-  _Power users want to know when menu items appear or change price. Reach for this for periodic health checks of a favorite store._
+  _Reach for this when 'how much have I spent on pizza this quarter' or 'what are my top 3 items' is the question. Powered entirely by the local SQLite order history._
 
   ```bash
-  dominos-pp-cli menu diff --store 7094 --no-update
+  dominos-pp-cli analytics --period 90d --group-by item --agent
   ```
-- **`analytics`** — Aggregate order history into spending trends, favorite items, order frequency, and average order value over a chosen window.
 
-  _Useful for budgeting and 'how much do I actually spend on pizza?' questions. Reach for this when the user asks for trends._
+### Cross-source insights
+- **`compare-prices`** — Same cart priced at every nearby store; rank by total including delivery fee.
+
+  _Reach for this when latency-or-price tradeoffs across nearby stores matter (delivery fee + wait time can offset a cheaper menu)._
 
   ```bash
-  dominos-pp-cli analytics --period 90d --top 10 --agent
+  dominos-pp-cli compare-prices --address "421 N 63rd St" --city "Seattle WA" --items S_PIZPH,S_LAVA --agent
   ```
-- **`reorder`** — Replay your last order against today's menu, automatically substituting unavailable items with the closest match using FTS similarity.
+- **`stores wait`** — Pull CartEtaMinutes for every store in radius and rank by ETA — the unique GraphQL BFF op every other wrapper ignores.
 
-  _Menus change. The 'usual' order may no longer be valid verbatim but can be reproduced in spirit. Reach for this when reorder fails strict._
+  _Reach for this when busy-hour delivery decisions need accurate wait estimates rather than a phone call to the store._
 
   ```bash
-  dominos-pp-cli reorder --last --substitute-unavailable --dry-run
+  dominos-pp-cli stores wait --address "421 N 63rd St" --city "Seattle WA" --agent
   ```
-- **`nutrition`** — Sum calories, protein, fat, and carbs across all items in a cart using the menu's embedded nutrition data.
+- **`deals eligible`** — List which advertised deals actually apply to your current cart and explain why each non-matching one fails.
 
-  _Health-conscious users want to know cart-level totals before ordering. Reach for this when nutrition is mentioned._
-
-  ```bash
-  dominos-pp-cli nutrition --cart ./cart.json
-  ```
-- **`order-bulk`** — Read a CSV of multi-person orders, find the optimal store for the group, and emit a combined cart JSON ready for orders place_order.
-
-  _Group ordering is painful. Reach for this when the user has more than 3 individual orders to place._
+  _Reach for this when the user is hunting for a coupon and needs to understand the predicate gap, not just whether 'a deal' applies._
 
   ```bash
-  dominos-pp-cli order-bulk --csv ./team-friday.csv --address "421 N 63rd St" --city "Seattle WA"
-  ```
-- **`stores health`** — Composite store health score combining wait times, hours, service capabilities, and historical delivery performance.
-
-  _Two stores at similar distances can have very different ETAs. Reach for this when the user is choosing between options._
-
-  ```bash
-  dominos-pp-cli stores health 7094
+  dominos-pp-cli deals eligible --agent
   ```
 
 ### Agent-native plumbing
+- **`track`** — Stream Domino's tracker stages — placed → prep → bake → quality check → out → delivered — until the order arrives.
 
-- **`tracking --watch`** — Polls the tracker endpoint at a chosen interval and streams status updates: prep → bake → quality check → out for delivery.
-
-  _Agents and users alike want a non-blocking 'tell me when the pizza arrives' primitive. Reach for this immediately after order place._
+  _Reach for this when an agent or user wants to know precisely when a placed order changes stage without holding open a browser tab._
 
   ```bash
-  dominos-pp-cli tracking --phone 2065551234 --watch --interval 30s
+  dominos-pp-cli track --phone 2065551234 --watch --interval 30s --agent
   ```
+- **`order-quick`** — Replay a template, validate, price, place (with --confirm), and tail the tracker — all in one command emitting a final JSON envelope.
+
+  _Reach for this when an agent or automation wants to trigger an order and exit cleanly with structured `{order_id, eta_min, total, tracker_phone}` output._
+
+  ```bash
+  dominos-pp-cli order-quick --template friday-night --confirm --eta-watch --json
+  ```
+
+## HTTP Transport
+
+This CLI uses Chrome-compatible HTTP transport for browser-facing endpoints. It does not require a resident browser process for normal API calls.
+
+## Discovery Signals
+
+This CLI was generated with browser-observed traffic context.
+- Capture coverage: 0 API entries from 0 total network entries
+- Auth signals: bearer_token
 
 ## Command Reference
 
-**auth** — Authentication and account management
+**customer** — Customer profile, order history, and loyalty (requires `auth login`)
 
-- `dominos-pp-cli auth login` — Log in to a Domino's account
+- `dominos-pp-cli customer loyalty` — Loyalty points balance, tier status, and pending points for the customer.
+- `dominos-pp-cli customer orders` — List the customer's recent orders. Returns full Order objects (Address, Products, Amounts, Coupons, Status, etc.)...
 
 **graphql** — GraphQL BFF operations (discovered via sniff)
 
@@ -116,22 +136,22 @@ These capabilities aren't available in any other tool for this API.
 
 **menu** — Browse store menus and search for items
 
-- `dominos-pp-cli menu get_menu` — Get the full menu for a store with categories, products, variants, and toppings
+- `dominos-pp-cli menu <storeID>` — Get the full menu for a store with categories, products, variants, and toppings
 
 **orders** — Create, validate, price, and place orders
 
-- `dominos-pp-cli orders place_order` — Place an order for delivery or carryout
-- `dominos-pp-cli orders price_order` — Get the price for an order including taxes and fees
-- `dominos-pp-cli orders validate_order` — Validate an order before placing it
+- `dominos-pp-cli orders place` — Place an order for delivery or carryout
+- `dominos-pp-cli orders price` — Get the price for an order including taxes and fees
+- `dominos-pp-cli orders validate` — Validate an order before placing it
 
 **stores** — Find and get information about Domino's stores
 
-- `dominos-pp-cli stores find_stores` — Find nearby Domino's stores by address
-- `dominos-pp-cli stores get_store` — Get detailed store information including hours, capabilities, and wait times
+- `dominos-pp-cli stores find` — Find nearby Domino's stores by address
+- `dominos-pp-cli stores get` — Get detailed store information including hours, capabilities, and wait times
 
 **tracking** — Track active orders
 
-- `dominos-pp-cli tracking track_order` — Track an order by phone number
+- `dominos-pp-cli tracking` — Track an order by phone number
 
 
 ### Finding the right command
@@ -147,53 +167,82 @@ dominos-pp-cli which "<capability in your own words>"
 ## Recipes
 
 
-### Friday night reorder
+### Full real-world flow: closest store → menu → cart → deals
 
 ```bash
-dominos-pp-cli template order friday-night
+# 1. Find closest store (no auth needed)
+dominos-pp-cli stores find --address "709 19th Ave" --city "Seattle WA 98122" --json
+
+# 2. List all coupons available at that store (no auth needed; 58 coupons)
+dominos-pp-cli deals list --store-id 7144 --json
+
+# 3. Build a cart (local, no API call)
+dominos-pp-cli cart new --store 7144 --service Delivery --address "709 19th Ave, Seattle WA 98122"
+dominos-pp-cli cart add 12THIN --qty 1     # Medium 12" Thin Pizza
+dominos-pp-cli cart add F_PBITES --qty 1   # Parmesan Bread Bites
+
+# 4. See which coupons auto-apply (real auto-couponing-service call)
+dominos-pp-cli deals best --json
+dominos-pp-cli deals eligible --json
 ```
 
-Emit the saved template's cart JSON to stdout. Pipe it to `orders place_order --order @-` to place, then `tracking --watch` to follow the order.
+Every step talks to a real Domino's endpoint and returns real data. The deals call correctly identifies which store coupons fulfill your specific cart.
 
-### Find cheapest store for tonight's order
+### Friday night reorder, hands-off
 
 ```bash
-dominos-pp-cli compare-prices --address "$HOME_ADDR" --items S_PIZPH,S_LAVA --agent
+dominos-pp-cli order-quick --template friday-night --confirm --eta-watch --json
 ```
 
-Surveys every nearby store, computes the same cart at each, and reports the cheapest.
+Replay a saved template, validate, price, place (with --confirm), and tail the tracker. Emits a final JSON envelope with order_id, eta_min, and total. Requires a template named friday-night — see `template save`. **Without `--confirm`, returns a dry-run preview (no order placed).**
 
-### Hunt for the best deal
+### Authenticated commands (after `auth login`)
 
 ```bash
-dominos-pp-cli deals best --cart default --agent
+# Order history
+dominos-pp-cli customer orders --limit 5 --json
+
+# Loyalty points balance
+dominos-pp-cli customer loyalty --json
 ```
 
-Tries every available deal against the current cart and reports the lowest total with the deal code.
+Customer ID is the long base64-style identifier from your sign-in. Once `auth login` completes, the bearer token persists in `~/.config/dominos-pp-cli/config.toml` until Dominos expires it (~1 hour).
+
+### Find the cheapest store for tonight's order (agent + select for narrow output)
+
+```bash
+dominos-pp-cli compare-prices --address "421 N 63rd St" --city "Seattle WA" --items S_PIZPH,S_LAVA --agent --select results[].store_id,results[].total_cents
+```
+
+Surveys nearby stores and returns only the comparison fields the agent needs.
+
+### Hunt for the best stacked deal
+
+```bash
+dominos-pp-cli deals best --agent
+```
+
+Tries every available deal — including 2-3 deal stacked combinations — against the active cart and reports the lowest-priced combination plus the deal codes.
 
 ### Watch a delivery in real-time
 
 ```bash
-dominos-pp-cli tracking --phone 2065551234 --watch --interval 30s
+dominos-pp-cli track --phone 2065551234 --watch --interval 30s --agent
 ```
 
-Streams status transitions every 30 seconds until the order is delivered.
+Streams status transitions every 30 seconds (placed → prep → bake → qc → out → delivered) until the order arrives. Exits 0 on delivered.
 
-### How much did I spend on pizza this quarter
+### Why is this deal not applying to my cart?
 
 ```bash
-dominos-pp-cli analytics --period 90d --agent
+dominos-pp-cli deals eligible --agent
 ```
 
-Aggregates synced order history into spending totals, frequency, and favorite items.
+Lists deals against the active cart and explains eligibility against each deal's predicates.
 
 ## Auth Setup
 
-Most commands work without authentication: store locator, menu browse, cart building, anonymous order placement, and tracking by phone all succeed unauthenticated. For loyalty rewards, member-exclusive deals, and saved-card payments, the CLI uses a Bearer token via the `DOMINOS_TOKEN` environment variable. Set it with `export DOMINOS_TOKEN=<your-token>` or save it to the config file with `dominos-pp-cli auth set-token <token>`.
-
-The `auth login` subcommand wraps the legacy `/power/login` endpoint (username + password). Domino's actual production auth flow uses an OAuth password grant against `authproxy.dominos.com`, which this CLI does not implement directly — set `DOMINOS_TOKEN` from a token captured via the website if you need authenticated calls.
-
-Auth subcommands: `auth login` (legacy /power/login), `auth set-token` (save to config), `auth status` (show source), `auth logout` (clear stored token).
+Most commands work without authentication: store locator, menu browse, cart building, anonymous order placement, and tracking-by-phone all succeed unauthenticated. For loyalty rewards, member-exclusive deals, and order history, run `dominos-pp-cli auth login` — it spawns a Chrome window pointed at dominos.com sign-in, waits for you to complete a normal login (handles captcha and 2FA), then reads the bearer token from sessionStorage and saves it to `~/.config/dominos-pp-cli/config.toml`. The token persists until Domino's expires it (~1 hour). Run `auth status` to confirm; `auth logout` to clear.
 
 Run `dominos-pp-cli doctor` to verify setup.
 
@@ -205,31 +254,18 @@ Add `--agent` to any command. Expands to: `--json --compact --no-input --no-colo
 - **Filterable** — `--select` keeps a subset of fields. Dotted paths descend into nested structures; arrays traverse element-wise. Critical for keeping context small on verbose APIs:
 
   ```bash
-  dominos-pp-cli graphql loyalty_points --agent --select Points,Pending
+  dominos-pp-cli stores get mock-value --agent --select id,name,status
   ```
 - **Previewable** — `--dry-run` shows the request without sending
-- **Offline-friendly** — sync/search commands can use the local SQLite store when available
 - **Non-interactive** — never prompts, every input is a flag
-
-### Response envelope
-
-Commands that read from the local store or the API wrap output in a provenance envelope:
-
-```json
-{
-  "meta": {"source": "live" | "local", "synced_at": "...", "reason": "..."},
-  "results": <data>
-}
-```
-
-Parse `.results` for data and `.meta.source` to know whether it's live or local. A human-readable `N results (live)` summary is printed to stderr only when stdout is a terminal — piped/agent consumers get pure JSON on stdout.
+- **Explicit retries** — use `--idempotent` only when an already-existing create should count as success
 
 ## Agent Feedback
 
 When you (or the agent) notice something off about this CLI, record it:
 
 ```
-dominos-pp-cli feedback "the --interval flag clamps below 10s without a clear error"
+dominos-pp-cli feedback "menu sync skipped nutrition fields for half the items"
 dominos-pp-cli feedback --stdin < notes.txt
 dominos-pp-cli feedback list --json --limit 10
 ```
@@ -256,7 +292,7 @@ A profile is a saved set of flag values, reused across invocations. Use it when 
 
 ```
 dominos-pp-cli profile save briefing --json
-dominos-pp-cli --profile briefing auth login
+dominos-pp-cli --profile briefing stores get mock-value
 dominos-pp-cli profile list --json
 dominos-pp-cli profile show briefing
 dominos-pp-cli profile delete briefing --yes
@@ -286,14 +322,14 @@ Parse `$ARGUMENTS`:
 
 ## CLI Installation
 
-1. Check Go is installed: `go version` (requires Go 1.23+)
+1. Check Go is installed: `go version` (requires Go 1.25+)
 2. Install:
    ```bash
-   go install github.com/mvanhorn/printing-press-library/library/commerce/dominos/cmd/dominos-pp-cli@latest
+   go install github.com/mvanhorn/printing-press-library/library/food-and-dining/dominos/cmd/dominos-pp-cli@latest
    
    # If `@latest` installs a stale build (Go module proxy cache lag), install from main:
    GOPRIVATE='github.com/mvanhorn/*' GOFLAGS=-mod=mod \
-     go install github.com/mvanhorn/printing-press-library/library/commerce/dominos/cmd/dominos-pp-cli@main
+     go install github.com/mvanhorn/printing-press-library/library/food-and-dining/dominos/cmd/dominos-pp-cli@main
    ```
 3. Verify: `dominos-pp-cli --version`
 4. Ensure `$GOPATH/bin` (or `$HOME/go/bin`) is on `$PATH`.
@@ -302,11 +338,11 @@ Parse `$ARGUMENTS`:
 
 1. Install the MCP server:
    ```bash
-   go install github.com/mvanhorn/printing-press-library/library/commerce/dominos/cmd/dominos-pp-mcp@latest
+   go install github.com/mvanhorn/printing-press-library/library/food-and-dining/dominos/cmd/dominos-pp-mcp@latest
    
    # If `@latest` installs a stale build (Go module proxy cache lag), install from main:
    GOPRIVATE='github.com/mvanhorn/*' GOFLAGS=-mod=mod \
-     go install github.com/mvanhorn/printing-press-library/library/commerce/dominos/cmd/dominos-pp-mcp@main
+     go install github.com/mvanhorn/printing-press-library/library/food-and-dining/dominos/cmd/dominos-pp-mcp@main
    ```
 2. Register with Claude Code:
    ```bash
