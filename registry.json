@@ -734,6 +734,25 @@
       }
     },
     {
+      "name": "redfin",
+      "category": "other",
+      "api": "Redfin",
+      "description": "Search Redfin homes for sale via internal Stingray endpoints, sync to local SQLite, and run workflows the website doesn't expose — saved-search diff, $/sqft net-HOA ranking, sold comps, multi-region trends.",
+      "path": "library/other/redfin",
+      "mcp": {
+        "binary": "redfin-pp-mcp",
+        "transports": [
+          "stdio"
+        ],
+        "tool_count": 3,
+        "public_tool_count": 0,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full",
+        "spec_format": "internal"
+      }
+    },
+    {
       "name": "scrape-creators",
       "category": "developer-tools",
       "api": "Scrape Creators",
@@ -892,7 +911,8 @@
       "mcp": {
         "binary": "trigger-dev-pp-mcp",
         "transports": [
-          "stdio"
+          "stdio",
+          "http"
         ],
         "tool_count": 47,
         "public_tool_count": 1,
