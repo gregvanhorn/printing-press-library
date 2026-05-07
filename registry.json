@@ -948,6 +948,25 @@
       }
     },
     {
+      "name": "wanderlust-goat",
+      "category": "travel",
+      "api": "Wanderlust GOAT",
+      "description": "Wanderlust GOAT — what a knowledgeable local with great taste would tell you to walk to from here, fused across editorial, local-language, and crowd layers no single tool ranks together.",
+      "path": "library/travel/wanderlust-goat",
+      "mcp": {
+        "binary": "wanderlust-goat-pp-mcp",
+        "transports": [
+          "stdio"
+        ],
+        "tool_count": 2,
+        "public_tool_count": 2,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full",
+        "spec_format": "internal"
+      }
+    },
+    {
       "name": "weather-goat",
       "category": "other",
       "api": "Open-Meteo + NWS",
