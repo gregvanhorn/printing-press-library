@@ -60,11 +60,25 @@ def validate(cli_dir: Path) -> list[str]:
     if server.get("type") != "binary":
         problems.append(f'server.type != "binary" (got {server.get("type")!r})')
     entry = server.get("entry_point", "")
+    expected_mcp = pp.get("mcp_binary")
+    expected_entry = f"bin/{expected_mcp}" if expected_mcp else ""
     if not entry.startswith("bin/"):
         problems.append(f'server.entry_point should start with "bin/" (got {entry!r})')
+    if expected_entry and entry != expected_entry:
+        problems.append(
+            f"server.entry_point should be {expected_entry!r} from .printing-press.json mcp_binary (got {entry!r})"
+        )
     cmd = (server.get("mcp_config") or {}).get("command", "")
     if "${__dirname}" not in cmd:
         problems.append(f'server.mcp_config.command should contain ${{__dirname}} (got {cmd!r})')
+    expected_cmd = f"${{__dirname}}/{expected_entry}" if expected_entry else ""
+    if expected_cmd and cmd != expected_cmd:
+        problems.append(
+            f"server.mcp_config.command should be {expected_cmd!r} (got {cmd!r})"
+        )
+    args = (server.get("mcp_config") or {}).get("args")
+    if args not in ([], None):
+        problems.append(f"server.mcp_config.args should be empty for generated binary MCPBs (got {args!r})")
 
     # user_config keys must match declared auth env vars (when both present).
     declared_envs = set(pp.get("auth_env_vars") or [])
@@ -75,6 +89,18 @@ def validate(cli_dir: Path) -> list[str]:
         missing = declared_envs - uc_envs
         if missing:
             problems.append(f"user_config missing entries for {sorted(missing)}")
+    mcp_env = (server.get("mcp_config") or {}).get("env") or {}
+    for env_name, env_value in mcp_env.items():
+        expected_key = env_name.lower()
+        expected_ref = f"${{user_config.{expected_key}}}"
+        if expected_key not in user_config:
+            problems.append(
+                f"server.mcp_config.env {env_name!r} references missing user_config key {expected_key!r}"
+            )
+        if env_value != expected_ref:
+            problems.append(
+                f"server.mcp_config.env {env_name!r} should map to {expected_ref!r} (got {env_value!r})"
+            )
 
     # cli_binary should match .printing-press.json's cli_name when set.
     cli_binary = m.get("cli_binary")

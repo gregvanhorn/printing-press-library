@@ -1,0 +1,93 @@
+name: CodeQL Go
+
+on:
+  pull_request:
+    paths:
+      - 'library/**/cmd/**'
+      - 'library/**/internal/**'
+      - 'library/**/go.mod'
+      - 'library/**/go.sum'
+      - 'tools/**/*.go'
+      - 'tools/**/go.mod'
+      - 'tools/**/go.sum'
+      - '.github/workflows/codeql.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'library/**/cmd/**'
+      - 'library/**/internal/**'
+      - 'library/**/go.mod'
+      - 'library/**/go.sum'
+      - 'tools/**/*.go'
+      - 'tools/**/go.mod'
+      - 'tools/**/go.sum'
+      - '.github/workflows/codeql.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze-go:
+    name: Analyze Go
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: go
+          build-mode: manual
+          queries: security-extended
+      - name: Build touched Go modules for CodeQL
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          if [ -n "${BASE_REF:-}" ]; then
+            git fetch --no-tags --depth=1 origin "${BASE_REF}" || true
+            base=$(git merge-base "origin/${BASE_REF}" HEAD || true)
+            if [ -n "$base" ]; then
+              changed=$(git diff --name-only "${base}...HEAD" -- library tools)
+            else
+              changed=$(git ls-files 'library/**/go.mod' 'tools/**/go.mod')
+            fi
+          elif [ -n "${BEFORE_SHA:-}" ] && [ "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            changed=$(git diff --name-only "${BEFORE_SHA}...HEAD" -- library tools || true)
+          else
+            changed=$(git ls-files 'library/**/go.mod' 'tools/**/go.mod')
+          fi
+
+          modules=$(printf '%s\n' "$changed" \
+            | awk -F/ '
+                $1 == "library" && NF >= 3 { print $1"/"$2"/"$3 }
+                $1 == "tools" && NF >= 2 { print $1"/"$2 }
+              ' \
+            | sort -u \
+            | while IFS= read -r dir; do
+                [ -f "${dir}/go.mod" ] && printf '%s\n' "$dir"
+              done)
+
+          if [ -z "$modules" ]; then
+            echo "No touched Go modules found; building all modules for workflow_dispatch fallback."
+            modules=$(find library tools -name go.mod -print | sed 's|/go.mod$||' | sort)
+          fi
+
+          printf 'Building modules:\n%s\n' "$modules"
+          while IFS= read -r dir; do
+            echo "::group::go build ${dir}"
+            (cd "$dir" && go build ./...)
+            echo "::endgroup::"
+          done <<< "$modules"
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:go"

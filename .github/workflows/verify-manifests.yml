@@ -11,7 +11,11 @@ on:
     branches: [main]
     paths:
       - 'library/**/manifest.json'
+      - 'library/**/.printing-press.json'
       - '.github/scripts/verify-manifest/**'
+
+permissions:
+  contents: read
 
 jobs:
   verify:

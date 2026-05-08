@@ -49,6 +49,8 @@ on:
 
 permissions:
   contents: write  # for creating/updating releases
+  id-token: write  # for provenance attestations
+  attestations: write
 
 jobs:
   detect:
@@ -308,6 +310,7 @@ jobs:
           pattern: cli-${{ steps.slug.outputs.slug }}-*
           merge-multiple: true
       - name: List downloaded artifacts and enforce per-app gate
+        id: gate
         env:
           CLI_TARGET: ${{ matrix.target }}
           SLUG: ${{ steps.slug.outputs.slug }}
@@ -328,13 +331,17 @@ jobs:
           # ship without a bundle.
           if [ "$cli_count" = "0" ]; then
             echo "::warning::Skipping release for ${SLUG}: no CLI binaries produced (build-cli matrix failed for this app)."
+            echo "publishable=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           if [ -f "library/${CLI_TARGET}/manifest.json" ] && [ "$mcpb_count" = "0" ]; then
             echo "::warning::Skipping release for ${SLUG}: app declares manifest.json (expects MCPB) but no .mcpb produced (bundle matrix failed for this app)."
+            echo "publishable=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
+          echo "publishable=true" >> "$GITHUB_OUTPUT"
       - name: Verify release-write PAT
+        if: steps.gate.outputs.publishable == 'true'
         env:
           GH_TOKEN: ${{ secrets.RELEASE_WRITE_TOKEN }}
         run: |
@@ -360,7 +367,13 @@ jobs:
             exit 1
           fi
           echo "PAT confirmed for repo ${GITHUB_REPOSITORY}."
+      - name: Attest release artifacts
+        if: steps.gate.outputs.publishable == 'true'
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: ${{ runner.temp }}/dl/*
       - name: Publish release ${{ steps.slug.outputs.slug }}-current
+        if: steps.gate.outputs.publishable == 'true'
         env:
           # Use a fine-grained PAT (Contents:write on this repo) instead of
           # the default GITHUB_TOKEN. The workflow's GITHUB_TOKEN reports
@@ -379,6 +392,7 @@ jobs:
             echo "No artifacts to publish for ${SLUG}; skipping release."
             exit 0
           fi
+          # shellcheck disable=SC2016
           notes=$(printf 'Auto-built artifacts for **%s** at commit %s.\n\n**Claude Desktop:** download the matching `.mcpb` file and double-click to install.\n\n**Terminal CLI:** download the binary matching your platform. On macOS you may need to clear the Gatekeeper quarantine: `xattr -d com.apple.quarantine <binary>`. On Unix, `chmod +x <binary>`.\n\n_This is a moving tag — it always points at the latest build._' "${CLI_TARGET}" "${GITHUB_SHA}")
           if gh release view "${tag}" >/dev/null 2>&1; then
             echo "Updating existing release ${tag}"

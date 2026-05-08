@@ -1,0 +1,30 @@
+name: MCPB security policy
+
+on:
+  pull_request:
+    paths:
+      - 'library/**'
+      - '.github/scripts/verify-manifest/**'
+      - '.github/scripts/verify-mcpb-policy/**'
+      - '.github/workflows/mcpb-security.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  policy:
+    name: Bundle policy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Validate MCPB manifests
+        run: python3 .github/scripts/verify-manifest/verify_manifest.py
+      - name: Block committed MCPB/native binary payloads
+        run: python3 .github/scripts/verify-mcpb-policy/verify_mcpb_policy.py
