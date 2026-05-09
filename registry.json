@@ -1125,6 +1125,28 @@
       }
     },
     {
+      "name": "substack",
+      "category": "media-and-entertainment",
+      "api": "Substack",
+      "description": "Run your Substack growth loop from the command line — publish, schedule, engage, and measure with cross-table...",
+      "path": "library/media-and-entertainment/substack",
+      "printer": "chirantan",
+      "printer_name": "Chirantan Rajhans",
+      "mcp": {
+        "binary": "substack-pp-mcp",
+        "transports": [
+          "stdio",
+          "http"
+        ],
+        "tool_count": 39,
+        "public_tool_count": 0,
+        "auth_type": "cookie",
+        "env_vars": [],
+        "mcp_ready": "partial",
+        "spec_format": "internal"
+      }
+    },
+    {
       "name": "tiktok-shop",
       "category": "commerce",
       "api": "TikTok Shop",
