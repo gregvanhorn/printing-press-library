@@ -1410,6 +1410,29 @@
       }
     },
     {
+      "name": "whoop",
+      "category": "devices",
+      "api": "Whoop",
+      "description": "Printing Press CLI for Whoop.",
+      "path": "library/devices/whoop",
+      "printer": "gregvanhorn",
+      "printer_name": "Greg Van Horn",
+      "mcp": {
+        "binary": "whoop-pp-mcp",
+        "transports": [
+          "stdio"
+        ],
+        "tool_count": 19,
+        "public_tool_count": 0,
+        "auth_type": "bearer_token",
+        "env_vars": [
+          "WHOOP_OAUTH"
+        ],
+        "mcp_ready": "full",
+        "spec_format": "openapi3"
+      }
+    },
+    {
       "name": "wikipedia",
       "category": "media-and-entertainment",
       "api": "Wikipedia",
