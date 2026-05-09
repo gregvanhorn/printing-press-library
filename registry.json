@@ -965,6 +965,28 @@
       }
     },
     {
+      "name": "roam",
+      "category": "productivity",
+      "api": "Roam HQ",
+      "description": "Every Roam HQ surface — chat, transcripts, On-Air events, SCIM, webhooks — in one local-first CLI with offline...",
+      "path": "library/productivity/roam",
+      "printer": "gregvanhorn",
+      "printer_name": "Greg Van Horn",
+      "mcp": {
+        "binary": "roam-pp-cli",
+        "transports": [
+          "stdio"
+        ],
+        "tool_count": 0,
+        "public_tool_count": 0,
+        "auth_type": "bearer",
+        "env_vars": [
+          "ROAM_API_KEY"
+        ],
+        "spec_format": "openapi3"
+      }
+    },
+    {
       "name": "scrape-creators",
       "category": "developer-tools",
       "api": "Scrape Creators",
