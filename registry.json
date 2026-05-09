@@ -797,8 +797,8 @@
       "api": "PokéAPI",
       "description": "Fully offline Pokédex with SQL, full-text search, type math, and a damage calculator no other Pokémon tool ships as a CLI.",
       "path": "library/media-and-entertainment/pokeapi",
-      "printer": "tmchow",
-      "printer_name": "Trevin Chow",
+      "printer": "hnshah",
+      "printer_name": "Hiten Shah",
       "mcp": {
         "binary": "pokeapi-pp-mcp",
         "transports": [
