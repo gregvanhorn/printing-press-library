@@ -1531,6 +1531,29 @@
       }
     },
     {
+      "name": "x-twitter",
+      "category": "social-and-messaging",
+      "api": "X (Twitter)",
+      "description": "Combined CLI for multiple API services",
+      "path": "library/social-and-messaging/x-twitter",
+      "printer": "cathrynlavery",
+      "printer_name": "Cathryn Lavery",
+      "mcp": {
+        "binary": "x-twitter-pp-mcp",
+        "transports": [
+          "stdio"
+        ],
+        "tool_count": 156,
+        "public_tool_count": 0,
+        "auth_type": "bearer_token",
+        "env_vars": [
+          "X_OAUTH2_USER_TOKEN"
+        ],
+        "mcp_ready": "full",
+        "spec_format": "openapi3"
+      }
+    },
+    {
       "name": "yahoo-finance",
       "category": "commerce",
       "api": "Yahoo Finance",
