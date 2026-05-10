@@ -1,0 +1,2710 @@
+openapi: 3.1.0
+info:
+  title: Smartlead
+  version: "1.0"
+  description: |
+    Smartlead REST API - cold email outreach platform.
+    Manage campaigns, leads, sender mailboxes, sequences, master inbox, and deliverability tooling.
+  contact:
+    name: Smartlead
+    url: https://smartlead.ai
+servers:
+  - url: https://server.smartlead.ai/api/v1
+security:
+  - apiKeyQuery: []
+components:
+  securitySchemes:
+    apiKeyQuery:
+      type: apiKey
+      in: query
+      name: api_key
+      description: API key from Smartlead settings or client API key page
+      x-auth-env-vars:
+        - SMARTLEAD_API_KEY
+  schemas:
+    Campaign:
+      type: object
+      properties:
+        id: {type: string}
+        name: {type: string}
+        status: {type: string}
+        client_id: {type: string}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+        track_settings: {type: array, items: {type: string}}
+        scheduler_cron_value: {type: object, additionalProperties: true}
+        min_time_btwn_emails: {type: integer}
+        max_leads_per_day: {type: integer}
+        stop_lead_settings: {type: string}
+    Lead:
+      type: object
+      properties:
+        id: {type: string}
+        first_name: {type: string}
+        last_name: {type: string}
+        email: {type: string}
+        phone_number: {type: string}
+        company_name: {type: string}
+        website: {type: string}
+        location: {type: string}
+        custom_fields: {type: object, additionalProperties: true}
+        linkedin_profile: {type: string}
+        company_url: {type: string}
+        created_at: {type: string, format: date-time}
+    EmailAccount:
+      type: object
+      properties:
+        id: {type: string}
+        from_name: {type: string}
+        from_email: {type: string}
+        username: {type: string}
+        smtp_host: {type: string}
+        smtp_port: {type: integer}
+        imap_host: {type: string}
+        imap_port: {type: integer}
+        message_per_day: {type: integer}
+        is_smtp_success: {type: boolean}
+        is_imap_success: {type: boolean}
+        warmup_details: {type: object, additionalProperties: true}
+    Webhook:
+      type: object
+      properties:
+        id: {type: string}
+        name: {type: string}
+        webhook_url: {type: string}
+        event_types: {type: array, items: {type: string}}
+        categories: {type: array, items: {type: string}}
+        enabled: {type: boolean}
+        created_at: {type: string, format: date-time}
+    Client:
+      type: object
+      properties:
+        id: {type: string}
+        name: {type: string}
+        email: {type: string}
+        permission: {type: array, items: {type: string}}
+        logo: {type: string}
+        logo_url: {type: string}
+        uuid: {type: string}
+        created_at: {type: string, format: date-time}
+    MasterInboxMessage:
+      type: object
+      properties:
+        id: {type: string}
+        message_id: {type: string}
+        thread_id: {type: string}
+        subject: {type: string}
+        body: {type: string}
+        from: {type: string}
+        to: {type: string}
+        sent_time: {type: string, format: date-time}
+        type: {type: string}
+        category: {type: string}
+        is_read: {type: boolean}
+        campaign_id: {type: string}
+        lead_id: {type: string}
+    Tag:
+      type: object
+      properties:
+        id: {type: string}
+        name: {type: string}
+        color: {type: string}
+        created_at: {type: string, format: date-time}
+    Note:
+      type: object
+      properties:
+        id: {type: string}
+        lead_id: {type: string}
+        note: {type: string}
+        created_by: {type: string}
+        created_at: {type: string, format: date-time}
+    Task:
+      type: object
+      properties:
+        id: {type: string}
+        lead_id: {type: string}
+        title: {type: string}
+        description: {type: string}
+        due_date: {type: string, format: date-time}
+        status: {type: string}
+        assigned_to: {type: string}
+        created_at: {type: string, format: date-time}
+    SpamTest:
+      type: object
+      properties:
+        id: {type: string}
+        test_id: {type: string}
+        name: {type: string}
+        status: {type: string}
+        type: {type: string}
+        score: {type: number}
+        inbox_count: {type: integer}
+        spam_count: {type: integer}
+        created_at: {type: string, format: date-time}
+        completed_at: {type: string, format: date-time}
+    LooseObject:
+      type: object
+      additionalProperties: true
+paths:
+  /campaigns/create:
+    post:
+      summary: Create campaign
+      operationId: createCampaign
+      tags: [campaigns]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: {type: string}
+                client_id: {type: string}
+      responses:
+        "200":
+          description: Campaign created
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Campaign"}
+  /campaigns/:
+    get:
+      summary: List all campaigns
+      operationId: listCampaigns
+      tags: [campaigns]
+      responses:
+        "200":
+          description: Campaigns
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/Campaign"}
+  /campaigns/{id}:
+    get:
+      summary: Get campaign by ID
+      operationId: getCampaign
+      tags: [campaigns]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: Campaign
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Campaign"}
+    delete:
+      summary: Delete campaign
+      operationId: deleteCampaign
+      tags: [campaigns]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Deleted}
+  /campaigns/{id}/status:
+    patch:
+      summary: Update campaign status
+      operationId: updateCampaignStatus
+      tags: [campaigns]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: {type: string, enum: [ACTIVE, PAUSED, STOPPED, START]}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/settings:
+    post:
+      summary: Update campaign settings
+      operationId: updateCampaignSettings
+      tags: [campaigns]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/schedule:
+    post:
+      summary: Set sending schedule
+      operationId: setCampaignSchedule
+      tags: [campaigns]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/sequences:
+    post:
+      summary: Save sequences
+      operationId: saveCampaignSequences
+      tags: [campaigns]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sequences]
+              properties:
+                sequences: {type: array, items: {type: object, additionalProperties: true}}
+      responses:
+        "200": {description: Saved, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+    get:
+      summary: Get sequences
+      operationId: getCampaignSequences
+      tags: [campaigns]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: Sequences
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {type: object, additionalProperties: true}
+  /campaigns/{id}/send-test-email:
+    post:
+      summary: Send test email
+      operationId: sendCampaignTestEmail
+      tags: [campaigns]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Sent, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/create-subsequence:
+    post:
+      summary: Create subsequence
+      operationId: createCampaignSubsequence
+      tags: [campaigns]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Created, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/update-lead-email-account:
+    post:
+      summary: Reassign lead's sending account
+      operationId: updateCampaignLeadEmailAccount
+      tags: [campaigns]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/export:
+    get:
+      summary: Export campaign data
+      operationId: exportCampaign
+      tags: [campaigns]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: from, in: query, schema: {type: string}}
+        - {name: to, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Export, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/analytics:
+    get:
+      summary: Campaigns with analytics
+      operationId: listCampaignsWithAnalytics
+      tags: [campaigns]
+      parameters:
+        - {name: client_id, in: query, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Campaigns with analytics, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+  /campaigns/{id}/analytics:
+    get:
+      summary: Campaign analytics
+      operationId: getCampaignAnalytics
+      tags: [campaigns]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Analytics, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/sequence-analytics:
+    get:
+      summary: Sequence-level analytics
+      operationId: getCampaignSequenceAnalytics
+      tags: [campaigns]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Analytics, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/by-lead:
+    get:
+      summary: Campaigns containing a lead
+      operationId: listCampaignsByLead
+      tags: [campaigns]
+      parameters:
+        - {name: lead_id, in: query, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Campaigns, content: {application/json: {schema: {type: array, items: {$ref: "#/components/schemas/Campaign"}}}}}
+  /campaigns/all-leads-activities:
+    get:
+      summary: All leads activities
+      operationId: listCampaignAllLeadsActivities
+      tags: [campaigns]
+      parameters:
+        - {name: campaign_id, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Activities, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+
+  /email-accounts:
+    get:
+      summary: List email accounts
+      operationId: listEmailAccounts
+      tags: [email_accounts]
+      parameters:
+        - {name: offset, in: query, schema: {type: integer}}
+        - {name: limit, in: query, schema: {type: integer}}
+      responses:
+        "200":
+          description: Email accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/EmailAccount"}
+  /email-accounts/save:
+    post:
+      summary: Add SMTP/IMAP account
+      operationId: createEmailAccount
+      tags: [email_accounts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Created, content: {application/json: {schema: {$ref: "#/components/schemas/EmailAccount"}}}}
+  /email-accounts/{id}:
+    get:
+      summary: Get email account
+      operationId: getEmailAccount
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Email account, content: {application/json: {schema: {$ref: "#/components/schemas/EmailAccount"}}}}
+    post:
+      summary: Update email account
+      operationId: updateEmailAccount
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/EmailAccount"}}}}
+    delete:
+      summary: Delete account
+      operationId: deleteEmailAccount
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Deleted}
+  /email-accounts/suspend/{id}:
+    put:
+      summary: Suspend account
+      operationId: suspendEmailAccount
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Suspended}
+  /email-accounts/unsuspend/{id}:
+    delete:
+      summary: Unsuspend account
+      operationId: unsuspendEmailAccount
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Unsuspended}
+  /email-accounts/{id}/warmup:
+    post:
+      summary: Update warmup
+      operationId: updateEmailAccountWarmup
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /email-accounts/{id}/warmup-stats:
+    get:
+      summary: Warmup stats
+      operationId: getEmailAccountWarmupStats
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /email-accounts/{id}/warmup-status:
+    get:
+      summary: Warmup status
+      operationId: getEmailAccountWarmupStatus
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Status, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /email-accounts/{id}/warmup-settings:
+    put:
+      summary: Update warmup settings
+      operationId: updateEmailAccountWarmupSettings
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /email-accounts/reconnect:
+    post:
+      summary: Reconnect
+      operationId: reconnectEmailAccount
+      tags: [email_accounts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [account_id]
+              properties:
+                account_id: {type: string}
+      responses:
+        "200": {description: Reconnected, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /email-accounts/{id}/test-connection:
+    post:
+      summary: Test connection
+      operationId: testEmailAccountConnection
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Tested, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /email-accounts/{id}/health-metrics:
+    get:
+      summary: Health metrics
+      operationId: getEmailAccountHealthMetrics
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Metrics, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /email-accounts/{id}/sending-limits:
+    get:
+      summary: Get sending limits
+      operationId: getEmailAccountSendingLimits
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Limits, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+    put:
+      summary: Update sending limits
+      operationId: updateEmailAccountSendingLimits
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /email-accounts/bulk-update:
+    put:
+      summary: Bulk update
+      operationId: bulkUpdateEmailAccounts
+      tags: [email_accounts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /email-accounts/{id}/tag:
+    post:
+      summary: Tag account
+      operationId: tagEmailAccount
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tag_ids]
+              properties:
+                tag_ids: {type: array, items: {type: string}}
+      responses:
+        "200": {description: Tagged, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /email-accounts/tag-mapping:
+    post:
+      summary: Map tags to emails
+      operationId: createEmailAccountTagMapping
+      tags: [email_accounts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [emails, tag_ids]
+              properties:
+                emails: {type: array, items: {type: string}}
+                tag_ids: {type: array, items: {type: string}}
+      responses:
+        "200": {description: Mapped, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+    delete:
+      summary: Remove tag mapping
+      operationId: deleteEmailAccountTagMapping
+      tags: [email_accounts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [emails, tag_ids]
+              properties:
+                emails: {type: array, items: {type: string}}
+                tag_ids: {type: array, items: {type: string}}
+      responses:
+        "200": {description: Removed}
+  /campaigns/{id}/email-accounts:
+    get:
+      summary: List accounts on campaign
+      operationId: listCampaignEmailAccounts
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: Accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/EmailAccount"}
+    post:
+      summary: Link accounts
+      operationId: linkCampaignEmailAccounts
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email_account_ids]
+              properties:
+                email_account_ids: {type: array, items: {type: string}}
+      responses:
+        "200": {description: Linked, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+    delete:
+      summary: Unlink accounts
+      operationId: unlinkCampaignEmailAccounts
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Unlinked}
+  /campaigns/{id}/email-accounts/{email_account_id}:
+    delete:
+      summary: Unlink one
+      operationId: unlinkCampaignEmailAccount
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: email_account_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Unlinked}
+  /campaigns/{id}/email-accounts/bulk:
+    post:
+      summary: Bulk link accounts to campaign
+      operationId: bulkLinkCampaignEmailAccounts
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Linked, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+    delete:
+      summary: Bulk unlink accounts from campaign
+      operationId: bulkUnlinkCampaignEmailAccounts
+      tags: [email_accounts]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Unlinked}
+
+  /leads:
+    get:
+      summary: List leads
+      operationId: listLeads
+      tags: [leads]
+      parameters:
+        - {name: offset, in: query, schema: {type: integer}}
+        - {name: limit, in: query, schema: {type: integer}}
+      responses:
+        "200":
+          description: Leads
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/Lead"}
+  /leads/by-email:
+    get:
+      summary: Search lead by email
+      operationId: getLeadByEmail
+      tags: [leads]
+      parameters:
+        - {name: email, in: query, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Lead, content: {application/json: {schema: {$ref: "#/components/schemas/Lead"}}}}
+  /leads/categories:
+    get:
+      summary: Lead categories
+      operationId: listLeadCategories
+      tags: [leads]
+      responses:
+        "200": {description: Categories, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+  /leads/{lead_id}:
+    post:
+      summary: Update lead
+      operationId: updateLead
+      tags: [leads]
+      parameters:
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/Lead"}}}}
+    delete:
+      summary: Delete lead
+      operationId: deleteLead
+      tags: [leads]
+      parameters:
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Deleted}
+  /leads/{lead_id}/campaigns:
+    get:
+      summary: Campaigns for lead
+      operationId: listLeadCampaigns
+      tags: [leads]
+      parameters:
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Campaigns, content: {application/json: {schema: {type: array, items: {$ref: "#/components/schemas/Campaign"}}}}}
+  /leads/{lead_id}/unsubscribe:
+    post:
+      summary: Unsubscribe globally
+      operationId: unsubscribeLead
+      tags: [leads]
+      parameters:
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Unsubscribed}
+  /leads/{lead_id}/unsubscribe-all:
+    post:
+      summary: Unsubscribe from all
+      operationId: unsubscribeLeadAll
+      tags: [leads]
+      parameters:
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Unsubscribed}
+  /leads/global-blocklist:
+    post:
+      summary: Add to global blocklist
+      operationId: addLeadToGlobalBlocklist
+      tags: [leads]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: {type: string}
+      responses:
+        "200": {description: Added, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+    get:
+      summary: Get global blocklist
+      operationId: getLeadGlobalBlocklist
+      tags: [leads]
+      parameters:
+        - {name: offset, in: query, schema: {type: integer}}
+        - {name: limit, in: query, schema: {type: integer}}
+      responses:
+        "200": {description: Blocklist, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+  /leads/add-domain-block-list:
+    post:
+      summary: Block domain
+      operationId: addLeadDomainBlocklist
+      tags: [leads]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [domain]
+              properties:
+                domain: {type: string}
+      responses:
+        "200": {description: Blocked, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /leads/push-to-campaign:
+    post:
+      summary: Push leads to campaign
+      operationId: pushLeadsToCampaign
+      tags: [leads]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Pushed, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /leads/push-between-lists:
+    post:
+      summary: Move leads between lists
+      operationId: pushLeadsBetweenLists
+      tags: [leads]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lead_ids, source, dest]
+              properties:
+                lead_ids: {type: array, items: {type: string}}
+                source: {type: string}
+                dest: {type: string}
+      responses:
+        "200": {description: Moved, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/leads:
+    get:
+      summary: List leads in campaign
+      operationId: listCampaignLeads
+      tags: [leads]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: offset, in: query, schema: {type: integer}}
+        - {name: limit, in: query, schema: {type: integer}}
+      responses:
+        "200":
+          description: Leads
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/Lead"}
+    post:
+      summary: Add leads to campaign (max 400)
+      operationId: addCampaignLeads
+      tags: [leads]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [leads]
+              properties:
+                leads: {type: array, items: {type: object, additionalProperties: true}}
+      responses:
+        "200": {description: Added, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/leads-export:
+    get:
+      summary: Export leads
+      operationId: exportCampaignLeads
+      tags: [leads]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: format, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Export, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/leads/{lead_id}:
+    post:
+      summary: Update lead in campaign
+      operationId: updateCampaignLead
+      tags: [leads]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/Lead"}}}}
+    delete:
+      summary: Remove lead from campaign
+      operationId: deleteCampaignLead
+      tags: [leads]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Removed}
+  /campaigns/{id}/leads/{lead_id}/pause:
+    post:
+      summary: Pause lead
+      operationId: pauseCampaignLead
+      tags: [leads]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Paused}
+  /campaigns/{id}/leads/{lead_id}/resume:
+    post:
+      summary: Resume lead
+      operationId: resumeCampaignLead
+      tags: [leads]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Resumed}
+  /campaigns/{id}/leads/{lead_id}/unsubscribe:
+    post:
+      summary: Unsubscribe lead from campaign
+      operationId: unsubscribeCampaignLead
+      tags: [leads]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Unsubscribed}
+  /campaigns/{id}/leads/{lead_id}/category:
+    post:
+      summary: Set lead category
+      operationId: setCampaignLeadCategory
+      tags: [leads]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [category]
+              properties:
+                category: {type: string}
+      responses:
+        "200": {description: Set, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/leads/{lead_id}/status:
+    patch:
+      summary: Update lead status
+      operationId: updateCampaignLeadStatus
+      tags: [leads]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: {type: string}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/leads/{lead_id}/manual-complete:
+    post:
+      summary: Mark lead complete
+      operationId: completeCampaignLead
+      tags: [leads]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Completed}
+  /campaigns/{id}/leads/{lead_id}/messages:
+    get:
+      summary: Lead message history
+      operationId: getCampaignLeadMessages
+      tags: [leads]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Messages, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+  /campaigns/{id}/leads/{lead_id}/reply:
+    post:
+      summary: Reply to lead
+      operationId: replyCampaignLead
+      tags: [leads]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Replied, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/leads/{lead_id}/forward:
+    post:
+      summary: Forward lead
+      operationId: forwardCampaignLead
+      tags: [leads]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Forwarded, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+
+  /lead-list/:
+    get:
+      summary: List lead lists
+      operationId: listLeadLists
+      tags: [lead_lists]
+      responses:
+        "200": {description: Lists, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+    post:
+      summary: Create lead list
+      operationId: createLeadList
+      tags: [lead_lists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Created, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /lead-list/{id}:
+    get:
+      summary: Get lead list
+      operationId: getLeadList
+      tags: [lead_lists]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Lead list, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+    put:
+      summary: Update lead list
+      operationId: updateLeadList
+      tags: [lead_lists]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+    delete:
+      summary: Delete lead list
+      operationId: deleteLeadList
+      tags: [lead_lists]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Deleted}
+  /lead-list/{id}/import:
+    post:
+      summary: Import leads to list
+      operationId: importLeadList
+      tags: [lead_lists]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Imported, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /lead-list/assign-tags:
+    post:
+      summary: Assign tags to lead list
+      operationId: assignLeadListTags
+      tags: [lead_lists]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [id, tag_ids]
+              properties:
+                id: {type: string}
+                tag_ids: {type: array, items: {type: string}}
+      responses:
+        "200": {description: Assigned, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+
+  /analytics/overview:
+    get:
+      summary: Analytics overview
+      operationId: getAnalyticsOverview
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Overview, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/overall-stats-v2:
+    get:
+      summary: Overall stats v2
+      operationId: getAnalyticsOverallStatsV2
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/day-wise-overall-stats:
+    get:
+      summary: Day-wise overall stats
+      operationId: getAnalyticsDayWiseOverallStats
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/day-wise-positive-reply-stats:
+    get:
+      summary: Day-wise positive reply stats
+      operationId: getAnalyticsDayWisePositiveReplyStats
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/campaign/list:
+    get:
+      summary: Analytics campaigns list
+      operationId: getAnalyticsCampaignList
+      tags: [analytics]
+      parameters:
+        - {name: client_id, in: query, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Campaigns, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+  /analytics/campaign/overall-stats:
+    get:
+      summary: Campaign overall stats
+      operationId: getAnalyticsCampaignOverallStats
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/campaign/response-stats:
+    get:
+      summary: Campaign response stats
+      operationId: getAnalyticsCampaignResponseStats
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/campaign/status-stats:
+    get:
+      summary: Campaign status stats
+      operationId: getAnalyticsCampaignStatusStats
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/campaign/leads-take-for-first-reply:
+    get:
+      summary: Leads take for first reply
+      operationId: getAnalyticsCampaignLeadsTakeForFirstReply
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/campaign/follow-up-reply-rate:
+    get:
+      summary: Follow-up reply rate
+      operationId: getAnalyticsCampaignFollowUpReplyRate
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/campaign/lead-to-reply-time:
+    get:
+      summary: Lead to reply time
+      operationId: getAnalyticsCampaignLeadToReplyTime
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/client/list:
+    get:
+      summary: Analytics clients list
+      operationId: getAnalyticsClientList
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Clients, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+  /analytics/client/month-wise-count:
+    get:
+      summary: Client month-wise count
+      operationId: getAnalyticsClientMonthWiseCount
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Count, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/client/overall-stats:
+    get:
+      summary: Client overall stats
+      operationId: getAnalyticsClientOverallStats
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/lead/overall-stats:
+    get:
+      summary: Lead overall stats
+      operationId: getAnalyticsLeadOverallStats
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/lead/category-wise-response:
+    get:
+      summary: Lead category-wise response
+      operationId: getAnalyticsLeadCategoryWiseResponse
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/mailbox/name-wise-health-metrics:
+    get:
+      summary: Mailbox name-wise health metrics
+      operationId: getAnalyticsMailboxNameWiseHealthMetrics
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/mailbox/domain-wise-health-metrics:
+    get:
+      summary: Mailbox domain-wise health metrics
+      operationId: getAnalyticsMailboxDomainWiseHealthMetrics
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/mailbox/provider-wise-overall-performance:
+    get:
+      summary: Mailbox provider-wise performance
+      operationId: getAnalyticsMailboxProviderWiseOverallPerformance
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/mailbox/overall-stats:
+    get:
+      summary: Mailbox overall stats
+      operationId: getAnalyticsMailboxOverallStats
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /analytics/team-board/overall-stats:
+    get:
+      summary: Team-board overall stats
+      operationId: getAnalyticsTeamBoardOverallStats
+      tags: [analytics]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /download-statistics:
+    get:
+      summary: Download statistics
+      operationId: downloadStatistics
+      tags: [analytics]
+      parameters:
+        - {name: campaign_id, in: query, schema: {type: string}}
+        - {name: from, in: query, schema: {type: string}}
+        - {name: to, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+
+  /campaigns/{id}/statistics:
+    get:
+      summary: Campaign statistics
+      operationId: getCampaignStatistics
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/statistics/emails:
+    get:
+      summary: Campaign email statistics
+      operationId: getCampaignStatisticsEmails
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/statistics/responses:
+    get:
+      summary: Campaign response statistics
+      operationId: getCampaignStatisticsResponses
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/statistics/engagement:
+    get:
+      summary: Campaign engagement statistics
+      operationId: getCampaignStatisticsEngagement
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/statistics/conversions:
+    get:
+      summary: Campaign conversion statistics
+      operationId: getCampaignStatisticsConversions
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/statistics/time-based:
+    get:
+      summary: Campaign time-based statistics
+      operationId: getCampaignStatisticsTimeBased
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/statistics/deliverability:
+    get:
+      summary: Campaign deliverability statistics
+      operationId: getCampaignStatisticsDeliverability
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/statistics/sequence:
+    get:
+      summary: Campaign sequence statistics
+      operationId: getCampaignStatisticsSequence
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/statistics/lead-sources:
+    get:
+      summary: Campaign lead source statistics
+      operationId: getCampaignStatisticsLeadSources
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/statistics/ab-tests:
+    get:
+      summary: Campaign A/B test statistics
+      operationId: getCampaignStatisticsAbTests
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/statistics/export:
+    get:
+      summary: Export campaign statistics
+      operationId: exportCampaignStatistics
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: format, in: query, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Export, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/statistics/real-time:
+    get:
+      summary: Campaign real-time statistics
+      operationId: getCampaignStatisticsRealTime
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/statistics/benchmark:
+    get:
+      summary: Campaign benchmark statistics
+      operationId: getCampaignStatisticsBenchmark
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: industry, in: query, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/statistics/date-range:
+    get:
+      summary: Campaign statistics by date range
+      operationId: getCampaignStatisticsDateRange
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, required: true, schema: {type: string}}
+        - {name: end_date, in: query, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/statistics/leads:
+    get:
+      summary: Campaign leads statistics
+      operationId: getCampaignStatisticsLeads
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/statistics/mailboxes:
+    get:
+      summary: Campaign mailboxes statistics
+      operationId: getCampaignStatisticsMailboxes
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/leads-statistics:
+    get:
+      summary: Campaign leads statistics paginated
+      operationId: getCampaignLeadsStatistics
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: offset, in: query, schema: {type: integer}}
+        - {name: limit, in: query, schema: {type: integer}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/analytics/top-level:
+    get:
+      summary: Campaign top-level analytics
+      operationId: getCampaignAnalyticsTopLevel
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/analytics/top-level/date-range:
+    get:
+      summary: Campaign top-level analytics by date range
+      operationId: getCampaignAnalyticsTopLevelDateRange
+      tags: [statistics]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, required: true, schema: {type: string}}
+        - {name: end_date, in: query, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Stats, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/statistics/compare:
+    post:
+      summary: Compare campaign statistics
+      operationId: compareCampaignStatistics
+      tags: [statistics]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [campaign_ids]
+              properties:
+                campaign_ids: {type: array, items: {type: string}}
+      responses:
+        "200": {description: Comparison, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+
+  /webhooks:
+    post:
+      summary: Create webhook
+      operationId: createWebhook
+      tags: [webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Created, content: {application/json: {schema: {$ref: "#/components/schemas/Webhook"}}}}
+    get:
+      summary: List webhooks
+      operationId: listWebhooks
+      tags: [webhooks]
+      parameters:
+        - {name: offset, in: query, schema: {type: integer}}
+        - {name: limit, in: query, schema: {type: integer}}
+      responses:
+        "200":
+          description: Webhooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/Webhook"}
+  /webhooks/{id}:
+    get:
+      summary: Get webhook
+      operationId: getWebhook
+      tags: [webhooks]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Webhook, content: {application/json: {schema: {$ref: "#/components/schemas/Webhook"}}}}
+    patch:
+      summary: Update webhook
+      operationId: updateWebhook
+      tags: [webhooks]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/Webhook"}}}}
+    delete:
+      summary: Delete webhook
+      operationId: deleteWebhook
+      tags: [webhooks]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Deleted}
+  /webhooks/{id}/test:
+    post:
+      summary: Test webhook
+      operationId: testWebhook
+      tags: [webhooks]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Tested, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /webhooks/{id}/events:
+    get:
+      summary: List webhook events
+      operationId: listWebhookEvents
+      tags: [webhooks]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: offset, in: query, schema: {type: integer}}
+        - {name: limit, in: query, schema: {type: integer}}
+      responses:
+        "200": {description: Events, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+  /webhooks/event-types:
+    get:
+      summary: List webhook event types
+      operationId: listWebhookEventTypes
+      tags: [webhooks]
+      responses:
+        "200": {description: Event types, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+  /webhooks/{id}/events/{event_id}/retry:
+    post:
+      summary: Retry webhook event
+      operationId: retryWebhookEvent
+      tags: [webhooks]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: event_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Retried, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /webhooks/{id}/analytics:
+    get:
+      summary: Webhook analytics
+      operationId: getWebhookAnalytics
+      tags: [webhooks]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Analytics, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /webhooks/{id}/status:
+    patch:
+      summary: Toggle webhook
+      operationId: toggleWebhookStatus
+      tags: [webhooks]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: {type: boolean}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /webhooks/{id}/delivery-logs:
+    get:
+      summary: Webhook delivery logs
+      operationId: getWebhookDeliveryLogs
+      tags: [webhooks]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Logs, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+  /webhooks/publish-summary:
+    get:
+      summary: Webhook publish summary
+      operationId: getWebhookPublishSummary
+      tags: [webhooks]
+      responses:
+        "200": {description: Summary, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /webhooks/retrigger-failed-events:
+    post:
+      summary: Retrigger failed webhook events
+      operationId: retriggerFailedWebhookEvents
+      tags: [webhooks]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Retriggered, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/webhooks:
+    get:
+      summary: List campaign webhooks
+      operationId: listCampaignWebhooks
+      tags: [webhooks]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: Webhooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/Webhook"}
+    post:
+      summary: Add campaign webhook
+      operationId: addCampaignWebhook
+      tags: [webhooks]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Added, content: {application/json: {schema: {$ref: "#/components/schemas/Webhook"}}}}
+  /campaigns/{id}/webhooks/{webhook_id}:
+    delete:
+      summary: Remove campaign webhook
+      operationId: removeCampaignWebhook
+      tags: [webhooks]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+        - {name: webhook_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Removed}
+
+  /client/:
+    get:
+      summary: List clients
+      operationId: listClients
+      tags: [clients]
+      responses:
+        "200":
+          description: Clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/Client"}
+  /client/save:
+    post:
+      summary: Create client
+      operationId: createClient
+      tags: [clients]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Created, content: {application/json: {schema: {$ref: "#/components/schemas/Client"}}}}
+  /client/api-key:
+    get:
+      summary: List API keys
+      operationId: listClientApiKeys
+      tags: [clients]
+      responses:
+        "200": {description: API keys, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+    post:
+      summary: Create API key
+      operationId: createClientApiKey
+      tags: [clients]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Created, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /client/api-key/{id}:
+    delete:
+      summary: Delete API key
+      operationId: deleteClientApiKey
+      tags: [clients]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Deleted}
+  /client/api-key/reset/{id}:
+    put:
+      summary: Reset API key
+      operationId: resetClientApiKey
+      tags: [clients]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Reset, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+
+  /crm/tags:
+    get:
+      summary: List CRM tags
+      operationId: listCrmTags
+      tags: [crm]
+      responses:
+        "200":
+          description: Tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/Tag"}
+    post:
+      summary: Create CRM tag
+      operationId: createCrmTag
+      tags: [crm]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Created, content: {application/json: {schema: {$ref: "#/components/schemas/Tag"}}}}
+  /crm/leads/tags:
+    get:
+      summary: List lead tag mappings
+      operationId: listCrmLeadTags
+      tags: [crm]
+      parameters:
+        - {name: lead_id, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Mappings, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+    post:
+      summary: Tag lead
+      operationId: createCrmLeadTag
+      tags: [crm]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lead_id, tag_ids]
+              properties:
+                lead_id: {type: string}
+                tag_ids: {type: array, items: {type: string}}
+      responses:
+        "200": {description: Tagged, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /crm/leads/tags/{tagMappingId}:
+    delete:
+      summary: Remove lead tag mapping
+      operationId: deleteCrmLeadTag
+      tags: [crm]
+      parameters:
+        - {name: tagMappingId, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Removed}
+  /crm/leads/notes/{lead_id}:
+    get:
+      summary: List lead notes
+      operationId: listCrmLeadNotes
+      tags: [crm]
+      parameters:
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: Notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/Note"}
+  /crm/leads/notes:
+    post:
+      summary: Create lead note
+      operationId: createCrmLeadNote
+      tags: [crm]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Created, content: {application/json: {schema: {$ref: "#/components/schemas/Note"}}}}
+  /crm/leads/tasks/{lead_id}:
+    get:
+      summary: List lead tasks
+      operationId: listCrmLeadTasks
+      tags: [crm]
+      parameters:
+        - {name: lead_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200":
+          description: Tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/Task"}
+  /crm/leads/tasks:
+    post:
+      summary: Create lead task
+      operationId: createCrmLeadTask
+      tags: [crm]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Created, content: {application/json: {schema: {$ref: "#/components/schemas/Task"}}}}
+  /crm/leads/tasks/{task_id}:
+    post:
+      summary: Update lead task
+      operationId: updateCrmLeadTask
+      tags: [crm]
+      parameters:
+        - {name: task_id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/Task"}}}}
+
+  /campaigns/{id}/reply-email-thread:
+    post:
+      summary: Reply on email thread
+      operationId: replyEmailThread
+      tags: [master_inbox]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Replied, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /email-campaigns/forward-reply-email:
+    post:
+      summary: Forward reply email
+      operationId: forwardReplyEmail
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Forwarded, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /master-inbox/{id}:
+    get:
+      summary: Get inbox item
+      operationId: getMasterInboxItem
+      tags: [master_inbox]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Item, content: {application/json: {schema: {$ref: "#/components/schemas/MasterInboxMessage"}}}}
+  /master-inbox/inbox-replies:
+    post:
+      summary: List inbox replies
+      operationId: listMasterInboxReplies
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200":
+          description: Replies
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/MasterInboxMessage"}
+  /master-inbox/unread-replies:
+    post:
+      summary: List unread replies
+      operationId: listMasterInboxUnreadReplies
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200":
+          description: Replies
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/MasterInboxMessage"}
+  /master-inbox/archived:
+    post:
+      summary: List archived
+      operationId: listMasterInboxArchived
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200":
+          description: Archived
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/MasterInboxMessage"}
+  /master-inbox/sent:
+    post:
+      summary: List sent
+      operationId: listMasterInboxSent
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200":
+          description: Sent
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/MasterInboxMessage"}
+  /master-inbox/scheduled:
+    post:
+      summary: List scheduled
+      operationId: listMasterInboxScheduled
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200":
+          description: Scheduled
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/MasterInboxMessage"}
+  /master-inbox/snoozed:
+    post:
+      summary: List snoozed
+      operationId: listMasterInboxSnoozed
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200":
+          description: Snoozed
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/MasterInboxMessage"}
+  /master-inbox/important:
+    post:
+      summary: List important
+      operationId: listMasterInboxImportant
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200":
+          description: Important
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/MasterInboxMessage"}
+  /master-inbox/reminders:
+    post:
+      summary: List reminders
+      operationId: listMasterInboxReminders
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200":
+          description: Reminders
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {type: object, additionalProperties: true}
+  /master-inbox/set-reminder:
+    post:
+      summary: Set reminder
+      operationId: setMasterInboxReminder
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Set, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /master-inbox/update-category:
+    patch:
+      summary: Update inbox category
+      operationId: updateMasterInboxCategory
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /master-inbox/change-read-status:
+    patch:
+      summary: Change read status
+      operationId: changeMasterInboxReadStatus
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /master-inbox/update-revenue:
+    patch:
+      summary: Update revenue
+      operationId: updateMasterInboxRevenue
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /master-inbox/resume-lead:
+    patch:
+      summary: Resume lead from inbox
+      operationId: resumeMasterInboxLead
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Resumed, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /master-inbox/update-team-member:
+    post:
+      summary: Assign team member
+      operationId: updateMasterInboxTeamMember
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Assigned, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /master-inbox/push-to-subsequence:
+    post:
+      summary: Push to subsequence
+      operationId: pushMasterInboxToSubsequence
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Pushed, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /master-inbox/create-note:
+    post:
+      summary: Create inbox note
+      operationId: createMasterInboxNote
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Created, content: {application/json: {schema: {$ref: "#/components/schemas/Note"}}}}
+  /master-inbox/create-task:
+    post:
+      summary: Create inbox task
+      operationId: createMasterInboxTask
+      tags: [master_inbox]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Created, content: {application/json: {schema: {$ref: "#/components/schemas/Task"}}}}
+
+  /smart-senders/search-domain:
+    get:
+      summary: Search smart sender domains
+      operationId: searchSmartSenderDomain
+      tags: [smart_senders]
+      parameters:
+        - {name: query, in: query, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Domains, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+  /smart-senders/vendors:
+    get:
+      summary: List smart sender vendors
+      operationId: listSmartSenderVendors
+      tags: [smart_senders]
+      responses:
+        "200": {description: Vendors, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+  /smart-senders/auto-generate-mailboxes:
+    post:
+      summary: Auto-generate mailboxes
+      operationId: autoGenerateSmartSenderMailboxes
+      tags: [smart_senders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Generated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /smart-senders/place-order:
+    post:
+      summary: Place smart sender order
+      operationId: placeSmartSenderOrder
+      tags: [smart_senders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Placed, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /smart-senders/domains:
+    get:
+      summary: List smart sender domains
+      operationId: listSmartSenderDomains
+      tags: [smart_senders]
+      responses:
+        "200": {description: Domains, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+  /smart-senders/reputation-scores:
+    get:
+      summary: Smart sender reputation scores
+      operationId: getSmartSenderReputationScores
+      tags: [smart_senders]
+      parameters:
+        - {name: domain, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Scores, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /smart-senders/performance-metrics:
+    get:
+      summary: Smart sender performance metrics
+      operationId: getSmartSenderPerformanceMetrics
+      tags: [smart_senders]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Metrics, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /smart-senders/health-monitoring:
+    get:
+      summary: Smart sender health monitoring
+      operationId: getSmartSenderHealthMonitoring
+      tags: [smart_senders]
+      parameters:
+        - {name: domain, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Health, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /smart-senders/analytics-dashboard:
+    get:
+      summary: Smart sender analytics dashboard
+      operationId: getSmartSenderAnalyticsDashboard
+      tags: [smart_senders]
+      parameters:
+        - {name: start_date, in: query, schema: {type: string}}
+        - {name: end_date, in: query, schema: {type: string}}
+      responses:
+        "200": {description: Dashboard, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /smart-senders/{sender_id}/reset-reputation:
+    post:
+      summary: Reset smart sender reputation
+      operationId: resetSmartSenderReputation
+      tags: [smart_senders]
+      parameters:
+        - {name: sender_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Reset, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /smart-senders/{sender_id}/pause:
+    post:
+      summary: Pause smart sender
+      operationId: pauseSmartSender
+      tags: [smart_senders]
+      parameters:
+        - {name: sender_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Paused}
+  /smart-senders/{sender_id}/resume:
+    post:
+      summary: Resume smart sender
+      operationId: resumeSmartSender
+      tags: [smart_senders]
+      parameters:
+        - {name: sender_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Resumed}
+  /campaigns/{id}/smart-senders/rotation-settings:
+    get:
+      summary: Get smart sender rotation settings
+      operationId: getCampaignSmartSenderRotationSettings
+      tags: [smart_senders]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Settings, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+    put:
+      summary: Update smart sender rotation settings
+      operationId: updateCampaignSmartSenderRotationSettings
+      tags: [smart_senders]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Updated, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/smart-senders/load-balancing-status:
+    get:
+      summary: Smart sender load balancing status
+      operationId: getCampaignSmartSenderLoadBalancingStatus
+      tags: [smart_senders]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Status, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /campaigns/{id}/smart-senders/apply-optimization:
+    post:
+      summary: Apply smart sender optimization
+      operationId: applyCampaignSmartSenderOptimization
+      tags: [smart_senders]
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Applied, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+
+  /spam-test/seed/providers:
+    get:
+      summary: List spam-test seed providers
+      operationId: listSpamTestSeedProviders
+      tags: [smart_delivery]
+      responses:
+        "200": {description: Providers, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+  /spam-test/manual:
+    post:
+      summary: Create manual spam test
+      operationId: createManualSpamTest
+      tags: [smart_delivery]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Created, content: {application/json: {schema: {$ref: "#/components/schemas/SpamTest"}}}}
+  /spam-test/automated:
+    post:
+      summary: Create automated spam test
+      operationId: createAutomatedSpamTest
+      tags: [smart_delivery]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Created, content: {application/json: {schema: {$ref: "#/components/schemas/SpamTest"}}}}
+  /spam-test/list:
+    get:
+      summary: List spam tests
+      operationId: listSpamTests
+      tags: [smart_delivery]
+      parameters:
+        - {name: offset, in: query, schema: {type: integer}}
+        - {name: limit, in: query, schema: {type: integer}}
+      responses:
+        "200":
+          description: Tests
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: "#/components/schemas/SpamTest"}
+  /spam-test/results:
+    get:
+      summary: Spam test results
+      operationId: getSpamTestResults
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: query, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Results, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/{test_id}:
+    get:
+      summary: Get spam test
+      operationId: getSpamTest
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Test, content: {application/json: {schema: {$ref: "#/components/schemas/SpamTest"}}}}
+  /spam-test/bulk-delete:
+    post:
+      summary: Bulk delete spam tests
+      operationId: bulkDeleteSpamTests
+      tags: [smart_delivery]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [test_ids]
+              properties:
+                test_ids: {type: array, items: {type: string}}
+      responses:
+        "200": {description: Deleted, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/{test_id}/stop:
+    put:
+      summary: Stop spam test
+      operationId: stopSpamTest
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Stopped}
+  /spam-test/report:
+    post:
+      summary: Spam test report
+      operationId: getSpamTestReport
+      tags: [smart_delivery]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Report, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/provider-wise-results:
+    post:
+      summary: Spam test provider-wise results
+      operationId: getSpamTestProviderWiseResults
+      tags: [smart_delivery]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Results, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/geo-wise-report:
+    post:
+      summary: Spam test geo-wise report
+      operationId: getSpamTestGeoWiseReport
+      tags: [smart_delivery]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Report, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/sender-account-wise-report:
+    get:
+      summary: Spam test sender-account-wise report
+      operationId: getSpamTestSenderAccountWiseReport
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: query, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Report, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/{test_id}/spam-filter-report:
+    get:
+      summary: Spam filter report
+      operationId: getSpamTestSpamFilterReport
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Report, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/{test_id}/dkim-details:
+    get:
+      summary: DKIM details
+      operationId: getSpamTestDkimDetails
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Details, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/{test_id}/spf-details:
+    get:
+      summary: SPF details
+      operationId: getSpamTestSpfDetails
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Details, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/{test_id}/rdns-report:
+    get:
+      summary: rDNS report
+      operationId: getSpamTestRdnsReport
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Report, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/{test_id}/sender-account-list:
+    get:
+      summary: Spam test sender account list
+      operationId: getSpamTestSenderAccountList
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: List, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+  /spam-test/{test_id}/blacklists:
+    get:
+      summary: Spam test blacklists
+      operationId: getSpamTestBlacklists
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Blacklists, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/{test_id}/domain-blacklist:
+    get:
+      summary: Spam test domain blacklist
+      operationId: getSpamTestDomainBlacklist
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Blacklist, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/{test_id}/email-content:
+    get:
+      summary: Spam test email content
+      operationId: getSpamTestEmailContent
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Content, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/{test_id}/ip-blacklist-count:
+    get:
+      summary: Spam test IP blacklist count
+      operationId: getSpamTestIpBlacklistCount
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Count, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/{test_id}/email-headers:
+    get:
+      summary: Spam test email headers
+      operationId: getSpamTestEmailHeaders
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Headers, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/{test_id}/schedule-history:
+    get:
+      summary: Spam test schedule history
+      operationId: getSpamTestScheduleHistory
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: History, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/{test_id}/ip-details:
+    get:
+      summary: Spam test IP details
+      operationId: getSpamTestIpDetails
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Details, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/{test_id}/mailbox-summary:
+    get:
+      summary: Spam test mailbox summary
+      operationId: getSpamTestMailboxSummary
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Summary, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/{test_id}/mailbox-count:
+    get:
+      summary: Spam test mailbox count
+      operationId: getSpamTestMailboxCount
+      tags: [smart_delivery]
+      parameters:
+        - {name: test_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Count, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/folder:
+    get:
+      summary: List spam-test folders
+      operationId: listSpamTestFolders
+      tags: [smart_delivery]
+      responses:
+        "200": {description: Folders, content: {application/json: {schema: {type: array, items: {type: object, additionalProperties: true}}}}}
+    post:
+      summary: Create spam-test folder
+      operationId: createSpamTestFolder
+      tags: [smart_delivery]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {type: object, additionalProperties: true}
+      responses:
+        "200": {description: Created, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+  /spam-test/folder/{folder_id}:
+    get:
+      summary: Get spam-test folder
+      operationId: getSpamTestFolder
+      tags: [smart_delivery]
+      parameters:
+        - {name: folder_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Folder, content: {application/json: {schema: {$ref: "#/components/schemas/LooseObject"}}}}
+    delete:
+      summary: Delete spam-test folder
+      operationId: deleteSpamTestFolder
+      tags: [smart_delivery]
+      parameters:
+        - {name: folder_id, in: path, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Deleted}
