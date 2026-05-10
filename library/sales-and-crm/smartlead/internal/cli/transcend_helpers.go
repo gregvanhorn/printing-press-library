@@ -1,4 +1,5 @@
 // Copyright 2026 gregvanhorn. Licensed under Apache-2.0. See LICENSE.
+// PATCH: novel transcendence command (cross-campaign aggregation, hand-built on top of generator output)
 // Transcendence command helpers.
 
 package cli

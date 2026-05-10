@@ -3,5 +3,22 @@
   "applied_at": "2026-05-10",
   "base_run_id": "20260510-080533",
   "base_printing_press_version": "4.1.0",
-  "patches": []
+  "patches": [
+    {
+      "id": "transcendence-commands",
+      "summary": "Hand-built 8 cross-campaign aggregation commands that read the local SQLite store: stale, overlap, mailbox-burnout, reply-velocity, deliv-drift, reach-budget, roll-up, reply-classify.",
+      "reason": "Smartlead's API has no global lead view or cross-campaign endpoints; these commands compute their results from the synced local store and are the differentiating value over the absorbed REST surface.",
+      "files": [
+        "internal/cli/transcend_helpers.go",
+        "internal/cli/transcend_stale.go",
+        "internal/cli/transcend_overlap.go",
+        "internal/cli/transcend_mailbox_burnout.go",
+        "internal/cli/transcend_reply_velocity.go",
+        "internal/cli/transcend_deliv_drift.go",
+        "internal/cli/transcend_reach_budget.go",
+        "internal/cli/transcend_roll_up.go",
+        "internal/cli/transcend_reply_classify.go"
+      ]
+    }
+  ]
 }
