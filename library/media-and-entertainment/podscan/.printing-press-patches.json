@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "applied_at": "2026-05-10",
+  "base_run_id": "20260509-110700",
+  "base_printing_press_version": "4.1.0",
+  "patches": [
+    {
+      "id": "id-field-overrides",
+      "summary": "Populate resourceIDFieldOverrides for every podscan resource so sync stores rows instead of skipping them.",
+      "reason": "PodScan uses {resource}_id naming (alert_id, category_id, episode_id, podcast_id) and has no plain `id` field. The generator's profiler emitted both override maps empty, so extractID and UpsertBatch fell through to the generic fallback list (id, ID, name, uuid, slug, key, code, uid), found nothing, and dropped every item. Reported externally in #383: `sync` for `categories` consumed 163 items and stored 0.",
+      "files": [
+        "internal/cli/sync.go",
+        "internal/store/store.go"
+      ],
+      "validated_outcome": "Both override maps now match the spec's response schemas (Alert.alert_id, Category.category_id, Episode.episode_id, Podcast.podcast_id; exports/* keyed off the shape they return). go build and go vet pass.",
+      "upstream_issue": "cli-printing-press: profiler should populate resourceIDFieldOverrides from response-schema {resource}_id fields when the spec lacks x-resource-id annotations"
+    }
+  ]
+}

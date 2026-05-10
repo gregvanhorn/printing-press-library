@@ -1070,7 +1070,19 @@ func syncDependentResource(c interface {
 // Includes both flat resources and dependent (parent-child) resources so
 // annotations on a child path-item are honored at runtime, not just on
 // flat paths.
+//
+// PATCH: PodScan uses {resource}_id naming (no plain "id" field anywhere),
+// so without these overrides every flat resource hits the generic fallback
+// list, fails ID extraction, and stores 0 rows. The generator's profiler
+// shipped this map empty for podscan; populate it from the spec schemas.
 var resourceIDFieldOverrides = map[string]string{
+	"alerts":           "alert_id",
+	"categories":       "category_id",
+	"episodes":         "episode_id",
+	"podcasts":         "podcast_id",
+	"exports":          "episode_id",
+	"exports-podcasts": "podcast_id",
+	"mentions":         "episode_id",
 }
 
 // genericIDFieldFallbacks is the runtime safety net for resources that did

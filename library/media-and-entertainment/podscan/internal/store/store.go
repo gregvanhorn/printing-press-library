@@ -946,7 +946,18 @@ func (s *Store) UpsertPodcastsEpisodes(data json.RawMessage) error {
 // Includes both flat resources and dependent (parent-child) resources so a
 // child path-item annotated with x-resource-id resolves the same as a flat
 // path-item.
+//
+// PATCH: mirrors the same map in internal/cli/sync.go — see that file for
+// rationale. Both must stay in sync; UpsertBatch and extractID resolve
+// fields the same way.
 var resourceIDFieldOverrides = map[string]string{
+	"alerts":           "alert_id",
+	"categories":       "category_id",
+	"episodes":         "episode_id",
+	"podcasts":         "podcast_id",
+	"exports":          "episode_id",
+	"exports-podcasts": "podcast_id",
+	"mentions":         "episode_id",
 }
 
 // genericIDFieldFallbacks is the runtime safety net for resources that did
