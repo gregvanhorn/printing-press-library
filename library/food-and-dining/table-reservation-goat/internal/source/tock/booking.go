@@ -43,6 +43,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -156,55 +157,68 @@ func (c *Client) Book(ctx context.Context, req BookRequest) (*BookResponse, erro
 	return c.ChromeBook(ctx, req)
 }
 
+// hiddenInputRE matches `<input type="hidden" name="X" value="Y">` shapes,
+// tolerant of attribute ordering and quoting style. Used by the cancel-flow
+// CSRF retry to scrape anti-forgery tokens from the receipt page HTML.
+var hiddenInputRE = regexp.MustCompile(`(?is)<input[^>]*type=["']hidden["'][^>]*>`)
+
+// hiddenAttrRE pulls the name + value attributes out of a single hidden-input
+// tag matched by hiddenInputRE.
+var hiddenAttrRE = regexp.MustCompile(`(?is)\b(name|value)=["']([^"']*)["']`)
+
+// csrfNamePatterns names a hidden input is treated as anti-forgery if any of
+// these substrings appears (case-insensitive). Drawn from common .NET / Rails
+// / Express conventions; covers the field names Tock has historically used
+// without us needing a fresh capture.
+var csrfNamePatterns = []string{"csrf", "xsrf", "authenticity", "requestverification", "antiforgery"}
+
 // Cancel cancels a Tock reservation by form-submitting to
-// /<venue-slug>/receipt/cancel. The request body shape is best-effort
-// (CSRF token if needed); the actual cancellation is verified by checking
-// the post-redirect page state.
+// /<venue-slug>/receipt/cancel. Two-step: first attempts an empty-body POST.
+// On 401/403 (likely CSRF rejection), GETs the receipt page, scrapes hidden
+// inputs whose names look like anti-forgery tokens, and retries the POST
+// with those fields populated. The actual cancellation is verified by
+// checking the post-redirect page state for the confirmation banner.
 //
-// Status caveat: this implementation hasn't been live-tested against an
-// active reservation due to the v0.2 constraint of "no fresh test bookings."
-// First U6 dogfood pass should validate against a manually-created Tock
-// reservation, then be removed if the form-submit shape proves brittle in
-// favor of chromedp-attach (Option B).
+// Status caveat: the CSRF retry has not been live-tested end-to-end (the
+// v0.2 testing budget cancelled via the Tock UI). On the next live cancel
+// session, capture the receipt page's hidden-input field names and tighten
+// csrfNamePatterns if the empty-body POST proves to fail consistently.
 func (c *Client) Cancel(ctx context.Context, req CancelRequest) (*CancelResponse, error) {
 	if req.VenueSlug == "" || req.PurchaseID == 0 {
 		return nil, fmt.Errorf("tock cancel: VenueSlug and PurchaseID are required")
 	}
 	cancelURL := Origin + "/" + url.PathEscape(req.VenueSlug) + "/receipt/cancel?purchaseId=" + fmt.Sprintf("%d", req.PurchaseID)
+	receiptURL := Origin + "/" + url.PathEscape(req.VenueSlug) + "/receipt?purchaseId=" + fmt.Sprintf("%d", req.PurchaseID)
 
-	// Form body: empty for now. The page may include an anti-forgery token
-	// rendered into the cancel page HTML; if so, GET that page first and
-	// extract the token. v0.2 attempts the simple POST and falls back to
-	// the typed error on non-200.
-	formBody := url.Values{}.Encode()
-
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, cancelURL, strings.NewReader(formBody))
+	// First attempt: empty-body POST. Some Tock venues don't enforce CSRF on
+	// the cancel form, in which case this succeeds without an extra GET.
+	resp, body, err := c.postCancelForm(ctx, cancelURL, receiptURL, url.Values{})
 	if err != nil {
-		return nil, fmt.Errorf("building tock cancel request: %w", err)
+		return nil, err
 	}
-	httpReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	httpReq.Header.Set("Accept", "text/html,application/xhtml+xml")
-	httpReq.Header.Set("Origin", Origin)
-	httpReq.Header.Set("Referer", Origin+"/"+url.PathEscape(req.VenueSlug)+"/receipt?purchaseId="+fmt.Sprintf("%d", req.PurchaseID))
-
-	resp, err := c.do429Aware(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("calling tock cancel: %w", err)
-	}
-	defer resp.Body.Close()
 	if resp.StatusCode == 401 || resp.StatusCode == 403 {
-		return nil, fmt.Errorf("tock cancel: HTTP %d (auth required); ensure session cookies are fresh", resp.StatusCode)
+		// Likely CSRF rejection. GET the receipt page, scrape any hidden
+		// anti-forgery inputs, and retry once with those fields populated.
+		tokens, terr := c.fetchCancelCSRFTokens(ctx, receiptURL)
+		if terr != nil {
+			return nil, fmt.Errorf("tock cancel: HTTP %d on initial POST and CSRF lookup failed: %w", resp.StatusCode, terr)
+		}
+		if len(tokens) == 0 {
+			return nil, fmt.Errorf("tock cancel: HTTP %d (no anti-forgery tokens found on receipt page; auth may be expired — run `auth login --chrome`)", resp.StatusCode)
+		}
+		resp, body, err = c.postCancelForm(ctx, cancelURL, receiptURL, tokens)
+		if err != nil {
+			return nil, err
+		}
+		if resp.StatusCode == 401 || resp.StatusCode == 403 {
+			return nil, fmt.Errorf("tock cancel: HTTP %d after CSRF retry; auth may be expired or token field name has drifted", resp.StatusCode)
+		}
 	}
 	if resp.StatusCode >= 400 && resp.StatusCode != 410 {
-		body, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("tock cancel returned HTTP %d: %s", resp.StatusCode, truncate(string(body), 200))
 	}
 	if resp.StatusCode == 410 {
 		return nil, fmt.Errorf("%w: HTTP 410", ErrPastCancellationWindow)
-	}
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("reading tock cancel response: %w", err)
 	}
 	bodyStr := string(body)
 	canceled := strings.Contains(bodyStr, "Reservation canceled") || strings.Contains(bodyStr, "Reservation cancelled")
@@ -223,6 +237,88 @@ func (c *Client) Cancel(ctx context.Context, req CancelRequest) (*CancelResponse
 		VenueSlug:  req.VenueSlug,
 		StatusText: "Reservation canceled",
 	}, nil
+}
+
+// postCancelForm POSTs form-encoded values to the cancel URL and reads the
+// full body. Returns the response (caller must NOT close — body is already
+// drained), the body bytes, and any transport error.
+func (c *Client) postCancelForm(ctx context.Context, cancelURL, referer string, fields url.Values) (*http.Response, []byte, error) {
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, cancelURL, strings.NewReader(fields.Encode()))
+	if err != nil {
+		return nil, nil, fmt.Errorf("building tock cancel request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	httpReq.Header.Set("Accept", "text/html,application/xhtml+xml")
+	httpReq.Header.Set("Origin", Origin)
+	httpReq.Header.Set("Referer", referer)
+	resp, err := c.do429Aware(httpReq)
+	if err != nil {
+		return nil, nil, fmt.Errorf("calling tock cancel: %w", err)
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, nil, fmt.Errorf("reading tock cancel response: %w", err)
+	}
+	return resp, body, nil
+}
+
+// fetchCancelCSRFTokens GETs the receipt page and scrapes hidden inputs that
+// look like anti-forgery tokens. Returns a url.Values populated with all such
+// fields (typically zero or one). Caller decides what to do when empty.
+func (c *Client) fetchCancelCSRFTokens(ctx context.Context, receiptURL string) (url.Values, error) {
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, receiptURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("building tock receipt-page request: %w", err)
+	}
+	httpReq.Header.Set("Accept", "text/html,application/xhtml+xml")
+	resp, err := c.do429Aware(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("calling tock receipt page: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("tock receipt page returned HTTP %d: %s", resp.StatusCode, truncate(string(body), 200))
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading tock receipt page: %w", err)
+	}
+	return extractCSRFTokens(string(body)), nil
+}
+
+// extractCSRFTokens parses the HTML for hidden inputs whose name matches one
+// of csrfNamePatterns and returns them as url.Values. Exposed for tests.
+func extractCSRFTokens(html string) url.Values {
+	out := url.Values{}
+	for _, tag := range hiddenInputRE.FindAllString(html, -1) {
+		var name, value string
+		for _, m := range hiddenAttrRE.FindAllStringSubmatch(tag, -1) {
+			switch strings.ToLower(m[1]) {
+			case "name":
+				name = m[2]
+			case "value":
+				value = m[2]
+			}
+		}
+		if name == "" {
+			continue
+		}
+		lower := strings.ToLower(name)
+		matched := false
+		for _, pat := range csrfNamePatterns {
+			if strings.Contains(lower, pat) {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			continue
+		}
+		out.Set(name, value)
+	}
+	return out
 }
 
 // ListUpcomingReservations fetches the user's upcoming Tock reservations

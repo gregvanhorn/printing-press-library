@@ -48,9 +48,16 @@ var (
 // CancelReservation persisted-query hash, captured live 2026-05-09.
 const CancelReservationHash = "4ee53a006030f602bdeb1d751fa90ddc4240d9e17d015fb7976f8efcb80a026e"
 
-// BookingConfirmationPageInFlow persisted-query hash. Used to fetch the
-// cancelCutoffDate after a successful book. The captured prefix was truncated
-// at capture time; the implementer should refresh from a live capture if 400.
+// BookingConfirmationPageInFlow persisted-query hash. Used by FetchCancelCutoff
+// to populate `cancellation_deadline` in the book JSON output.
+//
+// TODO: this hash was assembled from a partial capture and may be stale. The
+// FetchCancelCutoff caller already swallows errors gracefully (book output
+// degrades to an empty cutoff string), but on the next live OT booking
+// session capture the BookingConfirmationPageInFlow GraphQL request and
+// replace this constant with the captured `extensions.persistedQuery.sha256Hash`
+// value. Verify by booking a free reservation and confirming a non-empty
+// `cancellation_deadline` field.
 const BookingConfirmationHash = "7c4fe1d7786e25085199bddc46cb1525ebf90ac18621ceb3021074fda52b6000"
 
 // BookRequest is the user-facing input to Book(). All fields are required

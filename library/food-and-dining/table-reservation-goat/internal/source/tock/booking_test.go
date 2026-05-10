@@ -79,6 +79,66 @@ func TestCancelRequiresIDs(t *testing.T) {
 	}
 }
 
+func TestExtractCSRFTokens(t *testing.T) {
+	cases := []struct {
+		name string
+		html string
+		want map[string]string
+	}{
+		{
+			name: "rails-style authenticity_token",
+			html: `<form><input type="hidden" name="authenticity_token" value="abc123"></form>`,
+			want: map[string]string{"authenticity_token": "abc123"},
+		},
+		{
+			name: "dotnet-style RequestVerificationToken",
+			html: `<input type="hidden" name="__RequestVerificationToken" value="xyz789">`,
+			want: map[string]string{"__RequestVerificationToken": "xyz789"},
+		},
+		{
+			name: "csrfToken next-style",
+			html: `<input type='hidden' name='csrfToken' value='tok'>`,
+			want: map[string]string{"csrfToken": "tok"},
+		},
+		{
+			name: "ignores non-csrf hidden inputs",
+			html: `<input type="hidden" name="purchaseId" value="362575651">` +
+				`<input type="hidden" name="csrf_token" value="abc">` +
+				`<input type="hidden" name="venueSlug" value="canlis">`,
+			want: map[string]string{"csrf_token": "abc"},
+		},
+		{
+			name: "multiple csrf-shaped tokens",
+			html: `<input type="hidden" name="csrf" value="A">` +
+				`<input type="hidden" name="xsrfHeader" value="B">`,
+			want: map[string]string{"csrf": "A", "xsrfHeader": "B"},
+		},
+		{
+			name: "no hidden inputs",
+			html: `<html><body>nothing here</body></html>`,
+			want: map[string]string{},
+		},
+		{
+			name: "empty value preserved",
+			html: `<input type="hidden" name="csrf_token" value="">`,
+			want: map[string]string{"csrf_token": ""},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := extractCSRFTokens(tc.html)
+			if len(got) != len(tc.want) {
+				t.Fatalf("extractCSRFTokens len = %d (%v); want %d (%v)", len(got), got, len(tc.want), tc.want)
+			}
+			for k, v := range tc.want {
+				if got.Get(k) != v {
+					t.Errorf("extractCSRFTokens[%q] = %q; want %q", k, got.Get(k), v)
+				}
+			}
+		})
+	}
+}
+
 func TestSentinelErrorsAreDistinct(t *testing.T) {
 	wrapped := []struct {
 		name string

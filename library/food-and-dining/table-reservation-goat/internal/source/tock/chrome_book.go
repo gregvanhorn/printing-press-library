@@ -297,16 +297,37 @@ func fillCVCIfPresent(ctx context.Context, cvc string) error {
 }
 
 // checkAcknowledgeIfPresent ticks the cancellation-policy checkbox if present.
+// Selector is narrowed to checkboxes whose label/aria-label matches policy
+// keywords (cancellation, agree, acknowledge, terms) AND does NOT match
+// marketing keywords (newsletter, subscribe, promotional, marketing, offers).
+// This prevents the booking flow from silently consenting to data-sharing or
+// email opt-in checkboxes that may co-render on the checkout page.
 func checkAcknowledgeIfPresent(ctx context.Context) error {
 	js := `
 		(() => {
-			const cbs = Array.from(document.querySelectorAll('input[type="checkbox"]'));
-			for (const cb of cbs) {
-				if (!cb.checked) {
-					cb.click();
+			const policyRE  = /cancellation|policy|agree|acknowledg|terms|conditions/i;
+			const optInRE   = /newsletter|subscrib|promotion|marketing|offers|(?:promo|marketing|promotional) email|sms|text message/i;
+			const labelText = (cb) => {
+				const wrap = cb.closest('label');
+				if (wrap && wrap.textContent) return wrap.textContent;
+				if (cb.id) {
+					const lbl = document.querySelector('label[for="' + CSS.escape(cb.id) + '"]');
+					if (lbl && lbl.textContent) return lbl.textContent;
 				}
+				return cb.getAttribute('aria-label') || '';
+			};
+			const cbs = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+			let clicked = 0;
+			for (const cb of cbs) {
+				if (cb.checked) continue;
+				const t = labelText(cb).trim();
+				if (!t) continue;
+				if (!policyRE.test(t)) continue;
+				if (optInRE.test(t)) continue;
+				cb.click();
+				clicked++;
 			}
-			return cbs.length;
+			return clicked;
 		})()
 	`
 	var n int

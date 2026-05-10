@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/mvanhorn/printing-press-library/library/food-and-dining/table-reservation-goat/internal/source/opentable"
 )
 
 func TestParseNetworkPrefix(t *testing.T) {
@@ -201,4 +203,61 @@ func TestVerifyEnvFloor_GuardOrder(t *testing.T) {
 
 func envIsVerify() bool {
 	return os.Getenv("PRINTING_PRESS_VERIFY") == "1"
+}
+
+func TestMatchedExistingOT_RestaurantSlugCheck(t *testing.T) {
+	// Same date, time, and party at a different restaurant must NOT match.
+	// Greptile P1: prior implementation returned true unconditionally after
+	// date/time/party checks, false-positive matching any OT reservation.
+	water := opentable.UpcomingReservation{
+		PartySize:      2,
+		DateTime:       "2026-05-13T19:00:00",
+		RestaurantName: "Water Grill - Bellevue",
+	}
+	cases := []struct {
+		name string
+		slug string
+		want bool
+	}{
+		{"exact slug match", "water-grill-bellevue", true},
+		{"different restaurant same slot", "canlis", false},
+		{"different restaurant overlapping token", "grill-on-the-alley", false},
+		{"slug with extra token not in name", "water-grill-bellevue-private", false},
+		{"empty name short-circuits", "water-grill-bellevue", false},
+		{"accented name folds to ascii", "cafe-du-monde", true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := water
+			switch tc.name {
+			case "empty name short-circuits":
+				r.RestaurantName = ""
+			case "accented name folds to ascii":
+				r.RestaurantName = "Café du Monde"
+			}
+			got := matchedExistingOT(r, tc.slug, "2026-05-13", "19:00", 2)
+			if got != tc.want {
+				t.Errorf("matchedExistingOT(%q vs %q) = %v; want %v", tc.slug, r.RestaurantName, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestNormalizeForSlugMatch(t *testing.T) {
+	cases := []struct{ in, want string }{
+		{"Water Grill - Bellevue", "watergrillbellevue"},
+		{"Canlis", "canlis"},
+		// Greptile P2: accented runes fold to ASCII so slug tokens like
+		// "cafe" / "etoile" match Café / L'Étoile.
+		{"Café du Monde", "cafedumonde"},
+		{"L'Étoile", "letoile"},
+		{"Niño Restaurant", "ninorestaurant"},
+		{"Brüder", "bruder"},
+		{"", ""},
+	}
+	for _, tc := range cases {
+		if got := normalizeForSlugMatch(tc.in); got != tc.want {
+			t.Errorf("normalizeForSlugMatch(%q) = %q; want %q", tc.in, got, tc.want)
+		}
+	}
 }
