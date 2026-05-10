@@ -75,31 +75,26 @@ Exit codes & warnings:
   # Latest-only: refresh head of each resource, no historical backfill
   techmeme-pp-cli sync --latest-only`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			c, err := flags.newClient()
-			if err != nil {
-				return err
-			}
-			c.NoCache = true
-
-			if dbPath == "" {
-				dbPath = defaultDBPath("techmeme-pp-cli")
-			}
-
-			db, err := store.OpenWithContext(cmd.Context(), dbPath)
-			if err != nil {
-				return fmt.Errorf("opening local database: %w", err)
-			}
-			defer db.Close()
-
-			// If no specific resources, sync top-level resources
-			if len(resources) == 0 {
-				resources = defaultSyncResources()
-			}
-
-			// Techmeme has no JSON API — sync from RSS feed and river HTML
-			if len(resources) == 0 {
+			// Check if this is a Techmeme river sync (no JSON API resources)
+			if len(resources) == 0 && len(defaultSyncResources()) == 0 {
+				// Fetch river HTML FIRST, before creating any client or DB
+				// connections, to avoid file-descriptor conflicts.
 				started := time.Now()
-				count, err := syncRiver(c, db)
+				riverData, fetchErr := fetchRiverHTML()
+				if fetchErr != nil {
+					return fmt.Errorf("syncing river: %w", fetchErr)
+				}
+
+				if dbPath == "" {
+					dbPath = defaultDBPath("techmeme-pp-cli")
+				}
+				db, err := store.OpenWithContext(cmd.Context(), dbPath)
+				if err != nil {
+					return fmt.Errorf("opening local database: %w", err)
+				}
+				defer db.Close()
+
+				count, err := syncRiverData(db, riverData)
 				if err != nil {
 					return fmt.Errorf("syncing river: %w", err)
 				}
@@ -121,6 +116,22 @@ Exit codes & warnings:
 				}
 				return nil
 			}
+
+			c, err := flags.newClient()
+			if err != nil {
+				return err
+			}
+			c.NoCache = true
+
+			if dbPath == "" {
+				dbPath = defaultDBPath("techmeme-pp-cli")
+			}
+
+			db, err := store.OpenWithContext(cmd.Context(), dbPath)
+			if err != nil {
+				return fmt.Errorf("opening local database: %w", err)
+			}
+			defer db.Close()
 
 			// --full: clear all sync cursors before starting
 			if full {

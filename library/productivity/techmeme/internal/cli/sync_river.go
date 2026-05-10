@@ -3,6 +3,8 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -29,12 +31,17 @@ var (
 	pmlRE        = regexp.MustCompile(`pml="([^"]+)"`)
 )
 
-func syncRiver(c interface{ Get(string, map[string]string) (json.RawMessage, error) }, db *store.Store) (int, error) {
-	data, err := c.Get("/river", map[string]string{})
+func fetchRiverHTML() ([]byte, error) {
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Get("https://www.techmeme.com/river")
 	if err != nil {
-		return 0, fmt.Errorf("fetching river: %w", err)
+		return nil, fmt.Errorf("fetching river: %w", err)
 	}
+	defer resp.Body.Close()
+	return io.ReadAll(resp.Body)
+}
 
+func syncRiverData(db *store.Store, data []byte) (int, error) {
 	html := string(data)
 	lines := strings.Split(html, "\n")
 
