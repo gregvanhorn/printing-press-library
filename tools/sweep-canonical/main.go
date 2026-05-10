@@ -128,6 +128,7 @@ var cliAuthorByAPIName = map[string]string{
 	"producthunt":     "Trevin Chow",
 	"pypi":            "Hiten Shah",
 	"recipe-goat":     "Trevin Chow",
+	"render":          "Giuliano Giacaglia",
 	"scrape-creators": "Adrian Horning",
 	"seats-aero":      "Cathryn Lavery",
 	"sentry":          "Cathryn Lavery",
