@@ -1075,6 +1075,30 @@
       }
     },
     {
+      "name": "render",
+      "category": "cloud",
+      "api": "Render",
+      "description": "Every Render endpoint, plus diff, drift, cost, audit, and orphan analytics no other Render tool ships.",
+      "path": "library/cloud/render",
+      "printer": "giacaglia",
+      "printer_name": "Giuliano Giacaglia",
+      "mcp": {
+        "binary": "render-pp-mcp",
+        "transports": [
+          "stdio",
+          "http"
+        ],
+        "tool_count": 196,
+        "public_tool_count": 0,
+        "auth_type": "bearer_token",
+        "env_vars": [
+          "RENDER_API_KEY"
+        ],
+        "mcp_ready": "full",
+        "spec_format": "openapi3"
+      }
+    },
+    {
       "name": "roam",
       "category": "productivity",
       "api": "Roam HQ",
