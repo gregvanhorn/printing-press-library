@@ -192,6 +192,7 @@ func (c *Client) do429Aware(req *http.Request) (*http.Response, error) {
 				}
 			}
 			return nil, &BotDetectionError{
+				Kind:   BotKindOperationBlocked,
 				URL:    req.URL.String(),
 				Status: 403,
 				Streak: 1,
@@ -202,11 +203,14 @@ func (c *Client) do429Aware(req *http.Request) (*http.Response, error) {
 		bde, sErr := setCooldown(fmt.Sprintf("403 from %s (Akamai anti-bot)", req.URL.Path))
 		if sErr != nil {
 			return nil, &BotDetectionError{
-				URL: req.URL.String(), Status: 403, Streak: 1,
+				Kind: BotKindSessionBlocked,
+				URL:  req.URL.String(), Status: 403, Streak: 1,
 				Until:  time.Now().Add(5 * time.Minute),
 				Reason: fmt.Sprintf("403 from %s; cooldown not persisted: %v", req.URL.Path, sErr),
 			}
 		}
+		// setCooldown sets Kind = BotKindSessionBlocked unconditionally;
+		// no patch needed here.
 		return nil, bde
 	}
 	if resp.StatusCode != http.StatusTooManyRequests {
@@ -318,7 +322,8 @@ func (c *Client) Bootstrap(ctx context.Context) error {
 				// transient bot-detection error so the user sees the
 				// right error class.
 				return nil, &BotDetectionError{
-					URL: Origin + bootstrapPath, Status: 403, Streak: 1,
+					Kind: BotKindSessionBlocked,
+					URL:  Origin + bootstrapPath, Status: 403, Streak: 1,
 					Until:  time.Now().Add(5 * time.Minute),
 					Reason: "bootstrap returned 403 from " + bootstrapPath + " (Akamai anti-bot); cooldown not persisted: " + sErr.Error(),
 				}
@@ -761,7 +766,11 @@ func (c *Client) gqlCall(ctx context.Context, opname string, body any) ([]byte, 
 	// `do429Aware` were to surface a raw 403 here, surface it as
 	// BotDetectionError so callers' downstream handling stays correct.
 	if resp.StatusCode == 403 {
+		// This is the defense-in-depth path — a single GraphQL op being
+		// blocked is operation-specific, not session-wide. Setting Kind
+		// correctly lets the CLI suggest the numeric-ID bypass.
 		return nil, &BotDetectionError{
+			Kind:   BotKindOperationBlocked,
 			URL:    u,
 			Status: 403,
 			Streak: 1,
