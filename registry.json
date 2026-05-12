@@ -1512,6 +1512,27 @@
       }
     },
     {
+      "name": "techmeme",
+      "category": "productivity",
+      "api": "Techmeme",
+      "description": "Tech news aggregation and curation. No official API exists. This spec describes the RSS, OPML, search, and HTML surfaces available for programmatic access. No authentication required.",
+      "path": "library/productivity/techmeme",
+      "printer": "davemorin",
+      "printer_name": "Dave Morin",
+      "mcp": {
+        "binary": "techmeme-pp-mcp",
+        "transports": [
+          "stdio"
+        ],
+        "tool_count": 5,
+        "public_tool_count": 5,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full",
+        "spec_format": "openapi3"
+      }
+    },
+    {
       "name": "tiktok-shop",
       "category": "commerce",
       "api": "TikTok Shop",
