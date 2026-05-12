@@ -126,6 +126,123 @@ class PublishPackageVerifierTest(unittest.TestCase):
         self.assertIn("### Publication Path", suggestions[0])
         self.assertIn("| `search` | Example search | Searches example data. |", suggestions[0])
 
+    def test_new_cli_directory_with_pp_cli_suffix_fails(self) -> None:
+        cli_dir = self.tmp / "library" / "cloud" / "example-pp-cli"
+        manifest = {
+            "schema_version": 1,
+            "api_name": "example-pp-cli",
+            "category": "cloud",
+            "cli_name": "example-pp-cli",
+            "printer": "tmchow",
+            "printing_press_version": "4.0.1",
+            "run_id": "20260509T010203Z-test",
+            "novel_features": [{"name": "n", "command": "search", "description": "d"}],
+        }
+        files = {
+            ".printing-press.json": json.dumps(manifest),
+            ".printing-press-patches.json": json.dumps({"schema_version": 1, "applied_at": "2026-05-09", "patches": []}),
+            "AGENTS.md": "# Agents\n",
+            "README.md": "# Example\n",
+            "SKILL.md": "---\nname: pp-example\n---\n",
+            "go.mod": "module github.com/mvanhorn/printing-press-library/library/cloud/example-pp-cli\n",
+            ".goreleaser.yaml": "version: 2\n",
+            "LICENSE": "MIT\n",
+            "NOTICE": "Example\n",
+            "cmd/example-pp-cli/main.go": "package main\n",
+            ".manuscripts/20260509T010203Z-test/research/research.json": "{}\n",
+            ".manuscripts/20260509T010203Z-test/proofs/shipcheck.json": "{}\n",
+        }
+        for name, content in files.items():
+            self.write(f"library/cloud/example-pp-cli/{name}", content)
+
+        problems = verifier.validate_cli_dir(cli_dir, strict=True)
+        messages = [p.message for p in problems]
+
+        self.assertTrue(any("-pp-cli/-pp-mcp binary suffix" in msg for msg in messages))
+
+    def test_existing_cli_with_pp_cli_suffix_does_not_fail_when_non_strict(self) -> None:
+        cli_dir = self.tmp / "library" / "cloud" / "legacy-pp-cli"
+        manifest = {
+            "schema_version": 1,
+            "api_name": "legacy-pp-cli",
+            "category": "cloud",
+            "cli_name": "legacy-pp-cli",
+        }
+        self.write("library/cloud/legacy-pp-cli/.printing-press.json", json.dumps(manifest))
+        self.write("library/cloud/legacy-pp-cli/cmd/legacy-pp-cli/main.go", "package main\n")
+
+        problems = verifier.validate_cli_dir(cli_dir, strict=False)
+        messages = [p.message for p in problems]
+
+        self.assertFalse(any("-pp-cli/-pp-mcp binary suffix" in msg for msg in messages))
+
+
+class HasPatchMarkerTest(unittest.TestCase):
+    """Unit tests for ``has_patch_marker`` to ensure only the documented
+    ``// PATCH:`` / ``// PATCH(...)`` comment convention is detected, not bare
+    HTTP method literals or other coincidental occurrences of the word.
+    """
+
+    def setUp(self) -> None:
+        self.tmp = Path(tempfile.mkdtemp(prefix="has-patch-marker-"))
+        self.addCleanup(lambda: shutil.rmtree(self.tmp))
+
+    def _write(self, name: str, body: str) -> Path:
+        path = self.tmp / name
+        path.write_text(body)
+        return path
+
+    def test_detects_real_patch_marker(self) -> None:
+        path = self._write(
+            "real.go",
+            "// PATCH: align response envelope with upstream\nfunc foo() {}\n",
+        )
+        self.assertTrue(verifier.has_patch_marker(path))
+
+    def test_detects_patch_marker_with_upstream_ref(self) -> None:
+        path = self._write(
+            "real.go",
+            "    // PATCH(upstream cli-printing-press#842): auto-fill AccountSid\n",
+        )
+        self.assertTrue(verifier.has_patch_marker(path))
+
+    def test_ignores_http_method_string_literal(self) -> None:
+        path = self._write(
+            "client.go",
+            'return c.do("PATCH", path, nil, body, nil)\n',
+        )
+        self.assertFalse(verifier.has_patch_marker(path))
+
+    def test_ignores_makeAPIHandler_PATCH(self) -> None:
+        path = self._write(
+            "tools.go",
+            'makeAPIHandler("PATCH", "/conversations/{id}", bindings, positional)\n',
+        )
+        self.assertFalse(verifier.has_patch_marker(path))
+
+    def test_ignores_switch_case_PATCH(self) -> None:
+        path = self._write(
+            "tools.go",
+            'switch method {\ncase "POST", "PUT", "PATCH":\n    return body\n}\n',
+        )
+        self.assertFalse(verifier.has_patch_marker(path))
+
+    def test_ignores_annotation_map_value(self) -> None:
+        path = self._write(
+            "cmd.go",
+            'Annotations: map[string]string{"pp:method": "PATCH", "pp:path": "/x"},\n',
+        )
+        self.assertFalse(verifier.has_patch_marker(path))
+
+    def test_ignores_word_PATCH_in_string_or_comment(self) -> None:
+        path = self._write(
+            "doc.go",
+            "// This handler issues HTTP PATCH requests against the upstream API.\n",
+        )
+        # Plain prose comment without the colon/paren marker shape is not a
+        # customization marker.
+        self.assertFalse(verifier.has_patch_marker(path))
+
 
 if __name__ == "__main__":
     unittest.main()

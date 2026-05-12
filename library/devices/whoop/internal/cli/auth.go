@@ -68,15 +68,22 @@ func newAuthLoginCmd(flags *rootFlags) *cobra.Command {
 			redirectURI := fmt.Sprintf("http://localhost:%d/callback", listener.Addr().(*net.TCPAddr).Port)
 
 			authURL := "https://api.prod.whoop.com/oauth/oauth2/auth"
+			// PATCH: WHOOP requires the literal `offline` scope value to issue a
+			// refresh token (https://developer.whoop.com/docs/developing/oauth/).
+			// The generator's OAuth template assumed Google semantics
+			// (access_type=offline query param), which WHOOP ignores. Without
+			// the scope value, the token endpoint returns no refresh_token,
+			// the transparent refresh path in internal/client/client.go has
+			// nothing to use, and every call after the 1h expiry 401s with
+			// no recovery short of an interactive `auth login` re-run.
 			params := url.Values{
 				"client_id":     {clientID},
 				"redirect_uri":  {redirectURI},
 				"response_type": {"code"},
 				"state":         {state},
-				"access_type":   {"offline"},
 				"prompt":        {"consent"},
 			}
-			scopes := []string{"read:body_measurement", "read:cycles", "read:profile", "read:recovery", "read:sleep", "read:workout",  }
+			scopes := []string{"read:body_measurement", "read:cycles", "read:profile", "read:recovery", "read:sleep", "read:workout", "offline"}
 			if len(scopes) > 0 {
 				params.Set("scope", strings.Join(scopes, " "))
 			}

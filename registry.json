@@ -147,6 +147,27 @@
       }
     },
     {
+      "name": "arxiv",
+      "category": "other",
+      "api": "arXiv",
+      "description": "Public Atom API for searching and fetching arXiv e-print metadata.",
+      "path": "library/other/arxiv",
+      "printer": "hnshah",
+      "printer_name": "Hiten Shah",
+      "mcp": {
+        "binary": "arxiv-pp-mcp",
+        "transports": [
+          "stdio"
+        ],
+        "tool_count": 1,
+        "public_tool_count": 1,
+        "auth_type": "none",
+        "env_vars": [],
+        "mcp_ready": "full",
+        "spec_format": "openapi3"
+      }
+    },
+    {
       "name": "cal-com",
       "category": "productivity",
       "api": "Cal.com",
@@ -483,6 +504,29 @@
       }
     },
     {
+      "name": "fathom",
+      "category": "productivity",
+      "api": "Fathom",
+      "description": "Sync your Fathom meetings once, then search, analyze, and act on them forever — offline, at scale, without burning...",
+      "path": "library/productivity/fathom",
+      "printer": "neektza",
+      "printer_name": "Nikica Jokic",
+      "mcp": {
+        "binary": "fathom-pp-mcp",
+        "transports": [
+          "stdio"
+        ],
+        "tool_count": 7,
+        "public_tool_count": 0,
+        "auth_type": "api_key",
+        "env_vars": [
+          "FATHOM_PP_CLI_API_KEY"
+        ],
+        "mcp_ready": "full",
+        "spec_format": "internal"
+      }
+    },
+    {
       "name": "fedex",
       "category": "commerce",
       "api": "FedEx",
@@ -505,6 +549,30 @@
         ],
         "mcp_ready": "full",
         "spec_format": "internal"
+      }
+    },
+    {
+      "name": "figma",
+      "category": "productivity",
+      "api": "Figma",
+      "description": "Every Figma endpoint, plus codegen-ready frame extracts, comments audit, orphans finder, tokens diff, and webhook...",
+      "path": "library/productivity/figma",
+      "printer": "giacaglia",
+      "printer_name": "Giuliano Giacaglia",
+      "mcp": {
+        "binary": "figma-pp-mcp",
+        "transports": [
+          "stdio",
+          "http"
+        ],
+        "tool_count": 48,
+        "public_tool_count": 0,
+        "auth_type": "bearer_token",
+        "env_vars": [
+          "FIGMA_OAUTH2"
+        ],
+        "mcp_ready": "full",
+        "spec_format": "openapi3"
       }
     },
     {
@@ -685,6 +753,37 @@
       "path": "library/commerce/instacart",
       "printer": "mvanhorn",
       "printer_name": "Matt Van Horn"
+    },
+    {
+      "name": "jimmy-johns",
+      "category": "food-and-dining",
+      "api": "Jimmy John's",
+      "description": "First terminal CLI for Jimmy John's ordering — local Unwich conversion, agent-native JSON, every endpoint typed.",
+      "path": "library/food-and-dining/jimmy-johns",
+      "printer": "omarshahine",
+      "printer_name": "Omar Shahine",
+      "mcp": {
+        "binary": "jimmy-johns-pp-mcp",
+        "transports": [
+          "stdio",
+          "http"
+        ],
+        "tool_count": 16,
+        "public_tool_count": 8,
+        "auth_type": "cookie",
+        "env_vars": [],
+        "mcp_ready": "partial",
+        "spec_format": "openapi3"
+      }
+    },
+    {
+      "name": "jira",
+      "category": "project-management",
+      "api": "jira",
+      "description": "Jira Cloud platform REST API documentation",
+      "path": "library/project-management/jira",
+      "printer": "neektza",
+      "printer_name": "Nikica Jokic"
     },
     {
       "name": "kalshi",
@@ -911,6 +1010,28 @@
       }
     },
     {
+      "name": "openalex",
+      "category": "other",
+      "api": "OpenAlex",
+      "description": "The OpenAlex API provides access to a comprehensive catalog of scholarly works, authors, sources, institutions,...",
+      "path": "library/other/openalex",
+      "printer": "hiten-shah",
+      "printer_name": "Hiten Shah",
+      "mcp": {
+        "binary": "openalex-pp-mcp",
+        "transports": [
+          "stdio"
+        ],
+        "tool_count": 43,
+        "public_tool_count": 0,
+        "auth_type": "api_key",
+        "env_vars": [
+          "OPENALEX_API_KEY"
+        ],
+        "mcp_ready": "full"
+      }
+    },
+    {
       "name": "openrouter",
       "category": "ai",
       "api": "openrouter",
@@ -940,6 +1061,27 @@
         ],
         "mcp_ready": "full",
         "spec_format": "openapi3"
+      }
+    },
+    {
+      "name": "ordertogo",
+      "category": "food-and-dining",
+      "api": "OrderToGo",
+      "description": "Browse, cart, and place orders at any OrderToGo.com restaurant from the terminal — pure-Go agent-native client...",
+      "path": "library/food-and-dining/ordertogo",
+      "printer": "mvanhorn",
+      "printer_name": "Matt Van Horn",
+      "mcp": {
+        "binary": "ordertogo-pp-mcp",
+        "transports": [
+          "stdio"
+        ],
+        "tool_count": 15,
+        "public_tool_count": 0,
+        "auth_type": "cookie",
+        "env_vars": [],
+        "mcp_ready": "partial",
+        "spec_format": "internal"
       }
     },
     {
@@ -1352,7 +1494,7 @@
       "name": "table-reservation-goat",
       "category": "food-and-dining",
       "api": "Table Reservation GOAT",
-      "description": "One reservation CLI for OpenTable and Tock — search both networks at once, watch for cancellations, book, and...",
+      "description": "One reservation CLI for OpenTable, Tock, and Resy — search all three networks at once, watch for cancellations, book, and track changes from a local store agents can query.",
       "path": "library/food-and-dining/table-reservation-goat",
       "printer": "pejmanjohn",
       "printer_name": "Pejman Pour-Moezzi",

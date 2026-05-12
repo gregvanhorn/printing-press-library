@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -211,6 +212,14 @@ def validate_manifest_identity(cli_dir: Path, manifest: dict | None, strict: boo
         )
 
     if strict:
+        if slug.endswith("-pp-cli") or slug.endswith("-pp-mcp"):
+            problems.append(
+                Problem(
+                    manifest_path,
+                    f"new library CLI directory {slug!r} uses the -pp-cli/-pp-mcp binary suffix in its directory name. The slug-only convention is library/<category>/<slug>/; the -pp-cli infix belongs to cmd/<slug>-pp-cli/, not the parent directory. Re-run the publish package step or rename the directory to drop the suffix.",
+                )
+            )
+
         run_id = manifest.get("run_id")
         if not run_id:
             problems.append(
@@ -328,9 +337,24 @@ def candidate_patch_marker_files(cli_dir: Path) -> Iterable[Path]:
             yield path
 
 
+# Matches the inline marker convention documented in each printed CLI's
+# AGENTS.md:
+#
+#     // PATCH: <one-line summary>
+#     // PATCH(upstream cli-printing-press#<n>): ...
+#
+# Anchored on the `// PATCH` comment prefix immediately followed by `:` or `(`
+# — exactly the two documented forms. Intentionally excludes bare HTTP method
+# literals like "PATCH" that appear in generated client/handler code
+# (case "PATCH":, makeAPIHandler("PATCH", ...), {"pp:method": "PATCH"}, etc.),
+# which are not hand-authored customizations and would otherwise false-positive
+# on any printed CLI for an API that exposes HTTP PATCH endpoints.
+_PATCH_MARKER_RE = re.compile(r"//\s*PATCH\s*[:(]")
+
+
 def has_patch_marker(path: Path) -> bool:
     try:
-        return "PATCH" in path.read_text(errors="ignore")
+        return bool(_PATCH_MARKER_RE.search(path.read_text(errors="ignore")))
     except OSError:
         return False
 
