@@ -1,17 +1,17 @@
-# binaries
-fda-devices-pp-cli
-fda-devices-pp-mcp
+# binaries (top-level only, not directories named the same)
+/fda-devices-pp-cli
+/fda-devices-pp-mcp
 *.exe
 *.test
 
 # build & local artifacts
-build/
-.runstate/
-proofs/
+/build/
+/.runstate/
+/proofs/
 *.sqlite
 *.db
-dogfood-results.json
-workflow-verify-report.json
+/dogfood-results.json
+/workflow-verify-report.json
 
 # editor
 .DS_Store
