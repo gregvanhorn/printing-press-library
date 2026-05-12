@@ -1533,6 +1533,29 @@
       }
     },
     {
+      "name": "ticketmaster",
+      "category": "media-and-entertainment",
+      "api": "Ticketmaster",
+      "description": "Every Discovery v2 endpoint plus offline search, multi-venue watchlists, residency dedup, and on-sale tracking no...",
+      "path": "library/media-and-entertainment/ticketmaster",
+      "printer": "omarshahine",
+      "printer_name": "Omar Shahine",
+      "mcp": {
+        "binary": "ticketmaster-pp-mcp",
+        "transports": [
+          "stdio"
+        ],
+        "tool_count": 13,
+        "public_tool_count": 0,
+        "auth_type": "api_key",
+        "env_vars": [
+          "TICKETMASTER_API_KEY"
+        ],
+        "mcp_ready": "full",
+        "spec_format": "openapi3"
+      }
+    },
+    {
       "name": "tiktok-shop",
       "category": "commerce",
       "api": "TikTok Shop",
