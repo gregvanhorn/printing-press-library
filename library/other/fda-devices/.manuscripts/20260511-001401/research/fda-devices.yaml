@@ -1,0 +1,323 @@
+openapi: 3.1.0
+info:
+  title: fda-devices
+  version: "1.0"
+  description: |
+    openFDA medical device regulatory data — 510(k) clearances, PMA approvals, device recalls,
+    MAUDE adverse events, classifications, and establishment registrations.
+
+    Free public data, no auth required. Optional API key (OPENFDA_API_KEY) raises the daily
+    request cap from 1,000 to 120,000.
+  contact:
+    name: openFDA
+    url: https://open.fda.gov
+servers:
+  - url: https://api.fda.gov
+security: []
+components:
+  securitySchemes:
+    apiKeyQuery:
+      type: apiKey
+      in: query
+      name: api_key
+      description: Optional openFDA API key. Anonymous access works but is capped at 1,000 requests/day.
+      x-auth-env-vars:
+        - OPENFDA_API_KEY
+  schemas:
+    Meta:
+      type: object
+      properties:
+        disclaimer: {type: string}
+        terms: {type: string}
+        license: {type: string}
+        last_updated: {type: string}
+        results:
+          type: object
+          properties:
+            skip: {type: integer}
+            limit: {type: integer}
+            total: {type: integer}
+    Clearance510k:
+      type: object
+      description: A 510(k) premarket notification clearance record.
+      properties:
+        k_number: {type: string, description: K-number assigned by FDA (e.g. K203456)}
+        applicant: {type: string, description: Submitting company name}
+        device_name: {type: string}
+        product_code: {type: string, description: 3-letter FDA product code}
+        decision_date: {type: string, description: Date FDA issued the decision (YYYY-MM-DD)}
+        decision_code: {type: string}
+        decision_description: {type: string}
+        date_received: {type: string}
+        clearance_type: {type: string}
+        statement_or_summary: {type: string, description: Path or URL to the clearance letter PDF}
+        expedited_review_flag: {type: string}
+        third_party_flag: {type: string}
+        advisory_committee: {type: string}
+        advisory_committee_description: {type: string}
+        review_advisory_committee: {type: string}
+        contact: {type: string}
+        address_1: {type: string}
+        city: {type: string}
+        state: {type: string}
+        zip_code: {type: string}
+        country_code: {type: string}
+        openfda:
+          type: object
+          additionalProperties: true
+          description: Enriched cross-reference block (regulation_number, device_class, medical_specialty_description, registration_number, fei_number)
+    PMA:
+      type: object
+      description: A Premarket Approval (PMA) record.
+      properties:
+        pma_number: {type: string}
+        supplement_number: {type: string}
+        applicant: {type: string}
+        trade_name: {type: string}
+        generic_name: {type: string}
+        product_code: {type: string}
+        decision_date: {type: string}
+        decision_code: {type: string}
+        advisory_committee: {type: string}
+        supplement_type: {type: string}
+        supplement_reason: {type: string}
+        date_received: {type: string}
+        ao_statement: {type: string}
+        openfda: {type: object, additionalProperties: true}
+    Recall:
+      type: object
+      description: A device recall (enforcement record).
+      properties:
+        recall_number: {type: string}
+        event_date_initiated: {type: string}
+        recall_initiation_date: {type: string}
+        recall_status: {type: string, description: "Ongoing, Terminated, Completed, Pending"}
+        product_description: {type: string}
+        product_code: {type: string}
+        reason_for_recall: {type: string}
+        classification: {type: string, description: "Class I, II, or III"}
+        recalling_firm: {type: string}
+        firm_fei_number: {type: string}
+        product_quantity: {type: string}
+        distribution_pattern: {type: string}
+        code_info: {type: string}
+        more_code_info: {type: string}
+        cfres_id: {type: string}
+        res_event_number: {type: string}
+        product_res_number: {type: string}
+        k_numbers: {type: array, items: {type: string}, description: Related K-numbers if applicable}
+        pma_numbers: {type: array, items: {type: string}}
+        openfda: {type: object, additionalProperties: true}
+    MaudeEvent:
+      type: object
+      description: A MAUDE adverse event report.
+      properties:
+        report_number: {type: string}
+        event_type: {type: string, description: "Death, Injury, Malfunction, Other"}
+        date_received: {type: string}
+        date_of_event: {type: string}
+        date_report: {type: string}
+        report_source_code: {type: string}
+        manufacturer_name: {type: string}
+        manufacturer_g1_name: {type: string}
+        adverse_event_flag: {type: string}
+        product_problem_flag: {type: string}
+        type_of_report: {type: array, items: {type: string}}
+        source_type: {type: array, items: {type: string}}
+        device:
+          type: array
+          description: Devices involved in the event.
+          items:
+            type: object
+            additionalProperties: true
+        patient:
+          type: array
+          description: Patients involved in the event.
+          items:
+            type: object
+            additionalProperties: true
+        mdr_text:
+          type: array
+          description: MDR narrative text segments.
+          items:
+            type: object
+            additionalProperties: true
+    Classification:
+      type: object
+      description: A device product code classification.
+      properties:
+        product_code: {type: string, description: 3-letter FDA product code}
+        device_name: {type: string}
+        device_class: {type: string, description: "1, 2, 3, U, N, or F"}
+        regulation_number: {type: string}
+        medical_specialty_description: {type: string}
+        medical_specialty: {type: string}
+        submission_type_id: {type: string}
+        review_panel: {type: string}
+        gmp_exempt_flag: {type: string}
+        third_party_flag: {type: string}
+        life_sustain_support_flag: {type: string}
+        implant_flag: {type: string}
+        unclassified_reason: {type: string}
+        review_code: {type: string}
+        definition: {type: string}
+    Establishment:
+      type: object
+      description: An FDA-registered device establishment.
+      properties:
+        registration_number: {type: string}
+        fei_number: {type: string}
+        name: {type: string}
+        address_line_1: {type: string}
+        address_line_2: {type: string}
+        city: {type: string}
+        state_code: {type: string}
+        iso_country_code: {type: string}
+        postal_code: {type: string}
+        owner_operator:
+          type: object
+          additionalProperties: true
+        establishment_type:
+          type: array
+          items: {type: string}
+        products:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    SearchEnvelope:
+      type: object
+      properties:
+        meta: {$ref: "#/components/schemas/Meta"}
+        results:
+          type: array
+          items: {type: object, additionalProperties: true}
+  parameters:
+    SearchParam:
+      name: search
+      in: query
+      description: Lucene-style query expression. Example `applicant:Medtronic+AND+decision_date:[2023-01-01+TO+2024-01-01]`.
+      schema: {type: string}
+    SortParam:
+      name: sort
+      in: query
+      description: Sort expression, e.g. `decision_date:desc`.
+      schema: {type: string}
+    CountParam:
+      name: count
+      in: query
+      description: Field to aggregate counts on, e.g. `product_code.exact`.
+      schema: {type: string}
+    LimitParam:
+      name: limit
+      in: query
+      description: Max records to return (1-1000).
+      schema: {type: integer, default: 10, minimum: 1, maximum: 1000}
+    SkipParam:
+      name: skip
+      in: query
+      description: Records to skip. Capped at 25,000 — use search_after for deeper paging.
+      schema: {type: integer, default: 0, minimum: 0, maximum: 25000}
+paths:
+  /device/510k.json:
+    get:
+      summary: Search 510(k) clearances
+      operationId: list510k
+      tags: ["510k"]
+      parameters:
+        - $ref: "#/components/parameters/SearchParam"
+        - $ref: "#/components/parameters/SortParam"
+        - $ref: "#/components/parameters/CountParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/SkipParam"
+      responses:
+        "200":
+          description: Matching 510(k) records
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SearchEnvelope"}
+  /device/pma.json:
+    get:
+      summary: Search PMA approvals
+      operationId: listPma
+      tags: ["pma"]
+      parameters:
+        - $ref: "#/components/parameters/SearchParam"
+        - $ref: "#/components/parameters/SortParam"
+        - $ref: "#/components/parameters/CountParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/SkipParam"
+      responses:
+        "200":
+          description: Matching PMA records
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SearchEnvelope"}
+  /device/recall.json:
+    get:
+      summary: Search device recalls
+      operationId: listRecall
+      tags: ["recall"]
+      parameters:
+        - $ref: "#/components/parameters/SearchParam"
+        - $ref: "#/components/parameters/SortParam"
+        - $ref: "#/components/parameters/CountParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/SkipParam"
+      responses:
+        "200":
+          description: Matching recall records
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SearchEnvelope"}
+  /device/event.json:
+    get:
+      summary: Search MAUDE adverse events
+      operationId: listMaude
+      tags: ["maude"]
+      parameters:
+        - $ref: "#/components/parameters/SearchParam"
+        - $ref: "#/components/parameters/SortParam"
+        - $ref: "#/components/parameters/CountParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/SkipParam"
+      responses:
+        "200":
+          description: Matching MAUDE event records
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SearchEnvelope"}
+  /device/classification.json:
+    get:
+      summary: Search device product-code classifications
+      operationId: listClassification
+      tags: ["classification"]
+      parameters:
+        - $ref: "#/components/parameters/SearchParam"
+        - $ref: "#/components/parameters/SortParam"
+        - $ref: "#/components/parameters/CountParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/SkipParam"
+      responses:
+        "200":
+          description: Matching classification records
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SearchEnvelope"}
+  /device/registrationlisting.json:
+    get:
+      summary: Search establishment registrations
+      operationId: listEstablishment
+      tags: ["establishment"]
+      parameters:
+        - $ref: "#/components/parameters/SearchParam"
+        - $ref: "#/components/parameters/SortParam"
+        - $ref: "#/components/parameters/CountParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - $ref: "#/components/parameters/SkipParam"
+      responses:
+        "200":
+          description: Matching establishment records
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SearchEnvelope"}
