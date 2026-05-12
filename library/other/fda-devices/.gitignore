@@ -1,0 +1,19 @@
+# binaries
+fda-devices-pp-cli
+fda-devices-pp-mcp
+*.exe
+*.test
+
+# build & local artifacts
+build/
+.runstate/
+proofs/
+*.sqlite
+*.db
+dogfood-results.json
+workflow-verify-report.json
+
+# editor
+.DS_Store
+.vscode/
+.idea/

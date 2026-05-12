@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-05-11T04:41:52.330244Z",
+  "printing_press_version": "4.2.2",
+  "api_name": "fda-devices",
+  "display_name": "Fda Devices",
+  "cli_name": "fda-devices-pp-cli",
+  "owner": "gregvanhorn",
+  "printer": "gregvanhorn",
+  "printer_name": "Greg Van Horn",
+  "spec_format": "openapi3",
+  "spec_checksum": "sha256:a78fb7ae815352c36326f808ec574f85c316f9c6275b3a4053cffc47d5b97da8",
+  "run_id": "20260511-001401",
+  "mcp_binary": "fda-devices-pp-mcp",
+  "mcp_tool_count": 6,
+  "mcp_public_tool_count": 6,
+  "mcp_ready": "full",
+  "api_version": "1.0",
+  "auth_type": "none",
+  "novel_features": [
+    {
+      "name": "Competitor scan",
+      "command": "competitors",
+      "description": "Every new 510(k) clearance in a product code, ranked by recency, with applicant info."
+    },
+    {
+      "name": "Predicate-chain walk",
+      "command": "predicate-chain",
+      "description": "Recursive ancestor tree from a K-number, flagging any predicate that's been recalled."
+    },
+    {
+      "name": "Applicant history",
+      "command": "applicant-history",
+      "description": "Every clearance ever issued to a company, grouped by clinical area with go-to predicates."
+    },
+    {
+      "name": "Recall link graph",
+      "command": "recall-link",
+      "description": "Every recall on a device plus devices that used it as predicate."
+    },
+    {
+      "name": "Market-entry radar",
+      "command": "market-entry",
+      "description": "New entrants in a product code, ranked by time-to-clearance."
+    },
+    {
+      "name": "Safety pattern detector",
+      "command": "safety-pattern",
+      "description": "Devices in a category ranked by adverse-event count per year on market."
+    },
+    {
+      "name": "Standing alerts",
+      "command": "watch",
+      "description": "Subscribe to product codes, applicants, predicate devices, or recall classes; pipes diff to file/Slack/webhook."
+    },
+    {
+      "name": "Narrative story",
+      "command": "story",
+      "description": "One-paragraph briefing about a K-number: who cleared it, predicate chain, related recalls."
+    },
+    {
+      "name": "Cross-endpoint SQL",
+      "command": "sql",
+      "description": "Read-only SQL against the local mirror; join 510(k), recalls, MAUDE, classifications freely."
+    }
+  ]
+}

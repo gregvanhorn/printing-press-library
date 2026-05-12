@@ -1,0 +1,51 @@
+version: 2
+project_name: fda-devices-pp-cli
+changelog:
+  disable: true
+builds:
+  - id: fda-devices-pp-cli
+    main: ./cmd/fda-devices-pp-cli
+    binary: fda-devices-pp-cli
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/mvanhorn/printing-press-library/library/other/fda-devices/internal/cli.version={{ .Version }}
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+      - linux_amd64
+      - linux_arm64
+      - windows_amd64
+      - windows_arm64
+  - id: fda-devices-pp-mcp
+    main: ./cmd/fda-devices-pp-mcp
+    binary: fda-devices-pp-mcp
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+    targets:
+      - darwin_amd64
+      - darwin_arm64
+      - linux_amd64
+      - linux_arm64
+      - windows_amd64
+      - windows_arm64
+archives:
+  - formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+checksum:
+  name_template: checksums.txt
+brews:
+  - name: fda-devices-pp-cli
+    repository:
+      owner: gregvanhorn
+      name: homebrew-tap
+    homepage: "https://github.com/mvanhorn/printing-press-library"
+    description: "Regulatory intelligence for FDA medical devices — predicate-chain auditing, competitive scanning, and safety..."
+    install: |
+      bin.install "fda-devices-pp-cli"
+      bin.install "fda-devices-pp-mcp"

@@ -1,0 +1,61 @@
+{
+  "api_name": "fda-devices",
+  "base_url": "https://api.fda.gov",
+  "description": "openFDA medical device regulatory data — 510(k) clearances, PMA approvals, device recalls,\nMAUDE adverse events, classifications, and establishment registrations.\n\nFree public data, no auth required. Optional API key (OPENFDA_API_KEY) raises the daily\nrequest cap from 1,000 to 120,000.",
+  "mcp_ready": "full",
+  "http_transport": "standard",
+  "auth": {
+    "type": "none"
+  },
+  "required_headers": [],
+  "tools": [
+    {
+      "name": "device_list-classification",
+      "description": "Search device product-code classifications. Returns the SearchEnvelope.",
+      "method": "GET",
+      "path": "/device/classification.json",
+      "no_auth": true,
+      "params": []
+    },
+    {
+      "name": "device_list-establishment",
+      "description": "Search establishment registrations. Returns the SearchEnvelope.",
+      "method": "GET",
+      "path": "/device/registrationlisting.json",
+      "no_auth": true,
+      "params": []
+    },
+    {
+      "name": "device_list-maude",
+      "description": "Search MAUDE adverse events. Returns the SearchEnvelope.",
+      "method": "GET",
+      "path": "/device/event.json",
+      "no_auth": true,
+      "params": []
+    },
+    {
+      "name": "device_list-pma",
+      "description": "Search PMA approvals. Returns the SearchEnvelope.",
+      "method": "GET",
+      "path": "/device/pma.json",
+      "no_auth": true,
+      "params": []
+    },
+    {
+      "name": "device_list-recall",
+      "description": "Search device recalls. Returns the SearchEnvelope.",
+      "method": "GET",
+      "path": "/device/recall.json",
+      "no_auth": true,
+      "params": []
+    },
+    {
+      "name": "device_list510k",
+      "description": "Search 510(k) clearances. Returns the SearchEnvelope.",
+      "method": "GET",
+      "path": "/device/510k.json",
+      "no_auth": true,
+      "params": []
+    }
+  ]
+}
